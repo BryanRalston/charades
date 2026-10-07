@@ -1,0 +1,441 @@
+import { spawn } from "node:child_process";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { setTimeout as delay } from "node:timers/promises";
+
+const ROOT = "C:\\Users\\bryma\\dev\\charades";
+const QA = ROOT + "\\qa";
+const CHROME = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
+const PORT = 9333;
+const BASE = "http://127.0.0.1:8765/";
+const EXPECTED = [
+  "Bible Characters",
+  "Bible Stories",
+  "Miracles & Parables",
+  "Christmas & Easter",
+  "Church Life",
+  "Bible Animals",
+  "Bible Places & Things",
+  "Actions",
+  "Jobs",
+  "Sports",
+  "Animals",
+  "Chores",
+  "Movies",
+  "Everyday Objects",
+  "Foods",
+  "Outdoor Fun"
+];
+const POSES = {
+  90: { neutral: [0, 90], small: [180, -80], down: [180, -50], up: [0, 50] },
+  270: { neutral: [0, -90], small: [180, 80], down: [180, 50], up: [0, -50] }
+};
+
+mkdirSync(QA, { recursive: true });
+const consoleEvents = [];
+const checks = [];
+const shots = [];
+
+function check(name, ok, detail) {
+  checks.push({ name, ok: Boolean(ok), detail: detail == null ? "" : String(detail) });
+  console.log((ok ? "PASS " : "FAIL ") + name + (detail ? " — " + detail : ""));
+}
+
+function promptsFromHtml() {
+  const html = readFileSync(ROOT + "\\index.html", "utf8");
+  const start = html.indexOf("const PROMPTS = ");
+  const end = html.indexOf("let state = loadState()");
+  const block = html.slice(start + "const PROMPTS = ".length, end).trim().replace(/;$/, "");
+  return Function("return " + block)();
+}
+
+function connect(wsUrl) {
+  const ws = new WebSocket(wsUrl);
+  let next = 0;
+  const pending = new Map();
+  const listeners = [];
+  const ready = new Promise((resolve, reject) => {
+    ws.addEventListener("open", () => resolve());
+    ws.addEventListener("error", () => reject(new Error("websocket error")));
+  });
+  ws.addEventListener("message", (ev) => {
+    const msg = JSON.parse(ev.data);
+    if (msg.id && pending.has(msg.id)) {
+      const waiter = pending.get(msg.id);
+      pending.delete(msg.id);
+      if (msg.error) waiter.reject(new Error(msg.error.message || JSON.stringify(msg.error)));
+      else waiter.resolve(msg.result);
+    } else if (msg.method) {
+      for (const fn of listeners) fn(msg);
+    }
+  });
+  return {
+    ready,
+    on(fn) { listeners.push(fn); },
+    send(method, params = {}) {
+      const id = ++next;
+      return new Promise((resolve, reject) => {
+        pending.set(id, { resolve, reject });
+        ws.send(JSON.stringify({ id, method, params }));
+      });
+    },
+    close() { try { ws.close(); } catch (err) {} }
+  };
+}
+
+async function waitForTarget() {
+  for (let i = 0; i < 50; i += 1) {
+    try {
+      const res = await fetch("http://127.0.0.1:" + PORT + "/json/list");
+      if (res.ok) {
+        const list = await res.json();
+        const page = list.find((item) => item.type === "page");
+        if (page && page.webSocketDebuggerUrl) return page;
+      }
+    } catch (err) {}
+    await delay(200);
+  }
+  throw new Error("Chrome remote debugging did not come up");
+}
+
+const userData = process.env.TEMP + "\\charades-chrome-" + Date.now();
+const chrome = spawn(CHROME, [
+  "--headless=new",
+  "--disable-gpu",
+  "--no-first-run",
+  "--no-default-browser-check",
+  "--disable-background-networking",
+  "--disable-sync",
+  "--remote-debugging-port=" + PORT,
+  "--remote-allow-origins=*",
+  "--user-data-dir=" + userData,
+  "--autoplay-policy=no-user-gesture-required",
+  "about:blank"
+], { stdio: "ignore" });
+
+let cdp;
+try {
+  const target = await waitForTarget();
+  cdp = connect(target.webSocketDebuggerUrl);
+  await cdp.ready;
+  cdp.on((msg) => {
+    if (msg.method === "Runtime.consoleAPICalled") {
+      consoleEvents.push({
+        kind: "console",
+        type: msg.params.type,
+        text: (msg.params.args || []).map((arg) => arg.value || arg.description || arg.type).join(" ")
+      });
+    } else if (msg.method === "Runtime.exceptionThrown") {
+      const details = msg.params.exceptionDetails || {};
+      consoleEvents.push({
+        kind: "exception",
+        type: "error",
+        text: details.text + " " + (details.exception && details.exception.description ? details.exception.description : "")
+      });
+    } else if (msg.method === "Log.entryAdded") {
+      const entry = msg.params.entry || {};
+      consoleEvents.push({ kind: "log", type: entry.level, text: entry.text });
+    }
+  });
+  await cdp.send("Runtime.enable");
+  await cdp.send("Log.enable");
+  await cdp.send("Page.enable");
+  await cdp.send("Page.addScriptToEvaluateOnNewDocument", {
+    source: `
+      window.__screenAngle = 90;
+      window.__permCalls = 0;
+      window.__orientOverrideError = "";
+      (function () {
+        const fake = {
+          get angle() { return window.__screenAngle; },
+          get type() { return window.__screenAngle === 270 ? "landscape-secondary" : "landscape-primary"; },
+          lock() { return Promise.resolve(); },
+          unlock() {},
+          addEventListener() {},
+          removeEventListener() {},
+          dispatchEvent() { return true; }
+        };
+        try {
+          Object.defineProperty(screen, "orientation", { configurable: true, get() { return fake; } });
+        } catch (err) {
+          window.__orientOverrideError = String(err);
+        }
+      })();
+    `
+  });
+  await cdp.send("Emulation.setDeviceMetricsOverride", {
+    width: 1100,
+    height: 640,
+    deviceScaleFactor: 1,
+    mobile: true,
+    screenOrientation: { type: "landscapePrimary", angle: 90 }
+  });
+
+  async function ev(expression) {
+    const result = await cdp.send("Runtime.evaluate", {
+      expression,
+      returnByValue: true,
+      awaitPromise: true
+    });
+    if (result.exceptionDetails) {
+      const details = result.exceptionDetails;
+      throw new Error(details.text + " " + (details.exception && details.exception.description ? details.exception.description : expression.slice(0, 180)));
+    }
+    return result.result ? result.result.value : undefined;
+  }
+
+  async function shot(name) {
+    const png = await cdp.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: true });
+    writeFileSync(QA + "\\" + name, Buffer.from(png.data, "base64"));
+    shots.push(name);
+  }
+
+  async function waitFor(expression, timeoutMs, label) {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      if (await ev(expression)) return;
+      await delay(100);
+    }
+    const snap = await ev("document.body.dataset.phase + ' | ' + (document.getElementById('hint')||{}).textContent + ' | ' + (document.getElementById('prompt')||{}).textContent");
+    throw new Error("timed out waiting for " + label + " (" + snap + ")");
+  }
+
+  await cdp.send("Page.navigate", { url: BASE });
+  await waitFor("document.readyState === 'complete' && !!document.getElementById('btn-tap-start') && document.querySelectorAll('.cat-btn').length >= 16", 10000, "page load");
+  await delay(400);
+
+  const rendered = await ev(`({
+    headings: [...document.querySelectorAll('#category-picker h2')].map((node) => node.textContent),
+    categories: [...document.querySelectorAll('#category-picker .cat-btn')].map((node) => node.textContent),
+    start: (() => {
+      const button = document.getElementById('btn-tap-start');
+      const box = button.getBoundingClientRect();
+      return { text: button.textContent, width: box.width, height: box.height };
+    })(),
+    links: [...document.querySelectorAll('a')].map((node) => node.getAttribute('href')),
+    angle: screen.orientation && screen.orientation.angle,
+    orientError: window.__orientOverrideError || ''
+  })`);
+  check("headings render as Christian, Classic, Mix", JSON.stringify(rendered.headings) === JSON.stringify(["Christian", "Classic", "Mix"]), rendered.headings.join(" | "));
+  check("category buttons match the 16 names plus Mix", JSON.stringify(rendered.categories) === JSON.stringify(EXPECTED.concat(["Mix"])), rendered.categories.join(" | "));
+  check("Tap to start is present", rendered.start.text === "Tap to start" && rendered.start.width > 40 && rendered.start.height > 40, JSON.stringify(rendered.start));
+  check("screen angle is landscape-left 90", rendered.angle === 90, "angle " + rendered.angle + " " + rendered.orientError);
+  check("player UI does not link the feature map", rendered.links.every((href) => !href || href.indexOf("FEATURE_MAP") === -1), rendered.links.join(", "));
+  await shot("01-setup.png");
+
+  const promptMap = promptsFromHtml();
+  for (const name of EXPECTED) {
+    const count = (promptMap[name] || []).length;
+    check(name + " has at least 40 prompts", count >= 40, String(count));
+  }
+
+  await ev(`
+    window.__permCalls = 0;
+    const DOE = window.DeviceOrientationEvent;
+    function grant() { window.__permCalls += 1; return Promise.resolve('granted'); }
+    try { DOE.requestPermission = grant; }
+    catch (err) { Object.defineProperty(DOE, 'requestPermission', { configurable: true, writable: true, value: grant }); }
+  `);
+  await ev(`
+    const input = document.querySelector('input[name="seconds"][value="30"]');
+    input.click();
+    const button = [...document.querySelectorAll('.cat-btn')].find((node) => node.textContent === 'Actions');
+    button.click();
+  `);
+  await ev("document.getElementById('btn-tap-start').click()");
+  await delay(50);
+  const permCalls = await ev("window.__permCalls || 0");
+  check("Tap to start calls requestPermission", permCalls >= 1, "calls " + permCalls);
+  await waitFor("document.body.dataset.phase === 'play' && document.getElementById('prompt').textContent.length > 0", 8000, "round start");
+  await shot("02-play.png");
+
+  const pose = POSES[90];
+  async function fire(beta, gamma) {
+    return ev(`
+      (() => {
+        const beta = ${beta};
+        const gamma = ${gamma};
+        let event;
+        try {
+          event = new DeviceOrientationEvent('deviceorientation', { alpha: 0, beta: beta, gamma: gamma, absolute: true });
+        } catch (err) {
+          event = new Event('deviceorientation');
+          Object.defineProperty(event, 'beta', { get: () => beta });
+          Object.defineProperty(event, 'gamma', { get: () => gamma });
+        }
+        window.dispatchEvent(event);
+        return {
+          phase: document.body.dataset.phase,
+          score: document.getElementById('play-score').textContent,
+          prompt: document.getElementById('prompt').textContent,
+          last: document.documentElement.dataset.lastResult || '',
+          tilt: document.documentElement.dataset.tilt || ''
+        };
+      })()
+    `);
+  }
+
+  const opened = await fire(pose.neutral[0], pose.neutral[1]);
+  const firstPrompt = opened.prompt;
+  const small = await fire(pose.small[0], pose.small[1]);
+  check("a 10 degree tilt does not score", small.score === "0" && small.prompt === firstPrompt, "tilt " + small.tilt + " score " + small.score);
+  const correct = await fire(pose.down[0], pose.down[1]);
+  await shot("03-correct.png");
+  check("face-down counts as correct once", correct.score === "1" && correct.last === "correct" && correct.prompt !== firstPrompt, "score " + correct.score + " tilt " + correct.tilt + " last " + correct.last);
+  const again = await fire(pose.down[0], pose.down[1]);
+  check("holding the tilt does not score again", again.score === "1" && again.prompt === correct.prompt, again.prompt);
+  const earlyPass = await fire(pose.up[0], pose.up[1]);
+  check("the opposite tilt does not count before neutral", earlyPass.score === "1" && earlyPass.prompt === correct.prompt, "last " + earlyPass.last);
+  await fire(pose.neutral[0], pose.neutral[1]);
+  const debounced = await fire(pose.up[0], pose.up[1]);
+  check("a tilt inside 600ms does not count", debounced.score === "1" && debounced.prompt === correct.prompt, "last " + debounced.last);
+  await delay(750);
+  const passed = await fire(pose.up[0], pose.up[1]);
+  await shot("04-pass.png");
+  check("face-up counts as pass once", passed.score === "1" && passed.last === "pass" && passed.prompt !== correct.prompt, "score " + passed.score + " tilt " + passed.tilt);
+  const passAgain = await fire(pose.up[0], pose.up[1]);
+  check("holding pass does not advance again", passAgain.score === "1" && passAgain.prompt === passed.prompt, passAgain.prompt);
+
+  await ev("window.__screenAngle = 270");
+  await fire(POSES[270].neutral[0], POSES[270].neutral[1]);
+  await delay(750);
+  const otherSide = await fire(POSES[270].down[0], POSES[270].down[1]);
+  check("landscape-right face-down counts as correct", otherSide.score === "2" && otherSide.last === "correct" && otherSide.prompt !== passed.prompt, "score " + otherSide.score + " tilt " + otherSide.tilt + " angle now " + await ev("screen.orientation.angle"));
+  const keyed = await ev(`
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    ({ score: document.getElementById('play-score').textContent, prompt: document.getElementById('prompt').textContent, last: document.documentElement.dataset.lastResult || '' })
+  `);
+  check("arrow down counts as correct", keyed.score === "3" && keyed.last === "correct", "score " + keyed.score);
+
+  let sawUrgent = false;
+  let sawDrop = false;
+  let previous = null;
+  let recap = null;
+  const roundStart = Date.now();
+  while (Date.now() - roundStart < 40000) {
+    const info = await ev(`({
+      phase: document.body.dataset.phase,
+      timer: document.getElementById('timer').textContent,
+      urgent: document.getElementById('timer').classList.contains('urgent'),
+      line: (document.getElementById('recap-line') || {}).textContent || '',
+      next: (document.getElementById('recap-next') || {}).textContent || '',
+      guessed: [...document.querySelectorAll('#recap-guessed li')].map((node) => node.textContent),
+      passed: [...document.querySelectorAll('#recap-passed li')].map((node) => node.textContent)
+    })`);
+    if (previous !== null && Number(info.timer) < Number(previous)) sawDrop = true;
+    previous = info.timer;
+    if (info.urgent) {
+      sawUrgent = true;
+      if (!shots.includes("05-urgent.png")) await shot("05-urgent.png");
+    }
+    if (info.phase === "recap") {
+      recap = info;
+      break;
+    }
+    await delay(400);
+  }
+  check("the on-screen timer counts down", sawDrop, "last " + previous);
+  check("the last 10 seconds pulse", sawUrgent, "");
+  check("the timer ends the round", Boolean(recap), recap ? recap.line : "still " + previous);
+  if (recap) {
+    await shot("06-recap.png");
+    check("recap lists the guessed prompt", recap.guessed.indexOf(firstPrompt) !== -1, recap.guessed.join(", "));
+    check("recap lists the passed prompt", recap.passed.indexOf(correct.prompt) !== -1, recap.passed.join(", "));
+    check("recap shows the round total", recap.line.indexOf("scored 3") !== -1 && recap.line.indexOf("Total: 3") !== -1, recap.line);
+    check("the turn rotates", recap.next.indexOf("Team 2") !== -1, recap.next);
+  }
+
+  await cdp.send("Page.reload", { ignoreCache: false });
+  await waitFor("document.readyState === 'complete' && document.body.dataset.phase === 'setup'", 10000, "reload");
+  await delay(200);
+  const kept = await ev(`({
+    score: document.querySelector('[data-team-index="0"]').textContent,
+    up: document.getElementById('up-now').textContent,
+    seconds: document.querySelector('input[name="seconds"]:checked').value,
+    category: (document.querySelector('.cat-btn.selected') || {}).textContent || ''
+  })`);
+  check("score survives a refresh", kept.score === "3", "team score " + kept.score);
+  check("turn and settings survive a refresh", kept.up.indexOf("Team 2") !== -1 && kept.seconds === "30" && kept.category === "Actions", JSON.stringify(kept));
+  await shot("07-refresh.png");
+
+  await cdp.send("Emulation.setDeviceMetricsOverride", {
+    width: 420,
+    height: 800,
+    deviceScaleFactor: 1,
+    mobile: true,
+    screenOrientation: { type: "portraitPrimary", angle: 0 }
+  });
+  await ev("window.__screenAngle = 90");
+  await ev(`
+    window.__permCalls = 0;
+    const DOE = window.DeviceOrientationEvent;
+    function grant() { window.__permCalls += 1; return Promise.resolve('granted'); }
+    try { DOE.requestPermission = grant; }
+    catch (err) { Object.defineProperty(DOE, 'requestPermission', { configurable: true, writable: true, value: grant }); }
+    document.getElementById('btn-tap-start').click();
+  `);
+  await waitFor("document.body.classList.contains('playing') && document.body.classList.contains('portrait')", 8000, "portrait overlay");
+  const overlay = await ev(`({
+    display: getComputedStyle(document.getElementById('rotate-overlay')).display,
+    text: document.getElementById('rotate-overlay').innerText
+  })`);
+  check("portrait shows the rotate overlay", overlay.display === "flex" && overlay.text.indexOf("Rotate your phone") !== -1, overlay.display + " " + overlay.text.replace(/\\s+/g, " "));
+  await shot("08-portrait.png");
+
+  const used = promptMap.Actions.map((prompt) => "Actions\n" + prompt);
+  const saved = {
+    teams: [
+      { id: "a", name: "Team 1", score: 3 },
+      { id: "b", name: "Team 2", score: 0 }
+    ],
+    turnIndex: 1,
+    used,
+    settings: { seconds: 30, category: "Actions" }
+  };
+  await ev("localStorage.setItem('charades.v1', " + JSON.stringify(JSON.stringify(saved)) + ")");
+  await cdp.send("Emulation.setDeviceMetricsOverride", {
+    width: 1100,
+    height: 640,
+    deviceScaleFactor: 1,
+    mobile: true,
+    screenOrientation: { type: "landscapePrimary", angle: 90 }
+  });
+  await cdp.send("Page.reload");
+  await waitFor("document.readyState === 'complete' && document.body.dataset.phase === 'setup'", 10000, "exhausted reload");
+  await ev(`
+    const DOE = window.DeviceOrientationEvent;
+    function grant() { window.__permCalls = (window.__permCalls || 0) + 1; return Promise.resolve('granted'); }
+    try { DOE.requestPermission = grant; }
+    catch (err) { Object.defineProperty(DOE, 'requestPermission', { configurable: true, writable: true, value: grant }); }
+    document.getElementById('btn-tap-start').click();
+  `);
+  await waitFor("document.getElementById('deck-empty').hidden === false", 4000, "empty category message");
+  const emptyText = await ev("document.getElementById('deck-empty-text').textContent");
+  check("an empty category says so", emptyText === "No prompts left in this category.", emptyText);
+  await shot("09-empty.png");
+  await ev("document.getElementById('btn-reshuffle').click()");
+  await waitFor("document.body.dataset.phase === 'play' && document.getElementById('prompt').textContent.length > 0", 8000, "reshuffle deal");
+  const reshuffled = await ev("document.getElementById('prompt').textContent");
+  check("reshuffle deals a prompt again", promptMap.Actions.indexOf(reshuffled) !== -1, reshuffled);
+  await shot("10-reshuffle.png");
+
+  await delay(600);
+  const errors = consoleEvents.filter((event) => event.type === "error");
+  check("zero console errors", errors.length === 0, errors.map((event) => event.text).join(" || ") || "none");
+  writeFileSync(QA + "\\results.json", JSON.stringify({
+    checks,
+    shots,
+    rendered,
+    counts: Object.fromEntries(EXPECTED.map((name) => [name, promptMap[name].length])),
+    consoleEvents
+  }, null, 2));
+  const failed = checks.filter((item) => !item.ok);
+  console.log(failed.length ? "FAILED " + failed.length : "ALL PASS " + checks.length);
+  process.exitCode = failed.length ? 1 : 0;
+} catch (err) {
+  console.error("QC crashed: " + err.stack);
+  writeFileSync(QA + "\\results.json", JSON.stringify({ checks, shots, consoleEvents, crash: String(err.stack || err) }, null, 2));
+  process.exitCode = 1;
+} finally {
+  if (cdp) cdp.close();
+  chrome.kill();
+}

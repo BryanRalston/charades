@@ -1,0 +1,289 @@
+{
+  "checks": [
+    {
+      "name": "headings render as Christian, Classic, Mix",
+      "ok": true,
+      "detail": "Christian | Classic | Mix"
+    },
+    {
+      "name": "category buttons match the 16 names plus Mix",
+      "ok": true,
+      "detail": "Bible Characters | Bible Stories | Miracles & Parables | Christmas & Easter | Church Life | Bible Animals | Bible Places & Things | Actions | Jobs | Sports | Animals | Chores | Movies | Everyday Objects | Foods | Outdoor Fun | Mix"
+    },
+    {
+      "name": "Tap to start is present",
+      "ok": true,
+      "detail": "{\"text\":\"Tap to start\",\"width\":380,\"height\":74}"
+    },
+    {
+      "name": "screen angle is landscape-left 90",
+      "ok": true,
+      "detail": "angle 90 "
+    },
+    {
+      "name": "player UI does not link the feature map",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Bible Characters has at least 40 prompts",
+      "ok": true,
+      "detail": "52"
+    },
+    {
+      "name": "Bible Stories has at least 40 prompts",
+      "ok": true,
+      "detail": "48"
+    },
+    {
+      "name": "Miracles & Parables has at least 40 prompts",
+      "ok": true,
+      "detail": "48"
+    },
+    {
+      "name": "Christmas & Easter has at least 40 prompts",
+      "ok": true,
+      "detail": "48"
+    },
+    {
+      "name": "Church Life has at least 40 prompts",
+      "ok": true,
+      "detail": "50"
+    },
+    {
+      "name": "Bible Animals has at least 40 prompts",
+      "ok": true,
+      "detail": "47"
+    },
+    {
+      "name": "Bible Places & Things has at least 40 prompts",
+      "ok": true,
+      "detail": "48"
+    },
+    {
+      "name": "Actions has at least 40 prompts",
+      "ok": true,
+      "detail": "52"
+    },
+    {
+      "name": "Jobs has at least 40 prompts",
+      "ok": true,
+      "detail": "50"
+    },
+    {
+      "name": "Sports has at least 40 prompts",
+      "ok": true,
+      "detail": "49"
+    },
+    {
+      "name": "Animals has at least 40 prompts",
+      "ok": true,
+      "detail": "50"
+    },
+    {
+      "name": "Chores has at least 40 prompts",
+      "ok": true,
+      "detail": "48"
+    },
+    {
+      "name": "Movies has at least 40 prompts",
+      "ok": true,
+      "detail": "60"
+    },
+    {
+      "name": "Everyday Objects has at least 40 prompts",
+      "ok": true,
+      "detail": "60"
+    },
+    {
+      "name": "Foods has at least 40 prompts",
+      "ok": true,
+      "detail": "54"
+    },
+    {
+      "name": "Outdoor Fun has at least 40 prompts",
+      "ok": true,
+      "detail": "52"
+    },
+    {
+      "name": "Tap to start calls requestPermission",
+      "ok": true,
+      "detail": "calls 1"
+    },
+    {
+      "name": "a 10 degree tilt does not score",
+      "ok": true,
+      "detail": "tilt 10 score 0"
+    },
+    {
+      "name": "face-down counts as correct once",
+      "ok": true,
+      "detail": "score 1 tilt 40 last correct"
+    },
+    {
+      "name": "holding the tilt does not score again",
+      "ok": true,
+      "detail": "Hopping"
+    },
+    {
+      "name": "the opposite tilt does not count before neutral",
+      "ok": true,
+      "detail": "last correct"
+    },
+    {
+      "name": "a tilt inside 600ms does not count",
+      "ok": true,
+      "detail": "last correct"
+    },
+    {
+      "name": "face-up counts as pass once",
+      "ok": true,
+      "detail": "score 1 tilt -40"
+    },
+    {
+      "name": "holding pass does not advance again",
+      "ok": true,
+      "detail": "Throwing Ball"
+    },
+    {
+      "name": "landscape-right face-down counts as correct",
+      "ok": true,
+      "detail": "score 2 tilt 40 angle now 270"
+    },
+    {
+      "name": "arrow down counts as correct",
+      "ok": true,
+      "detail": "score 3"
+    },
+    {
+      "name": "the on-screen timer counts down",
+      "ok": true,
+      "detail": "last 0"
+    },
+    {
+      "name": "the last 10 seconds pulse",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "the timer ends the round",
+      "ok": true,
+      "detail": "Team 1 scored 3. Total: 3."
+    },
+    {
+      "name": "recap lists the guessed prompt",
+      "ok": true,
+      "detail": "Baking Cookies, Throwing Ball, Wrapping Present"
+    },
+    {
+      "name": "recap lists the passed prompt",
+      "ok": true,
+      "detail": "Hopping"
+    },
+    {
+      "name": "recap shows the round total",
+      "ok": true,
+      "detail": "Team 1 scored 3. Total: 3."
+    },
+    {
+      "name": "the turn rotates",
+      "ok": true,
+      "detail": "Next up: Team 2"
+    },
+    {
+      "name": "score survives a refresh",
+      "ok": true,
+      "detail": "team score 3"
+    },
+    {
+      "name": "turn and settings survive a refresh",
+      "ok": true,
+      "detail": "{\"score\":\"3\",\"up\":\"Up now: Team 2\",\"seconds\":\"30\",\"category\":\"Actions\"}"
+    },
+    {
+      "name": "portrait shows the rotate overlay",
+      "ok": true,
+      "detail": "flex Rotate your phone\n\nLandscape works best for heads-up play."
+    },
+    {
+      "name": "an empty category says so",
+      "ok": true,
+      "detail": "No prompts left in this category."
+    },
+    {
+      "name": "reshuffle deals a prompt again",
+      "ok": true,
+      "detail": "Waving"
+    },
+    {
+      "name": "zero console errors",
+      "ok": true,
+      "detail": "none"
+    }
+  ],
+  "shots": [
+    "01-setup.png",
+    "02-play.png",
+    "03-correct.png",
+    "04-pass.png",
+    "05-urgent.png",
+    "06-recap.png",
+    "07-refresh.png",
+    "08-portrait.png",
+    "09-empty.png",
+    "10-reshuffle.png"
+  ],
+  "rendered": {
+    "headings": [
+      "Christian",
+      "Classic",
+      "Mix"
+    ],
+    "categories": [
+      "Bible Characters",
+      "Bible Stories",
+      "Miracles & Parables",
+      "Christmas & Easter",
+      "Church Life",
+      "Bible Animals",
+      "Bible Places & Things",
+      "Actions",
+      "Jobs",
+      "Sports",
+      "Animals",
+      "Chores",
+      "Movies",
+      "Everyday Objects",
+      "Foods",
+      "Outdoor Fun",
+      "Mix"
+    ],
+    "start": {
+      "text": "Tap to start",
+      "width": 380,
+      "height": 74
+    },
+    "links": [],
+    "angle": 90,
+    "orientError": ""
+  },
+  "counts": {
+    "Bible Characters": 52,
+    "Bible Stories": 48,
+    "Miracles & Parables": 48,
+    "Christmas & Easter": 48,
+    "Church Life": 50,
+    "Bible Animals": 47,
+    "Bible Places & Things": 48,
+    "Actions": 52,
+    "Jobs": 50,
+    "Sports": 49,
+    "Animals": 50,
+    "Chores": 48,
+    "Movies": 60,
+    "Everyday Objects": 60,
+    "Foods": 54,
+    "Outdoor Fun": 52
+  },
+  "consoleEvents": []
+}
