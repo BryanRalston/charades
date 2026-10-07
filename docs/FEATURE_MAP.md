@@ -16,9 +16,9 @@ Internal notes for this repo. The player page does not link here.
 - Teams or players can be added, renamed, and removed (at least one, at most eight). Turns rotate after each round. Scores are running totals.
 - The recap lists prompts guessed and prompts passed that round.
 - Teams, scores, whose turn it is, used prompts, the selected category, and the round length are stored in `localStorage` under `charades.v1`. A refresh keeps them. New game asks for confirmation, then clears that saved game.
-- A prompt is used once it is guessed or passed. It is not dealt again until New game or Reshuffle. The card still on screen when time runs out is not marked used.
-- If the chosen category, or the whole mix, has no prompts left, the page says so and offers Reshuffle. Reshuffle puts that category's used prompts back. Mix reshuffles every category.
-- Sixteen categories, in order, under the headings Christian, Classic, and Mix. Mix deals from all sixteen and still skips prompts already used in the game.
+- A prompt is used once it is guessed or passed. Each new card is drawn at random from the prompts not yet used, so a round is not the list in page order. A used prompt stays out until New game, or until a reshuffle lets it back in. The card still on screen when time runs out is not marked used.
+- If the chosen category, or the whole mix, has no prompts left, the page says so and offers Reshuffle. Reshuffle returns the older used prompts and holds back the most recent 24, so the cards just played do not show up again right away. If 24 or fewer prompts were used, they all return. Mix does this across every category.
+- Sixteen categories, in order, under the headings Christian, Classic, and Mix. Each category has at least 100 prompts. Mix deals from all sixteen and still skips prompts already used in the game.
 - Prompts are one word or a short two-to-three word phrase. Movie prompts are G or PG family titles only.
 - One `index.html` file with inline CSS and JavaScript. No external fonts or CDNs. `sw.js` and `manifest.webmanifest` cache the page, the manifest, and the icons so a second load can work offline.
 - Paths are relative so the same files work at the site root and at a project subpath.

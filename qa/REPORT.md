@@ -5,7 +5,8 @@ Local static server only. No GitHub repo, push, or Pages site was created. Publi
 - Page: http://127.0.0.1:8765/
 - Server: `python -m http.server 8765 --bind 127.0.0.1` from `C:\Users\bryma\dev\charades`
 - Browser: headless Chrome, driven by `qa/headless_qc.mjs` over the DevTools protocol
-- Result: 44 checks passed. Console events: none. No 402 or 429.
+- Result: 44 checks passed after the decks were expanded. Console events: none. No 402 or 429.
+- Shuffle check: `node qa/shuffle_check.mjs` passed 28 checks. A round's cards were unique and not in list order, the next round did not repeat them, and Reshuffle held back the most recent 24.
 
 `sw.js`, `manifest.webmanifest`, `icon-192.png`, and `icon-512.png` each returned HTTP 200.
 
@@ -35,25 +36,27 @@ Category buttons under those headings, in order, with the prompt count in the pa
 
 | Heading | Category | Prompts |
 | --- | --- | --- |
-| Christian | Bible Characters | 52 |
-| Christian | Bible Stories | 48 |
-| Christian | Miracles & Parables | 48 |
-| Christian | Christmas & Easter | 48 |
-| Christian | Church Life | 50 |
-| Christian | Bible Animals | 47 |
-| Christian | Bible Places & Things | 48 |
-| Classic | Actions | 52 |
-| Classic | Jobs | 50 |
-| Classic | Sports | 49 |
-| Classic | Animals | 50 |
-| Classic | Chores | 48 |
-| Classic | Movies | 60 |
-| Classic | Everyday Objects | 60 |
-| Classic | Foods | 54 |
-| Classic | Outdoor Fun | 52 |
-| Mix | Mix | 816 cards drawn from the 16 lists |
+| Christian | Bible Characters | 130 |
+| Christian | Bible Stories | 130 |
+| Christian | Miracles & Parables | 120 |
+| Christian | Christmas & Easter | 126 |
+| Christian | Church Life | 120 |
+| Christian | Bible Animals | 111 |
+| Christian | Bible Places & Things | 124 |
+| Classic | Actions | 130 |
+| Classic | Jobs | 124 |
+| Classic | Sports | 117 |
+| Classic | Animals | 118 |
+| Classic | Chores | 112 |
+| Classic | Movies | 180 |
+| Classic | Everyday Objects | 136 |
+| Classic | Foods | 124 |
+| Classic | Outdoor Fun | 122 |
+| Mix | Mix | 2024 cards drawn from the 16 lists |
 
-Mix is a heading plus one button labeled Mix. It has no list of its own. A Mix game deals from all 816 category-and-prompt cards and still skips any card already used in that game.
+Mix is a heading plus one button labeled Mix. It has no list of its own. A Mix game deals from all 2024 category-and-prompt cards and still skips any card already used in that game.
+
+Each new card is drawn at random from the prompts not yet guessed or passed. When a category, or the whole mix, is used up, Reshuffle returns the older cards and holds the most recent 24 out, so the cards just played do not come back immediately. If 24 or fewer were used, they all return.
 
 ## Tilt run
 

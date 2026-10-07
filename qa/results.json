@@ -28,82 +28,82 @@
     {
       "name": "Bible Characters has at least 40 prompts",
       "ok": true,
-      "detail": "52"
+      "detail": "130"
     },
     {
       "name": "Bible Stories has at least 40 prompts",
       "ok": true,
-      "detail": "48"
+      "detail": "130"
     },
     {
       "name": "Miracles & Parables has at least 40 prompts",
       "ok": true,
-      "detail": "48"
+      "detail": "120"
     },
     {
       "name": "Christmas & Easter has at least 40 prompts",
       "ok": true,
-      "detail": "48"
+      "detail": "126"
     },
     {
       "name": "Church Life has at least 40 prompts",
       "ok": true,
-      "detail": "50"
+      "detail": "120"
     },
     {
       "name": "Bible Animals has at least 40 prompts",
       "ok": true,
-      "detail": "47"
+      "detail": "111"
     },
     {
       "name": "Bible Places & Things has at least 40 prompts",
       "ok": true,
-      "detail": "48"
+      "detail": "124"
     },
     {
       "name": "Actions has at least 40 prompts",
       "ok": true,
-      "detail": "52"
+      "detail": "130"
     },
     {
       "name": "Jobs has at least 40 prompts",
       "ok": true,
-      "detail": "50"
+      "detail": "124"
     },
     {
       "name": "Sports has at least 40 prompts",
       "ok": true,
-      "detail": "49"
+      "detail": "117"
     },
     {
       "name": "Animals has at least 40 prompts",
       "ok": true,
-      "detail": "50"
+      "detail": "118"
     },
     {
       "name": "Chores has at least 40 prompts",
       "ok": true,
-      "detail": "48"
+      "detail": "112"
     },
     {
       "name": "Movies has at least 40 prompts",
       "ok": true,
-      "detail": "60"
+      "detail": "180"
     },
     {
       "name": "Everyday Objects has at least 40 prompts",
       "ok": true,
-      "detail": "60"
+      "detail": "136"
     },
     {
       "name": "Foods has at least 40 prompts",
       "ok": true,
-      "detail": "54"
+      "detail": "124"
     },
     {
       "name": "Outdoor Fun has at least 40 prompts",
       "ok": true,
-      "detail": "52"
+      "detail": "122"
     },
     {
       "name": "Tap to start calls requestPermission",
@@ -123,7 +123,7 @@
     {
       "name": "holding the tilt does not score again",
       "ok": true,
-      "detail": "Hopping"
+      "detail": "Growing Tall"
     },
     {
       "name": "the opposite tilt does not count before neutral",
@@ -143,7 +143,7 @@
     {
       "name": "holding pass does not advance again",
       "ok": true,
-      "detail": "Throwing Ball"
+      "detail": "Licking Spoon"
     },
     {
       "name": "landscape-right face-down counts as correct",
@@ -173,12 +173,12 @@
     {
       "name": "recap lists the guessed prompt",
       "ok": true,
-      "detail": "Baking Cookies, Throwing Ball, Wrapping Present"
+      "detail": "Folding Paper, Licking Spoon, Rolling Dough"
     },
     {
       "name": "recap lists the passed prompt",
       "ok": true,
-      "detail": "Hopping"
+      "detail": "Growing Tall"
     },
     {
       "name": "recap shows the round total",
@@ -213,7 +213,7 @@
     {
       "name": "reshuffle deals a prompt again",
       "ok": true,
-      "detail": "Waving"
+      "detail": "Hopping"
     },
     {
       "name": "zero console errors",
@@ -268,22 +268,22 @@
     "orientError": ""
   },
   "counts": {
-    "Bible Characters": 52,
-    "Bible Stories": 48,
-    "Miracles & Parables": 48,
-    "Christmas & Easter": 48,
-    "Church Life": 50,
-    "Bible Animals": 47,
-    "Bible Places & Things": 48,
-    "Actions": 52,
-    "Jobs": 50,
-    "Sports": 49,
-    "Animals": 50,
-    "Chores": 48,
-    "Movies": 60,
-    "Everyday Objects": 60,
-    "Foods": 54,
-    "Outdoor Fun": 52
+    "Bible Characters": 130,
+    "Bible Stories": 130,
+    "Miracles & Parables": 120,
+    "Christmas & Easter": 126,
+    "Church Life": 120,
+    "Bible Animals": 111,
+    "Bible Places & Things": 124,
+    "Actions": 130,
+    "Jobs": 124,
+    "Sports": 117,
+    "Animals": 118,
+    "Chores": 112,
+    "Movies": 180,
+    "Everyday Objects": 136,
+    "Foods": 124,
+    "Outdoor Fun": 122
   },
   "consoleEvents": []
 }
