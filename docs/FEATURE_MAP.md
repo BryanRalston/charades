@@ -6,7 +6,7 @@ Internal notes for this repo. The player page does not link here.
 
 - Heads-up charades in the browser. The group sees a giant prompt while the player holds the phone to their forehead in landscape.
 - Portrait shows a full-screen "Rotate your phone" overlay during the countdown and the round. Setup stays usable in portrait and asks the player to turn sideways.
-- Tilt forward so the screen faces the floor: correct. Green flash, a short WebAudio beep, `navigator.vibrate` when the browser allows it, and one point.
+- Tilt forward so the screen faces the floor: correct. Green flash, a short WebAudio beep, one point, and `navigator.vibrate` while the browser still treats the last tap as active. A later tilt does not call vibrate, because Chrome records an error when vibration is blocked. The Correct button vibrates on that tap.
 - Tilt back so the screen faces the ceiling: pass. Orange flash and the next prompt. No point and no beep.
 - A tilt counts once. The phone must come back within ±20° of upright, and at least 600ms must pass, before another tilt counts.
 - Landscape-left (`screen.orientation.angle` 90) and landscape-right (270) are both mapped. Upside-down portrait (180) and upright portrait (0) are mapped too. The signed tilt uses beta and gamma in the screen's frame: positive means face-down.

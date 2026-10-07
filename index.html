@@ -197,7 +197,7 @@
     letter-spacing: -0.04em;
     overflow-wrap: break-word;
   }
-  #prompt-cat { margin-top: 8px; font-size: 1rem; font-weight: 700; opacity: 0.85; }
+  #prompt-cat { margin-bottom: 10px; font-size: 1.05rem; font-weight: 700; letter-spacing: 0.04em; opacity: 0.85; }
   .play-help { text-align: center; font-weight: 700; font-size: 0.95rem; margin: 4px 0; }
   #actions { display: flex; gap: 12px; }
   #btn-pass, #btn-correct {
@@ -341,8 +341,8 @@
     <div id="stage">
       <div id="countdown" aria-live="assertive"><span id="countdown-num">3</span></div>
       <div id="prompt-box">
-        <div id="prompt" aria-live="polite"></div>
         <div id="prompt-cat"></div>
+        <div id="prompt" aria-live="polite"></div>
       </div>
     </div>
     <p class="play-help">Tilt face-down: correct. Tilt face-up: pass. Buttons and arrow keys work too.</p>
@@ -849,7 +849,9 @@
 
     function buzz() {
       try {
-        if (typeof navigator.vibrate === "function") navigator.vibrate(80);
+        if (typeof navigator.vibrate !== "function") return;
+        if (navigator.userActivation && navigator.userActivation.isActive === false) return;
+        navigator.vibrate(80);
       } catch (err) {}
     }
 
