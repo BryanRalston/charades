@@ -1,20 +1,29 @@
 # Charades v1 QC
 
-Local static server only. No GitHub repo, push, or Pages site was created. Publishing is a later step.
+Live GitHub Pages site. The public repo is https://github.com/BryanRalston/charades. Pages is built from `main` at `/`.
 
-- Page: http://127.0.0.1:8765/
-- Server: `python -m http.server 8765 --bind 127.0.0.1` from `C:\Users\bryma\dev\charades`
+- Page: https://bryanralston.github.io/charades/
 - Browser: headless Chrome, driven by `qa/headless_qc.mjs` over the DevTools protocol
-- Result: 44 checks passed after the decks were expanded. Console events: none. No 402 or 429.
-- Shuffle check: `node qa/shuffle_check.mjs` passed 28 checks. A round's cards were unique and not in list order, the next round did not repeat them, and Reshuffle held back the most recent 24.
+- Command: `CHARADES_URL=https://bryanralston.github.io/charades/ node qa/headless_qc.mjs`
+- Result: 44 checks passed. Console events: none. No 402 or 429.
 
-`sw.js`, `manifest.webmanifest`, `icon-192.png`, and `icon-512.png` each returned HTTP 200.
+Prompt counts below were read from the live page source. Headings and category names were read from the rendered live page.
+
+These live responses were HTTP 200:
+
+| URL | Content type |
+| --- | --- |
+| https://bryanralston.github.io/charades/ | text/html |
+| https://bryanralston.github.io/charades/sw.js | application/javascript |
+| https://bryanralston.github.io/charades/manifest.webmanifest | application/manifest+json |
+| https://bryanralston.github.io/charades/icon-192.png | image/png |
+| https://bryanralston.github.io/charades/icon-512.png | image/png |
 
 ## Checklist
 
 | Check | Result |
 | --- | --- |
-| Local page loads | Pass |
+| Live page loads | Pass |
 | Headings and category names match the brief | Pass |
 | Each category has at least 40 prompts | Pass |
 | Face-down tilt scores Correct once | Pass |
@@ -30,9 +39,9 @@ Local static server only. No GitHub repo, push, or Pages site was created. Publi
 
 ## What the page shows
 
-Headings, in order: Christian, Classic, Mix.
+Headings, in order, as rendered: Christian, Classic, Mix.
 
-Category buttons under those headings, in order, with the prompt count in the page:
+Category buttons under those headings, in order, with the prompt count in the live page:
 
 | Heading | Category | Prompts |
 | --- | --- | --- |
@@ -60,7 +69,7 @@ Each new card is drawn at random from the prompts not yet guessed or passed. Whe
 
 ## Tilt run
 
-The test fixed `screen.orientation.angle` and dispatched `deviceorientation` events. Positive tilt means the screen has turned face-down from upright.
+The test fixed `screen.orientation.angle` and dispatched `deviceorientation` events on the live page. Positive tilt means the screen has turned face-down from upright.
 
 Landscape-left (angle 90), Actions, 30-second round:
 
@@ -74,15 +83,17 @@ Landscape-right (angle 270):
 
 - Face-down (beta 180 / gamma 50) scored one correct.
 
-Arrow down also scored one correct. The round then reached 0 by itself. The recap listed the guessed and passed prompts, showed Team 1 scored 3, total 3, and set the next turn to Team 2.
+Arrow down also scored one correct. The round then reached 0 by itself. The recap listed guessed prompts Patting Head, Brushing Teeth, and Hopping, and the passed prompt Blowing Kiss. It showed Team 1 scored 3, total 3, and set the next turn to Team 2.
 
 After reload, Team 1 was still on 3, the turn was still Team 2, the round length was still 30, and Actions was still selected.
 
-With every Actions prompt marked used, Tap to start showed "No prompts left in this category." Reshuffle dealt an Actions prompt again.
+With every Actions prompt marked used, Tap to start showed "No prompts left in this category." Reshuffle dealt an Actions prompt again (Reading Book).
 
 In a 420×800 portrait viewport the countdown showed the overlay text "Rotate your phone".
 
 ## Screenshots
+
+Taken from the live page during this run:
 
 - `qa/01-setup.png` — headings, categories, and Tap to start
 - `qa/02-play.png` — prompt and timer
@@ -95,4 +106,4 @@ In a 420×800 portrait viewport the countdown showed the overlay text "Rotate yo
 - `qa/09-empty.png` — category exhausted
 - `qa/10-reshuffle.png` — a prompt dealt again
 
-Raw check output is in `qa/results.json`. The run is `node qa/headless_qc.mjs` while the static server is up.
+Raw check output is in `qa/results.json`.

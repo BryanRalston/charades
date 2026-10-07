@@ -6,7 +6,7 @@ const ROOT = "C:\\Users\\bryma\\dev\\charades";
 const QA = ROOT + "\\qa";
 const CHROME = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
 const PORT = 9333;
-const BASE = "http://127.0.0.1:8765/";
+const BASE = process.env.CHARADES_URL || "http://127.0.0.1:8765/";
 const EXPECTED = [
   "Bible Characters",
   "Bible Stories",
