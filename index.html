@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ff6b4a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Charades">
+<title>Charades</title>
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+  :root {
+    --ink: #241c4f;
+    --cream: #fff6ea;
+    --coral: #ff6b4a;
+    --gold: #ffc857;
+    --teal: #128f8f;
+    --grape: #5b4bff;
+    --green: #14804a;
+    --orange: #ef8b12;
+    --play: #1b1148;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: "Segoe UI", system-ui, sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(circle at 8% 8%, #ffe08a 0 14%, transparent 15%),
+      radial-gradient(circle at 96% 0%, #ffb4a2 0 12%, transparent 13%),
+      var(--cream);
+    user-select: none;
+  }
+  button, input { font: inherit; }
+  button { cursor: pointer; }
+  button:focus-visible, input:focus-visible {
+    outline: 3px solid var(--ink);
+    outline-offset: 2px;
+  }
+  h1, h2, p { margin: 0; }
+  #setup {
+    display: none;
+    min-height: 100%;
+    grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
+    gap: 18px;
+    padding: 18px;
+  }
+  body[data-phase="setup"] #setup { display: grid; }
+  .panel {
+    background: #fff;
+    border: 3px solid var(--ink);
+    border-radius: 22px;
+    padding: 16px;
+    box-shadow: 6px 6px 0 var(--ink);
+  }
+  .setup-side { display: flex; flex-direction: column; gap: 12px; }
+  h1 { font-size: 2.4rem; line-height: 0.95; letter-spacing: -0.04em; }
+  .lede { font-size: 1.05rem; line-height: 1.35; }
+  .rotate-hint {
+    background: var(--gold);
+    border-radius: 14px;
+    padding: 10px 12px;
+    font-weight: 700;
+  }
+  fieldset {
+    border: 3px solid var(--ink);
+    border-radius: 16px;
+    margin: 0;
+    padding: 10px 12px 12px;
+  }
+  legend { font-weight: 800; padding: 0 6px; }
+  .times { display: flex; gap: 8px; }
+  .times label {
+    flex: 1;
+    text-align: center;
+    font-weight: 800;
+    border: 3px solid var(--ink);
+    border-radius: 12px;
+    padding: 8px 0;
+    background: #fff;
+  }
+  .times input { position: absolute; opacity: 0; pointer-events: none; }
+  .times label:has(input:checked) { background: var(--teal); color: #fff; }
+  #team-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  #team-list li {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 8px;
+    align-items: center;
+  }
+  #team-list li.turn input { background: #fff4cc; }
+  #team-list input {
+    min-width: 0;
+    border: 3px solid var(--ink);
+    border-radius: 12px;
+    padding: 8px 10px;
+    user-select: text;
+  }
+  .team-score {
+    min-width: 2.2rem;
+    text-align: center;
+    font-weight: 800;
+    font-size: 1.25rem;
+  }
+  .remove-team, #btn-add-team, #btn-new-game, #btn-next, #btn-reshuffle, #btn-end-round, #confirm-no, #confirm-yes {
+    border: 3px solid var(--ink);
+    border-radius: 12px;
+    background: #fff;
+    min-height: 44px;
+    padding: 8px 12px;
+    font-weight: 800;
+  }
+  .remove-team:disabled { opacity: 0.4; }
+  #btn-add-team { width: 100%; margin-top: 8px; background: var(--gold); }
+  #up-now { font-weight: 800; }
+  #btn-tap-start {
+    width: 100%;
+    min-height: 74px;
+    border: 3px solid var(--ink);
+    border-radius: 18px;
+    background: var(--coral);
+    color: #fff;
+    font-size: 1.6rem;
+    font-weight: 800;
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+  #btn-new-game { width: 100%; background: #fff; }
+  #hint { min-height: 1.3em; font-weight: 700; }
+  #category-picker { display: flex; flex-direction: column; gap: 8px; }
+  #category-picker h2 { font-size: 1.45rem; letter-spacing: -0.03em; }
+  .group-christian h2 { color: #9a6700; }
+  .group-classic h2 { color: var(--teal); }
+  .group-mix h2 { color: var(--grape); }
+  .cat-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .cat-btn {
+    border: 3px solid var(--ink);
+    border-radius: 999px;
+    background: #fff;
+    min-height: 48px;
+    padding: 8px 14px;
+    font-weight: 800;
+  }
+  .cat-btn.selected { background: var(--gold); }
+  #play, #recap { display: none; }
+  body[data-phase="countdown"] #play,
+  body[data-phase="play"] #play,
+  body[data-phase="empty"] #play {
+    display: flex;
+    position: fixed;
+    inset: 0;
+    flex-direction: column;
+    background: radial-gradient(circle at 50% 30%, #3a2b86 0%, var(--play) 68%);
+    color: #fff;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+  }
+  #play button:focus-visible { outline-color: #fff; }
+  .play-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  #play-team { font-size: clamp(1.1rem, 3vh, 1.8rem); font-weight: 800; }
+  #timer {
+    font-size: clamp(64px, 18vh, 132px);
+    font-weight: 800;
+    line-height: 0.85;
+    letter-spacing: -0.05em;
+  }
+  #timer.urgent { color: #ffd166; animation: pulse 0.6s ease-in-out infinite; }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.12); }
+  }
+  #stage { position: relative; flex: 1; min-height: 0; }
+  #prompt-box, #countdown {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 8px;
+  }
+  #countdown { display: none; font-size: clamp(96px, 28vh, 220px); font-weight: 800; }
+  body[data-phase="countdown"] #countdown { display: flex; }
+  body[data-phase="countdown"] #prompt-box,
+  body[data-phase="empty"] #prompt-box { visibility: hidden; }
+  #prompt {
+    max-width: 100%;
+    font-weight: 800;
+    line-height: 1.02;
+    letter-spacing: -0.04em;
+    overflow-wrap: break-word;
+  }
+  #prompt-cat { margin-top: 8px; font-size: 1rem; font-weight: 700; opacity: 0.85; }
+  .play-help { text-align: center; font-weight: 700; font-size: 0.95rem; margin: 4px 0; }
+  #actions { display: flex; gap: 12px; }
+  #btn-pass, #btn-correct {
+    flex: 1;
+    min-height: 72px;
+    border: 0;
+    border-radius: 18px;
+    font-size: 1.5rem;
+    font-weight: 800;
+  }
+  #btn-pass { background: var(--orange); color: #2a1600; }
+  #btn-correct { background: var(--green); color: #fff; }
+  #flash {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    z-index: 4;
+  }
+  #flash.show { opacity: 0.72; }
+  #flash.correct { background: #22c55e; }
+  #flash.pass { background: #ff9f1c; }
+  body[data-phase="recap"] #recap {
+    display: block;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 22px 16px 40px;
+  }
+  #recap h2 { font-size: 2.2rem; }
+  .recap-score { font-size: 1.35rem; font-weight: 800; margin: 8px 0; }
+  .lists { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
+  .lists section { background: #fff; border: 3px solid var(--ink); border-radius: 16px; padding: 12px; }
+  .lists h3 { margin: 0 0 8px; }
+  .lists ul { margin: 0; padding-left: 1.1rem; }
+  #btn-next { background: var(--coral); color: #fff; font-size: 1.2rem; min-height: 56px; }
+  #rotate-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    background: var(--cream);
+    color: var(--ink);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+    gap: 12px;
+  }
+  body.portrait.playing #rotate-overlay { display: flex; }
+  .phone-icon {
+    width: 86px;
+    height: 140px;
+    border: 6px solid var(--ink);
+    border-radius: 16px;
+    animation: turn 1.4s ease-in-out infinite;
+  }
+  @keyframes turn {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(-90deg); }
+  }
+  #rotate-overlay strong { font-size: 2rem; }
+  #deck-empty, #confirm-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background: rgba(36, 28, 79, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  #deck-empty[hidden], #confirm-modal[hidden] { display: none !important; }
+  .dialog {
+    background: #fff;
+    color: var(--ink);
+    border: 3px solid var(--ink);
+    border-radius: 18px;
+    padding: 18px;
+    max-width: 420px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 6px 6px 0 var(--ink);
+  }
+  .dialog p { font-size: 1.25rem; font-weight: 800; }
+  .dialog-actions { display: flex; gap: 8px; }
+  .dialog-actions button { flex: 1; }
+  #btn-reshuffle, #confirm-yes { background: var(--gold); }
+  @media (max-width: 800px) {
+    body[data-phase="setup"] #setup { grid-template-columns: 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #timer.urgent, .phone-icon { animation: none; }
+  }
+</style>
+</head>
+<body data-phase="setup">
+  <div id="rotate-overlay" aria-hidden="true">
+    <div class="phone-icon"></div>
+    <strong>Rotate your phone</strong>
+    <p>Landscape works best for heads-up play.</p>
+  </div>
+
+  <main id="setup">
+    <div class="setup-side">
+      <div class="panel">
+        <h1>Charades</h1>
+        <p class="lede">Hold the phone to your forehead. Friends call out the guess.</p>
+      </div>
+      <p class="rotate-hint">Rotate your phone sideways to play.</p>
+      <fieldset>
+        <legend>Round length</legend>
+        <div class="times">
+          <label><input type="radio" name="seconds" value="30">30</label>
+          <label><input type="radio" name="seconds" value="60" checked>60</label>
+          <label><input type="radio" name="seconds" value="90">90</label>
+        </div>
+      </fieldset>
+      <div class="panel">
+        <p id="up-now">Up now: Team 1</p>
+        <ul id="team-list"></ul>
+        <button type="button" id="btn-add-team">Add team</button>
+      </div>
+      <button type="button" id="btn-tap-start">Tap to start</button>
+      <button type="button" id="btn-new-game">New game</button>
+      <p id="hint" role="status"></p>
+    </div>
+    <div class="panel" id="category-picker"></div>
+  </main>
+
+  <section id="play" aria-label="Round">
+    <div class="play-top">
+      <div>
+        <div id="play-team">Team 1</div>
+        <div>Score <strong id="play-score">0</strong></div>
+      </div>
+      <div id="timer" aria-label="Seconds left">60</div>
+    </div>
+    <div id="stage">
+      <div id="countdown" aria-live="assertive"><span id="countdown-num">3</span></div>
+      <div id="prompt-box">
+        <div id="prompt" aria-live="polite"></div>
+        <div id="prompt-cat"></div>
+      </div>
+    </div>
+    <p class="play-help">Tilt face-down: correct. Tilt face-up: pass. Buttons and arrow keys work too.</p>
+    <div id="actions">
+      <button type="button" id="btn-pass">Pass</button>
+      <button type="button" id="btn-correct">Correct</button>
+    </div>
+    <div id="flash" class="" aria-hidden="true"></div>
+  </section>
+
+  <section id="recap" aria-label="Round recap">
+    <h2>Round over</h2>
+    <p class="recap-score" id="recap-line"></p>
+    <p id="recap-next"></p>
+    <div class="lists">
+      <section>
+        <h3>Guessed</h3>
+        <ul id="recap-guessed"></ul>
+      </section>
+      <section>
+        <h3>Passed</h3>
+        <ul id="recap-passed"></ul>
+      </section>
+    </div>
+    <button type="button" id="btn-next">Next round</button>
+  </section>
+
+  <div id="deck-empty" hidden>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="deck-empty-text">
+      <p id="deck-empty-text">No prompts left in this category.</p>
+      <div class="dialog-actions">
+        <button type="button" id="btn-reshuffle">Reshuffle</button>
+        <button type="button" id="btn-end-round">End round</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="confirm-modal" hidden>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-text">
+      <p id="confirm-text">Start a new game? This clears teams, scores, and used prompts.</p>
+      <div class="dialog-actions">
+        <button type="button" id="confirm-yes">Yes, clear it</button>
+        <button type="button" id="confirm-no">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <noscript><p>Charades needs JavaScript.</p></noscript>
+  <script>
+    const STORAGE_KEY = "charades.v1";
+    const NEUTRAL_DEG = 20;
+    const DEBOUNCE_MS = 600;
+    const GROUPS = [
+      ["Christian", ["Bible Characters", "Bible Stories", "Miracles & Parables", "Christmas & Easter", "Church Life", "Bible Animals", "Bible Places & Things"]],
+      ["Classic", ["Actions", "Jobs", "Sports", "Animals", "Chores", "Movies", "Everyday Objects", "Foods", "Outdoor Fun"]],
+      ["Mix", []]
+    ];
+    const CATEGORY_NAMES = GROUPS[0][1].concat(GROUPS[1][1]);
+    const PROMPTS = {
+      "Bible Characters": ["Noah","Moses","Abraham","Sarah","Isaac","Rebekah","Jacob","Rachel","Leah","Joseph","Benjamin","Miriam","Aaron","Joshua","Caleb","Rahab","Deborah","Gideon","Samson","Ruth","Naomi","Boaz","Samuel","Hannah","David","Goliath","Jonathan","Solomon","Elijah","Elisha","Esther","Mordecai","Daniel","Jonah","Mary","Peter","Andrew","James","John","Martha","Lazarus","Zacchaeus","Paul","Timothy","Lydia","Dorcas","Barnabas","Nicodemus","Bartimaeus","Stephen","Pharaoh","Gabriel"],
+      "Bible Stories": ["Noah's Ark","Baby Moses","Burning Bush","Red Sea","Coat of Colors","Lion's Den","Fiery Furnace","Walls of Jericho","Ten Commandments","Golden Calf","David's Harp","Sling and Stone","Queen Esther","Jacob's Ladder","Tower of Babel","Garden of Eden","Noah's Rainbow","Olive Branch","Balaam's Donkey","Elijah's Chariot","Widow's Oil","Boy's Lunch","Upper Room","Empty Tomb","Rolled Stone","Palm Parade","Bethlehem Star","Wise Men","Baby in Manger","Two by Two","Basket Boat","Moses' Staff","Water from Rock","Morning Manna","Cloud by Day","Fire by Night","Spies with Grapes","Trumpet Blast","Marching Around","Writing on Wall","Ship in Storm","Prison Song","Dove Returns","Ark Door","Shepherd Boy","Giant Soldier","Fish Swallow","Rainbow Promise"],
+      "Miracles & Parables": ["Walking on Water","Calming the Storm","Water to Wine","Loaves and Fish","Healing Blind Eyes","Man Through Roof","Raising Lazarus","Catch of Fish","Coin in Fish","Withered Hand","Ten Lepers","Centurion's Servant","Jairus Daughter","Woman Touches Hem","Mute Man Speaks","Deaf Ears Open","Lame Man Walks","Fig Tree","The Good Samaritan","The Prodigal Son","Lost Sheep","Lost Coin","Mustard Seed","The Sower","Priceless Pearl","House on Rock","House on Sand","Lamp on Stand","Hidden Treasure","The Talents","Wedding Feast","Wise Builder","Foolish Builder","Two Sons","Persistent Widow","Friend at Midnight","Rich Fool","Good Shepherd","Narrow Gate","Yeast in Dough","Sheep and Goats","Banquet Guests","New Wineskins","Old Wineskins","Vine and Branches","Ten Lamps","Vineyard Workers","Lost Son Home"],
+      "Christmas & Easter": ["Baby Jesus","Manger Bed","Bethlehem Star","Wise Men","Shepherds","Angel Choir","Christmas Tree","Candy Cane","Stocking","Wrapped Gift","Sleigh Bells","Snowman","Nativity Scene","Gold Gift","Frankincense","Myrrh","Drummer Boy","Christmas Cookie","Holly Wreath","Advent Candle","Jingle Bells","Gingerbread House","Christmas Carol","Ornament","Wreath","Reindeer","North Star","Swaddling Cloth","Palm Branch","Easter Egg","Empty Tomb","Rolled Away Stone","Easter Lily","Easter Basket","Jelly Beans","Sunrise Service","Hosanna","Donkey Ride","Last Supper","Foot Washing","Garden Prayer","Rooster Crows","Linen Cloth","Angel at Tomb","He Is Risen","Bread and Cup","Hot Cross Bun","Easter Sunrise"],
+      "Church Life": ["Singing Hymns","Passing Offering","Prayer Hands","Communion Cup","Baptism","Church Pew","Choir Robe","Organ Music","Handbells","Sunday School","Memory Verse","Handshake Peace","Church Potluck","Casserole","Greeter Smile","Church Bulletin","Pew Bible","Cross Necklace","Stained Glass","Steeple","Church Bell","Pastor Preaching","Usher Seating","Bible Craft","Gold Star","Flannel Board","Youth Group","Church Camp","Campfire Song","Saying Grace","Amen","Hallelujah","Raising Hands","Clapping Praise","Kneeling Prayer","Lighting Candle","Flower Duty","Nursery Rocking","Fellowship Hall","Coffee Hour","Name Tag","Welcome Table","Food Pantry","Choir Practice","Scripture Reading","Offering Plate","Hymnal","Sunday Best","Church Van","Potluck Dessert"],
+      "Bible Animals": ["Dove","Lamb","Lion","Donkey","Whale","Fish","Raven","Sheep","Goat","Camel","Horse","Colt","Ox","Sparrow","Eagle","Rooster","Hen","Locust","Frog","Quail","Deer","Wolf","Bear","Fox","Pig","Dog","Ant","Calf","Ram","Pigeon","Mule","Turtledove","Fatted Calf","Talking Donkey","Big Fish","Lost Lamb","Noah's Dove","Jonah's Fish","Balaam's Donkey","Shepherd Dog","Pair of Doves","Work Horse","Young Colt","Mother Hen","Baby Chick","Little Lamb","Wild Goat"],
+      "Bible Places & Things": ["Manger","Stable","Temple","Tabernacle","Stone Altar","Ark of Covenant","Stone Tablets","Wooden Staff","Sling","Harp","Crown","Throne","Water Well","Desert Tent","Holy Mountain","Jordan River","Red Sea","Garden Tomb","Wooden Cup","Unleavened Bread","Scroll","Oil Lamp","Clay Jar","Reed Basket","Fig Tree","Grapevine","Olive Branch","Rainbow","Pillar of Fire","Pillar of Cloud","Trumpet","Shofar","Menorah","Temple Veil","Fishing Boat","Fishing Net","Sycamore Tree","Upper Room","Empty Jar","Mustard Plant","City Gate","City Wall","Shepherd Staff","Prayer Shawl","Sandal","Water Jar","Alabaster Jar","Sheepfold"],
+      "Actions": ["Running","Jumping","Swimming","Dancing","Sleeping","Sneezing","Laughing","Crying","Eating","Drinking","Climbing","Crawling","Hopping","Skipping","Waving","Clapping","Marching","Tiptoeing","Spinning","Stretching","Yawning","Brushing Teeth","Combing Hair","Tying Shoes","Blowing Bubbles","Flying Kite","Riding Bike","Rowing Boat","Pitching Tent","Reading Book","Writing Letter","Taking Photo","Opening Gift","Wrapping Present","Baking Cookies","Flipping Pancakes","Walking Dog","Washing Hands","Blowing Nose","Hiccuping","Balancing","Juggling","Bowling","Ice Skating","Pushing Swing","Catching Ball","Throwing Ball","Blowing Candles","Peeling Banana","Zipping Jacket","High Five","Making Faces"],
+      "Jobs": ["Firefighter","Teacher","Doctor","Nurse","Chef","Farmer","Pilot","Astronaut","Police Officer","Mail Carrier","Dentist","Veterinarian","Librarian","Baker","Painter","Musician","Singer","Builder","Carpenter","Plumber","Electrician","Mechanic","Bus Driver","Sailor","Fisher","Judge","Scientist","Photographer","Reporter","Cashier","Server","Lifeguard","Coach","Zookeeper","Florist","Barber","Janitor","Principal","Pastor","Crossing Guard","Flight Attendant","Park Ranger","Miner","Blacksmith","Tailor","Potter","Shepherd","Beekeeper","Gardener","Conductor"],
+      "Sports": ["Soccer","Basketball","Baseball","Tennis","Golf","Swim Race","Bowling","Volleyball","Hockey","Softball","Kickball","Dodgeball","Frisbee","Relay Race","Hurdles","Long Jump","High Jump","Shot Put","Archery","Cartwheel","Balance Beam","Cheerleading","Ice Skating","Skiing","Sledding","Surfing","Canoeing","Rowing","Horseback Riding","Ping Pong","Badminton","Croquet","Mini Golf","Tee Ball","Free Throw","Slam Dunk","Home Run","Touchdown","Goalie","Penalty Kick","Batting","Pitching","Gymnastics","Martial Arts","Skateboarding","Jump Rope","Tug of War","Sack Race","Egg and Spoon"],
+      "Animals": ["Dog","Cat","Puppy","Kitten","Horse","Pony","Cow","Pig","Chicken","Duck","Goose","Turkey","Rabbit","Mouse","Hamster","Frog","Turtle","Goldfish","Dolphin","Shark","Octopus","Crab","Butterfly","Bumblebee","Ladybug","Parrot","Penguin","Flamingo","Elephant","Giraffe","Tiger","Monkey","Gorilla","Zebra","Kangaroo","Koala","Panda","Hippo","Rhino","Crocodile","Squirrel","Raccoon","Owl","Seal","Walrus","Otter","Peacock","Swan","Hedgehog","Llama"],
+      "Chores": ["Washing Dishes","Drying Dishes","Sweeping Floor","Mopping Floor","Vacuuming","Dusting Shelves","Taking Out Trash","Sorting Recycling","Making the Bed","Folding Laundry","Ironing Shirt","Washing Clothes","Hanging Laundry","Matching Socks","Setting the Table","Clearing Table","Washing Windows","Cleaning Mirror","Scrubbing Tub","Feeding Pet","Walking Dog","Watering Plants","Mowing Lawn","Raking Leaves","Shoveling Snow","Weeding Garden","Loading Dishwasher","Unloading Dishwasher","Wiping Counters","Cleaning Fridge","Sorting Mail","Packing Lunch","Unpacking Groceries","Washing Car","Drying Car","Sweeping Porch","Shaking Rug","Fluffing Pillows","Organizing Books","Cleaning Shoes","Emptying Trash","Picking Up Toys","Changing Sheets","Watering Flowers","Wiping Table","Putting Toys Away","Feeding Fish","Making Sandwich"],
+      "Movies": ["Frozen","Moana","Cars","Up","Coco","Brave","Tangled","Encanto","Luca","Soul","Onward","Hercules","Mulan","Aladdin","Bambi","Dumbo","Pinocchio","Cinderella","Peter Pan","Mary Poppins","The Lion King","Finding Nemo","Toy Story","Ratatouille","WALL-E","Inside Out","Monsters Inc","The Incredibles","Shrek","Madagascar","Kung Fu Panda","Minions","Sing","Trolls","Paddington","Matilda","Home Alone","The Sandlot","Space Jam","Jumanji","Hook","Babe","Beethoven","Lassie","Happy Feet","Zootopia","Sleeping Beauty","Snow White","The Lorax","Elf","Ice Age","The Croods","Boss Baby","Despicable Me","Big Hero 6","Wreck-It Ralph","Charlotte's Web","Stuart Little","The Polar Express","Arthur Christmas"],
+      "Everyday Objects": ["Spoon","Fork","Plate","Bowl","Chair","Table","Lamp","Clock","Phone","House Key","Book","Pencil","Shoe","Hat","Glasses","Umbrella","Pillow","Blanket","Toothbrush","Comb","Mirror","Towel","Bar of Soap","Ball","Teddy Bear","Scissors","Glue Stick","Crayon","Notebook","Lunchbox","Water Bottle","Backpack","Door","Window","TV Remote","Television","Couch","Rug","Broom","Bucket","Sponge","Hammer","Flashlight","Candle","Picture Frame","Flower Pot","Calendar","Wristwatch","Bicycle","Stroller","Coffee Mug","Toothpaste","Hairbrush","Pencil Case","Rubber Duck","Doorknob","Light Switch","Tissue Box","Alarm Clock","Piggy Bank"],
+      "Foods": ["Pizza","Taco","Burger","Hot Dog","Sandwich","Tomato Soup","Garden Salad","Spaghetti","Mac and Cheese","Pancakes","Waffles","French Toast","Scrambled Eggs","Bacon","Cereal","Oatmeal","Toast","Bagel","Donut","Muffin","Cookie","Birthday Cake","Apple Pie","Ice Cream","Popsicle","Apple","Banana","Grapes","Orange","Strawberry","Watermelon","Carrot","Broccoli","Corn Cob","Baked Potato","French Fries","Popcorn","Pretzel","Nachos","Cheese","Yogurt","Milk","Apple Juice","Lemonade","Hot Chocolate","Marshmallow","Peanut Butter","Grape Jelly","Chicken Nuggets","Grilled Cheese","Fruit Salad","Bread Roll","Mashed Potatoes","Green Beans"],
+      "Outdoor Fun": ["Camping","Hiking","Fishing","Picnic","Kite Flying","Bike Ride","Scooter Ride","Skateboard","Jump Rope","Hopscotch","Playing Tag","Hide and Seek","Simon Says","Red Rover","Capture the Flag","Nature Walk","Bird Watching","Star Gazing","Roasting Marshmallows","Campfire","Canoe Ride","Paddle Boat","Sandcastle","Beach Ball","Finding Shells","Sunscreen","Sunglasses","Tossing Frisbee","Playground Slide","Swing Set","Seesaw","Monkey Bars","Climbing Tree","Leaf Pile","Building Snowman","Sledding Hill","Roller Skating","Planting Seeds","Watering Can","Butterfly Net","Bug Hunt","Skipping Stones","Treasure Hunt","Flashlight Walk","Blowing Bubbles","Picnic Blanket","Trail Walk","Tent Camping","Sleeping Bag","Collecting Leaves","Puddle Jump","Rain Boots"]
+    };
+
+    let state = loadState();
+    let queue = [];
+    let currentCard = null;
+    let roundGuessed = [];
+    let roundPassed = [];
+    let roundPoints = 0;
+    let endAt = 0;
+    let timerHandle = 0;
+    let countdownHandle = 0;
+    let flashHandle = 0;
+    let startLock = false;
+    let audioCtx = null;
+    let tiltGate = { neutral: true, last: 0 };
+    let lastSummary = null;
+
+    function defaultState() {
+      return {
+        teams: [
+          { id: uid(), name: "Team 1", score: 0 },
+          { id: uid(), name: "Team 2", score: 0 }
+        ],
+        turnIndex: 0,
+        used: [],
+        settings: { seconds: 60, category: "" }
+      };
+    }
+
+    function uid() {
+      return Math.random().toString(36).slice(2, 10);
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return defaultState();
+        const data = JSON.parse(raw);
+        if (!data || !Array.isArray(data.teams) || data.teams.length < 1) return defaultState();
+        const teams = data.teams.slice(0, 8).map((team, index) => ({
+          id: typeof team.id === "string" && team.id ? team.id : uid(),
+          name: typeof team.name === "string" ? team.name.slice(0, 24) : "Team " + (index + 1),
+          score: Number.isFinite(team.score) ? team.score : 0
+        }));
+        const seconds = data.settings && [30, 60, 90].indexOf(data.settings.seconds) !== -1 ? data.settings.seconds : 60;
+        let category = data.settings && typeof data.settings.category === "string" ? data.settings.category : "";
+        if (category !== "Mix" && CATEGORY_NAMES.indexOf(category) === -1) category = "";
+        let turnIndex = Number.isInteger(data.turnIndex) ? data.turnIndex : 0;
+        if (turnIndex < 0 || turnIndex >= teams.length) turnIndex = 0;
+        const used = Array.isArray(data.used) ? data.used.filter((item) => typeof item === "string") : [];
+        return { teams, turnIndex, used, settings: { seconds, category } };
+      } catch (err) {
+        return defaultState();
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (err) {}
+    }
+
+    function teamLabel(team, index) {
+      const name = team && typeof team.name === "string" ? team.name.trim() : "";
+      return name || "Team " + (index + 1);
+    }
+
+    function currentTeam() {
+      return state.teams[state.turnIndex] || state.teams[0];
+    }
+
+    function normAngle(angle) {
+      const n = ((Math.round(angle) % 360) + 360) % 360;
+      if (n === 90 || n === 180 || n === 270) return n;
+      return 0;
+    }
+
+    function screenAngle() {
+      try {
+        if (screen.orientation && typeof screen.orientation.angle === "number") {
+          return normAngle(screen.orientation.angle);
+        }
+      } catch (err) {}
+      if (typeof window.orientation === "number") return normAngle(window.orientation);
+      return window.innerWidth >= window.innerHeight ? 90 : 0;
+    }
+
+    // W3C deviceorientation: beta/gamma describe the portrait device frame.
+    // Earth-up is rotated into the current screen orientation so landscape-left
+    // (90) and landscape-right (270) share one sign. Positive means the screen
+    // has turned face-down from upright. Negative means face-up.
+    function tiltDegrees(betaDeg, gammaDeg) {
+      if (!Number.isFinite(betaDeg) || !Number.isFinite(gammaDeg)) return null;
+      const beta = (betaDeg * Math.PI) / 180;
+      const gamma = (gammaDeg * Math.PI) / 180;
+      const upX = -Math.cos(beta) * Math.sin(gamma);
+      const upY = Math.sin(beta);
+      const upZ = Math.cos(beta) * Math.cos(gamma);
+      const angle = screenAngle();
+      let sy;
+      const sz = upZ;
+      if (angle === 90) sy = -upX;
+      else if (angle === 270) sy = upX;
+      else if (angle === 180) sy = -upY;
+      else sy = upY;
+      return (Math.atan2(-sz, sy) * 180) / Math.PI;
+    }
+
+    function resetTiltGate() {
+      tiltGate = { neutral: true, last: 0 };
+    }
+
+    function onOrientation(event) {
+      if (document.body.dataset.phase !== "play") return;
+      const tilt = tiltDegrees(event.beta, event.gamma);
+      if (tilt === null) return;
+      document.documentElement.dataset.tilt = String(Math.round(tilt));
+      if (Math.abs(tilt) <= NEUTRAL_DEG) {
+        tiltGate.neutral = true;
+        return;
+      }
+      if (!tiltGate.neutral) return;
+      const now = Date.now();
+      if (now - tiltGate.last < DEBOUNCE_MS) return;
+      tiltGate.neutral = false;
+      tiltGate.last = now;
+      resolveRound(tilt > NEUTRAL_DEG ? "correct" : "pass");
+    }
+
+    function listenTilt() {
+      window.removeEventListener("deviceorientation", onOrientation);
+      window.addEventListener("deviceorientation", onOrientation);
+    }
+
+    function setHint(text) {
+      document.getElementById("hint").textContent = text;
+    }
+
+    function renderPicker() {
+      const root = document.getElementById("category-picker");
+      root.replaceChildren();
+      GROUPS.forEach((group) => {
+        const heading = group[0];
+        const names = group[1];
+        const section = document.createElement("section");
+        section.className = "group-" + heading.toLowerCase();
+        const title = document.createElement("h2");
+        title.textContent = heading;
+        section.appendChild(title);
+        const grid = document.createElement("div");
+        grid.className = "cat-grid";
+        const buttons = names.length ? names : ["Mix"];
+        buttons.forEach((name) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "cat-btn";
+          button.dataset.category = name;
+          button.textContent = name;
+          button.addEventListener("click", () => selectCategory(name));
+          grid.appendChild(button);
+        });
+        section.appendChild(grid);
+        root.appendChild(section);
+      });
+    }
+
+    function selectCategory(name) {
+      state.settings.category = name;
+      saveState();
+      applySelection();
+    }
+
+    function applySelection() {
+      document.querySelectorAll(".cat-btn").forEach((button) => {
+        const on = button.dataset.category === state.settings.category;
+        button.classList.toggle("selected", on);
+        button.setAttribute("aria-pressed", on ? "true" : "false");
+      });
+    }
+
+    function renderTeams() {
+      const list = document.getElementById("team-list");
+      list.replaceChildren();
+      state.teams.forEach((team, index) => {
+        const item = document.createElement("li");
+        if (index === state.turnIndex) item.classList.add("turn");
+        const input = document.createElement("input");
+        input.value = team.name;
+        input.maxLength = 24;
+        input.spellcheck = false;
+        input.setAttribute("aria-label", "Team name");
+        input.addEventListener("input", () => {
+          team.name = input.value;
+          saveState();
+          updateUpNow();
+        });
+        const score = document.createElement("span");
+        score.className = "team-score";
+        score.dataset.teamIndex = String(index);
+        score.textContent = String(team.score);
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "remove-team";
+        remove.textContent = "Remove";
+        remove.disabled = state.teams.length <= 1;
+        remove.addEventListener("click", () => removeTeam(team.id));
+        item.append(input, score, remove);
+        list.appendChild(item);
+      });
+      document.getElementById("btn-add-team").disabled = state.teams.length >= 8;
+      updateUpNow();
+    }
+
+    function updateUpNow() {
+      const team = currentTeam();
+      const index = state.teams.indexOf(team);
+      document.getElementById("up-now").textContent = "Up now: " + teamLabel(team, index);
+    }
+
+    function addTeam() {
+      if (state.teams.length >= 8) return;
+      state.teams.push({ id: uid(), name: "Team " + (state.teams.length + 1), score: 0 });
+      saveState();
+      renderTeams();
+    }
+
+    function removeTeam(id) {
+      if (state.teams.length <= 1) return;
+      const index = state.teams.findIndex((team) => team.id === id);
+      if (index < 0) return;
+      state.teams.splice(index, 1);
+      if (state.turnIndex >= state.teams.length) state.turnIndex = 0;
+      else if (index < state.turnIndex) state.turnIndex -= 1;
+      saveState();
+      renderTeams();
+    }
+
+    function applySettings() {
+      document.querySelectorAll('input[name="seconds"]').forEach((input) => {
+        input.checked = Number(input.value) === state.settings.seconds;
+      });
+    }
+
+    function buildDeck() {
+      const chosen = state.settings.category;
+      const names = chosen === "Mix" ? CATEGORY_NAMES : [chosen];
+      const used = new Set(state.used);
+      const cards = [];
+      names.forEach((name) => {
+        (PROMPTS[name] || []).forEach((prompt) => {
+          const key = name + "\n" + prompt;
+          if (!used.has(key)) cards.push({ category: name, prompt: prompt, key: key });
+        });
+      });
+      for (let i = cards.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const swap = cards[i];
+        cards[i] = cards[j];
+        cards[j] = swap;
+      }
+      return cards;
+    }
+
+    function showOutOfPrompts() {
+      const mix = state.settings.category === "Mix";
+      document.getElementById("deck-empty-text").textContent = mix
+        ? "No prompts left in the mix."
+        : "No prompts left in this category.";
+      document.getElementById("btn-end-round").hidden = document.body.dataset.phase !== "empty";
+      document.getElementById("deck-empty").hidden = false;
+    }
+
+    function reshuffle() {
+      const cat = state.settings.category;
+      if (cat === "Mix") state.used = [];
+      else state.used = state.used.filter((key) => key.slice(0, key.indexOf("\n")) !== cat);
+      saveState();
+      document.getElementById("deck-empty").hidden = true;
+      if (document.body.dataset.phase === "empty") {
+        queue = buildDeck();
+        document.body.dataset.phase = "play";
+        deal();
+        return;
+      }
+      startCountdown();
+    }
+
+    function startCountdown() {
+      queue = buildDeck();
+      if (!queue.length) {
+        showOutOfPrompts();
+        return;
+      }
+      roundGuessed = [];
+      roundPassed = [];
+      roundPoints = 0;
+      currentCard = null;
+      resetTiltGate();
+      document.documentElement.dataset.lastResult = "";
+      const countdownTimer = document.getElementById("timer");
+      countdownTimer.textContent = String(state.settings.seconds);
+      countdownTimer.classList.remove("urgent");
+      document.body.dataset.phase = "countdown";
+      document.body.classList.add("playing");
+      updatePortrait();
+      let n = 3;
+      const step = () => {
+        if (document.body.dataset.phase !== "countdown") return;
+        if (n <= 0) {
+          beginPlay();
+          return;
+        }
+        document.getElementById("countdown-num").textContent = String(n);
+        n -= 1;
+        countdownHandle = window.setTimeout(step, 1000);
+      };
+      step();
+    }
+
+    function beginPlay() {
+      document.body.dataset.phase = "play";
+      document.body.classList.add("playing");
+      endAt = Date.now() + state.settings.seconds * 1000;
+      stopTimer();
+      timerHandle = window.setInterval(onTimer, 100);
+      onTimer();
+      updatePlayHud();
+      deal();
+      fitSoon();
+    }
+
+    function onTimer() {
+      const phase = document.body.dataset.phase;
+      if (phase !== "play" && phase !== "empty") return;
+      const leftMs = endAt - Date.now();
+      const left = Math.max(0, Math.ceil(leftMs / 1000));
+      const timer = document.getElementById("timer");
+      timer.textContent = String(left);
+      timer.classList.toggle("urgent", left <= 10 && left > 0);
+      if (leftMs <= 0) endRound();
+    }
+
+    function stopTimer() {
+      if (timerHandle) window.clearInterval(timerHandle);
+      timerHandle = 0;
+    }
+
+    function updatePlayHud() {
+      const team = currentTeam();
+      const index = state.teams.indexOf(team);
+      document.getElementById("play-team").textContent = teamLabel(team, index);
+      document.getElementById("play-score").textContent = String(team ? team.score : 0);
+    }
+
+    function deal() {
+      if (!queue.length) {
+        currentCard = null;
+        document.body.dataset.phase = "empty";
+        document.getElementById("prompt").textContent = "";
+        document.getElementById("prompt-cat").textContent = "";
+        showOutOfPrompts();
+        return;
+      }
+      document.getElementById("deck-empty").hidden = true;
+      document.body.dataset.phase = "play";
+      currentCard = queue.shift();
+      document.getElementById("prompt").textContent = currentCard.prompt;
+      document.getElementById("prompt-cat").textContent = currentCard.category;
+      fitSoon();
+    }
+
+    function resolveRound(kind) {
+      if (document.body.dataset.phase !== "play" || !currentCard) return;
+      if (endAt && Date.now() >= endAt) {
+        endRound();
+        return;
+      }
+      const card = currentCard;
+      currentCard = null;
+      state.used.push(card.key);
+      if (kind === "correct") {
+        const team = currentTeam();
+        if (team) team.score += 1;
+        roundPoints += 1;
+        roundGuessed.push(card.prompt);
+        flash("correct");
+        beep();
+        buzz();
+      } else {
+        roundPassed.push(card.prompt);
+        flash("pass");
+      }
+      document.documentElement.dataset.lastResult = kind;
+      saveState();
+      updatePlayHud();
+      renderTeams();
+      deal();
+    }
+
+    function flash(kind) {
+      const el = document.getElementById("flash");
+      el.className = "show " + kind;
+      window.clearTimeout(flashHandle);
+      flashHandle = window.setTimeout(() => {
+        el.className = "";
+      }, 700);
+    }
+
+    function beep() {
+      try {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        if (!audioCtx) audioCtx = new Ctx();
+        if (audioCtx.state === "suspended") audioCtx.resume();
+        const t = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(880, t);
+        gain.gain.setValueAtTime(0.0001, t);
+        gain.gain.exponentialRampToValueAtTime(0.08, t + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(t);
+        osc.stop(t + 0.15);
+      } catch (err) {}
+    }
+
+    function buzz() {
+      try {
+        if (typeof navigator.vibrate === "function") navigator.vibrate(80);
+      } catch (err) {}
+    }
+
+    function primeAudio() {
+      try {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        if (!audioCtx) audioCtx = new Ctx();
+        if (audioCtx.state === "suspended") audioCtx.resume();
+      } catch (err) {}
+    }
+
+    function endRound() {
+      const phase = document.body.dataset.phase;
+      if (phase !== "play" && phase !== "empty") return;
+      document.body.dataset.phase = "recap";
+      document.body.classList.remove("playing");
+      stopTimer();
+      window.clearTimeout(countdownHandle);
+      document.getElementById("deck-empty").hidden = true;
+      const team = currentTeam();
+      const index = Math.max(0, state.teams.indexOf(team));
+      const summary = {
+        name: teamLabel(team, index),
+        roundPoints: roundPoints,
+        total: team ? team.score : 0,
+        guessed: roundGuessed.slice(),
+        passed: roundPassed.slice()
+      };
+      if (state.teams.length) state.turnIndex = (state.turnIndex + 1) % state.teams.length;
+      summary.nextName = teamLabel(currentTeam(), state.turnIndex);
+      lastSummary = summary;
+      saveState();
+      renderRecap(summary);
+      updatePortrait();
+    }
+
+    function renderRecap(summary) {
+      document.getElementById("recap-line").textContent =
+        summary.name + " scored " + summary.roundPoints + ". Total: " + summary.total + ".";
+      document.getElementById("recap-next").textContent = "Next up: " + summary.nextName;
+      fillList(document.getElementById("recap-guessed"), summary.guessed);
+      fillList(document.getElementById("recap-passed"), summary.passed);
+      renderTeams();
+    }
+
+    function fillList(list, items) {
+      list.replaceChildren();
+      const rows = items.length ? items : ["None"];
+      rows.forEach((text) => {
+        const item = document.createElement("li");
+        item.textContent = text;
+        list.appendChild(item);
+      });
+    }
+
+    function fitPrompt() {
+      const el = document.getElementById("prompt");
+      const box = document.getElementById("prompt-box");
+      if (!el || !box || document.body.dataset.phase !== "play") return;
+      const maxW = box.clientWidth * 0.96;
+      const maxH = box.clientHeight * 0.78;
+      if (maxW < 20 || maxH < 20) return;
+      let size = Math.floor(Math.min(box.clientWidth * 0.2, box.clientHeight * 0.45));
+      if (size > 160) size = 160;
+      if (size < 32) size = 32;
+      el.style.fontSize = size + "px";
+      let guard = 0;
+      while (guard < 24 && size > 28 && (el.scrollWidth > maxW || el.scrollHeight > maxH)) {
+        size = Math.floor(size * 0.9);
+        el.style.fontSize = size + "px";
+        guard += 1;
+      }
+    }
+
+    function fitSoon() {
+      window.requestAnimationFrame(() => {
+        fitPrompt();
+        window.requestAnimationFrame(fitPrompt);
+      });
+    }
+
+    function updatePortrait() {
+      document.body.classList.toggle("portrait", window.innerHeight > window.innerWidth);
+    }
+
+    function clearGame() {
+      state = defaultState();
+      saveState();
+      roundGuessed = [];
+      roundPassed = [];
+      roundPoints = 0;
+      currentCard = null;
+      queue = [];
+      stopTimer();
+      window.clearTimeout(countdownHandle);
+      document.getElementById("deck-empty").hidden = true;
+      document.getElementById("confirm-modal").hidden = true;
+      document.getElementById("flash").className = "";
+      document.documentElement.dataset.lastResult = "";
+      setHint("");
+      document.body.dataset.phase = "setup";
+      document.body.classList.remove("playing");
+      applySettings();
+      applySelection();
+      renderTeams();
+      updatePortrait();
+    }
+
+    function onTapStart() {
+      if (document.body.dataset.phase !== "setup" || startLock) return;
+      startLock = true;
+      let permPromise;
+      try {
+        const DOE = window.DeviceOrientationEvent;
+        if (DOE && typeof DOE.requestPermission === "function") permPromise = DOE.requestPermission();
+        else permPromise = Promise.resolve("granted");
+      } catch (err) {
+        permPromise = Promise.resolve("denied");
+      }
+      primeAudio();
+      Promise.resolve(permPromise).then((result) => {
+        startLock = false;
+        if (document.body.dataset.phase !== "setup") return;
+        if (!state.settings.category) {
+          setHint("Pick a category first.");
+          return;
+        }
+        if (!state.teams.length) {
+          setHint("Add a team first.");
+          return;
+        }
+        if (result === "denied") setHint("Motion controls are off. Use Correct and Pass.");
+        else setHint("");
+        listenTilt();
+        startCountdown();
+      }).catch(() => {
+        startLock = false;
+        if (document.body.dataset.phase !== "setup") return;
+        if (!state.settings.category) {
+          setHint("Pick a category first.");
+          return;
+        }
+        setHint("Motion controls are off. Use Correct and Pass.");
+        listenTilt();
+        startCountdown();
+      });
+    }
+
+    function onKey(event) {
+      if (event.repeat) return;
+      const tag = event.target && event.target.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      if (document.body.dataset.phase !== "play") return;
+      if (event.key === "ArrowDown" || event.key === "ArrowRight") {
+        event.preventDefault();
+        resolveRound("correct");
+      } else if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
+        event.preventDefault();
+        resolveRound("pass");
+      }
+    }
+
+    function registerSW() {
+      if (!("serviceWorker" in navigator)) return;
+      navigator.serviceWorker.register("./sw.js").catch(() => {});
+    }
+
+    document.getElementById("btn-tap-start").addEventListener("click", onTapStart);
+    document.getElementById("btn-correct").addEventListener("click", () => resolveRound("correct"));
+    document.getElementById("btn-pass").addEventListener("click", () => resolveRound("pass"));
+    document.getElementById("btn-new-game").addEventListener("click", () => {
+      document.getElementById("confirm-modal").hidden = false;
+    });
+    document.getElementById("confirm-yes").addEventListener("click", clearGame);
+    document.getElementById("confirm-no").addEventListener("click", () => {
+      document.getElementById("confirm-modal").hidden = true;
+    });
+    document.getElementById("btn-reshuffle").addEventListener("click", reshuffle);
+    document.getElementById("btn-end-round").addEventListener("click", () => {
+      document.getElementById("deck-empty").hidden = true;
+      endRound();
+    });
+    document.getElementById("btn-next").addEventListener("click", () => {
+      document.body.dataset.phase = "setup";
+      document.body.classList.remove("playing");
+      document.getElementById("deck-empty").hidden = true;
+      applySelection();
+      renderTeams();
+      updatePortrait();
+    });
+    document.getElementById("btn-add-team").addEventListener("click", addTeam);
+    document.querySelectorAll('input[name="seconds"]').forEach((input) => {
+      input.addEventListener("change", () => {
+        if (!input.checked) return;
+        state.settings.seconds = Number(input.value);
+        saveState();
+      });
+    });
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("resize", () => {
+      updatePortrait();
+      fitPrompt();
+    });
+    window.addEventListener("orientationchange", updatePortrait);
+    renderPicker();
+    applySettings();
+    applySelection();
+    renderTeams();
+    listenTilt();
+    registerSW();
+    updatePortrait();
+  </script>
+</body>
+</html>
