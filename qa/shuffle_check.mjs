@@ -14,10 +14,10 @@ function check(name, ok, detail) {
 }
 
 function promptsFromHtml() {
-  const html = readFileSync(ROOT + "\\index.html", "utf8");
-  const start = html.indexOf("const PROMPTS = ");
-  const end = html.indexOf("let state = loadState()");
-  const block = html.slice(start + "const PROMPTS = ".length, end).trim().replace(/;$/, "");
+  const js = readFileSync(ROOT + "\\prompts.js", "utf8");
+  const marker = "window.CHARADES_PROMPTS = ";
+  const start = js.indexOf(marker);
+  const block = js.slice(start + marker.length).trim().replace(/;$/, "");
   return Function("return " + block)();
 }
 

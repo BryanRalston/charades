@@ -11,6 +11,7 @@ const V5 = QA + "\\v5";
 const V6 = QA + "\\v6";
 const V7 = QA + "\\v7";
 const V8 = QA + "\\v8";
+const V81 = QA + "\\v8_1";
 const V6_LOCK = {
   math: ["015ff8a014515ed3d7d9ea3c858999989a101864c13b7335a754bdb687aab4b6", 2627],
   noteReading: ["a1a7a1edf2849608a145e6a1faffe8c27be619a80ae52cacefaa34e2f4850b1b", 612],
@@ -52,6 +53,7 @@ mkdirSync(V5, { recursive: true });
 mkdirSync(V6, { recursive: true });
 mkdirSync(V7, { recursive: true });
 mkdirSync(V8, { recursive: true });
+mkdirSync(V81, { recursive: true });
 
 function protectedSlices(html) {
   const mathStart = html.indexOf("/* tilt-math-start */");
@@ -87,10 +89,10 @@ function check(name, ok, detail) {
 }
 
 function promptsFromHtml() {
-  const html = readFileSync(ROOT + "\\index.html", "utf8");
-  const start = html.indexOf("const PROMPTS = ");
-  const end = html.indexOf("let state = loadState()");
-  const block = html.slice(start + "const PROMPTS = ".length, end).trim().replace(/;$/, "");
+  const js = readFileSync(ROOT + "\\prompts.js", "utf8");
+  const marker = "window.CHARADES_PROMPTS = ";
+  const start = js.indexOf(marker);
+  const block = js.slice(start + marker.length).trim().replace(/;$/, "");
   return Function("return " + block)();
 }
 
@@ -299,6 +301,21 @@ try {
     shots.push("v8/" + name);
   }
 
+  async function v81Shot(name) {
+    const png = await cdp.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
+    writeFileSync(V81 + "\\" + name, Buffer.from(png.data, "base64"));
+    shots.push("v8_1/" + name);
+  }
+
+  const DIALOG_IDS = ["share-modal", "deck-offer", "pause-modal", "confirm-modal", "deck-empty"];
+  async function assertDialogsClosed(where) {
+    const open = await ev(`(${JSON.stringify(DIALOG_IDS)}).filter((id) => { const el = document.getElementById(id); return el && el.hidden === false; })`);
+    check("no dialog is open before " + where, Array.isArray(open) && open.length === 0, (open || []).join(","));
+  }
+  async function closeShotDialogs() {
+    await ev(`["share-modal","deck-offer","deck-editor","pause-modal","confirm-modal","deck-empty"].forEach((id) => { const el = document.getElementById(id); if (el) el.hidden = true; })`);
+  }
+
   async function setViewport(width, height) {
     const landscape = width > height;
     await cdp.send("Emulation.setDeviceMetricsOverride", {
@@ -324,12 +341,12 @@ try {
 
   const tiltNow = protectedSlices(readFileSync(ROOT + "\\index.html", "utf8"));
   const tiltSame = Object.keys(V6_LOCK).every((key) => tiltNow[key][0] === V6_LOCK[key][0] && tiltNow[key][1] === V6_LOCK[key][1]);
-  check("tilt math and sensor handlers are byte-identical to v7", tiltSame, JSON.stringify(tiltNow));
+  check("tilt math and sensor handlers are byte-identical to v8", tiltSame, JSON.stringify(tiltNow));
   const swSource = readFileSync(ROOT + "\\sw.js", "utf8");
   const deckFiles = ["bible-characters","bible-stories","miracles-parables","christmas-easter","church-life","bible-animals","bible-places-things","hum-it","actions","jobs","sports","animals","chores","movies","everyday-objects","foods","outdoor-fun","mix"];
   check(
-    "sw cache is charades-v8",
-    swSource.indexOf('const CACHE = "charades-v8"') !== -1 && swSource.indexOf('ASSET_VERSION = "8"') !== -1 && deckFiles.every((name) => swSource.indexOf("./assets/decks/" + name + ".webp") !== -1),
+    "sw cache is charades-v8-1",
+    swSource.indexOf('const CACHE = "charades-v8-1"') !== -1 && swSource.indexOf('ASSET_VERSION = "8.1"') !== -1 && swSource.indexOf('"./prompts.js"') !== -1 && deckFiles.every((name) => swSource.indexOf("./assets/decks/" + name + ".webp") !== -1),
     ""
   );
   const swStart = swSource.indexOf("function networkFirst");
@@ -445,6 +462,7 @@ try {
     ring.style.strokeDashoffset = "40";
   `);
   await delay(200);
+  await assertDialogsClosed("v6 play");
   await v6Shot("play-light.png");
   await setScheme("dark");
   await v6Shot("play-dark.png");
@@ -461,6 +479,7 @@ try {
       document.getElementById("prompt").textContent = "Blanket Fort";
     })()`);
     await setScheme("light");
+    await assertDialogsClosed("v6 " + entry[1]);
     await v6Shot(entry[1] + "-light.png");
     await setScheme("dark");
     await v6Shot(entry[1] + "-dark.png");
@@ -468,6 +487,7 @@ try {
   }
   await setViewport(932, 430);
   await delay(150);
+  await assertDialogsClosed("v6 play 932");
   await v6Shot("play-932.png");
   await setViewport(844, 390);
   await ev(`
@@ -512,6 +532,7 @@ try {
     renderConfetti(3);
   `);
   await delay(250);
+  await assertDialogsClosed("v6 recap");
   await v6Shot("recap-light.png");
   await setScheme("dark");
   await v6Shot("recap-dark.png");
@@ -679,6 +700,7 @@ try {
   check("fullscreen and orientation lock run on start", locks.screens >= 1 && locks.orient >= 1, JSON.stringify(locks));
   check("wake lock is requested when play begins", locks.wake >= 1 && locks.wakeType === "screen", JSON.stringify(locks));
   await setScheme("light");
+  await assertDialogsClosed("v6 live play");
   await v6Shot("play-light.png");
   await setScheme("dark");
   await v6Shot("play-dark.png");
@@ -810,6 +832,7 @@ try {
   check("the timer ends the round", Boolean(recap), recap ? recap.line : "still " + previous);
   if (recap) {
     await setScheme("light");
+    await assertDialogsClosed("v6 live recap");
     await v6Shot("recap-light.png");
     await setScheme("dark");
     await v6Shot("recap-dark.png");
@@ -1419,6 +1442,7 @@ try {
     })()`);
     shotPrompts[entry[0]] = prompt;
     check(entry[0] + " play shot uses a real prompt", (promptMap[entry[0]] || []).indexOf(prompt) !== -1, prompt);
+    await assertDialogsClosed("v7 " + entry[1]);
     await v7Pair(entry[1]);
   }
   check(
@@ -1434,6 +1458,7 @@ try {
     renderRecap({ name: "Team 1", roundPoints: 3, total: 3, guessed: ["Running", "Jumping", "Swimming"], passed: ["Dancing"], timeUp: "", nextName: "Team 2" });
     document.body.dataset.phase = "recap";
   })()`);
+  await assertDialogsClosed("v7 recap");
   await v7Pair("recap");
   await ev(`(() => {
     state.settings.format = "score";
@@ -1442,6 +1467,7 @@ try {
     renderWinner({ name: "Team 1", roundPoints: 2, total: 20, guessed: [], passed: [], timeUp: "", nextName: "Team 2" });
     document.body.dataset.phase = "winner";
   })()`);
+  await assertDialogsClosed("v7 winner");
   await v7Pair("winner");
   await ev(`(() => {
     state.turnIndex = 1;
@@ -1651,6 +1677,7 @@ try {
   check("custom deck tile is a gradient with no image", deckShare.customTile.img === false && deckShare.customTile.art === true && deckShare.customTile.bg.indexOf("gradient") !== -1, JSON.stringify(deckShare.customTile));
   check("a shared deck round-trips with the same prompts", addedDeck.hidden === true && addedDeck.prompts.join("|") === "Ants|Basket|Blanket" && addedDeck.dealt.join("|") === "Ants|Basket|Blanket" && addedDeck.mixed === true, JSON.stringify(addedDeck));
   check("the deck QR draws dark modules", deckShare.dark > 40, String(deckShare.dark));
+  await closeShotDialogs();
 
   const styleRead = await ev(`(() => {
     return ["act", "describe", "hum"].map((value) => {
@@ -1677,6 +1704,7 @@ try {
     })()`);
     stylePrompts[entry[0]] = prompt;
     check(entry[1] + " style shot uses a real prompt", (promptMap[entry[1]] || []).indexOf(prompt) !== -1, prompt);
+    await assertDialogsClosed("v8 " + entry[2]);
     await v8Pair(entry[2]);
   }
   check("style shots use three different prompts", stylePrompts.act !== stylePrompts.describe && stylePrompts.describe !== stylePrompts.hum && stylePrompts.act !== stylePrompts.hum, JSON.stringify(stylePrompts));
@@ -1733,6 +1761,7 @@ try {
   await waitFor("document.getElementById('recap-video').hidden === false", 5000, "reaction preview");
   check("the recap shows the reaction preview", await ev("document.getElementById('recap-video').hidden === false"), "");
   await setViewport(844, 390);
+  await assertDialogsClosed("v8 recap video");
   await v8Pair("recap-video");
   await ev(`(() => {
     clearGame();
@@ -1741,6 +1770,7 @@ try {
     renderRecap({ name: "Team 1", roundPoints: 3, total: 3, guessed: ["Running", "Jumping", "Swimming"], passed: ["Dancing", "Singing"], timeUp: "Singing", nextName: "Team 2" });
     document.body.dataset.phase = "recap";
   })()`);
+  await assertDialogsClosed("v8 recap");
   await v8Pair("recap");
   await ev(`(() => {
     state.settings.format = "score";
@@ -1749,6 +1779,7 @@ try {
     renderWinner({ name: "Team 1", roundPoints: 3, total: 20, guessed: [], passed: [], timeUp: "", nextName: "Team 2" });
     document.body.dataset.phase = "winner";
   })()`);
+  await assertDialogsClosed("v8 winner");
   await v8Pair("winner");
 
   await ev(`setRoundSeconds(45, true);`);
@@ -1757,6 +1788,130 @@ try {
   await delay(300);
   const persisted = await ev(`({ seconds: state.settings.seconds, label: document.getElementById("custom-seconds-text").textContent, open: document.getElementById("length-stepper").hidden === false })`);
   check("a custom length reloads from localStorage", persisted.seconds === 45 && persisted.label === "45s" && persisted.open === true, JSON.stringify(persisted));
+
+  const indexBytes = readFileSync(ROOT + "\\index.html").length;
+  check("index.html is under 150 KB", indexBytes < 150 * 1024, String(indexBytes));
+
+  async function measureDeck(width, height) {
+    await setViewport(width, height);
+    await delay(80);
+    const measured = await ev(`(() => {
+      openSetup("deck");
+      const editor = document.getElementById("deck-editor");
+      if (editor) editor.hidden = true;
+      const scroller = document.getElementById("category-picker");
+      scroller.scrollTop = 0;
+      const view = scroller.getBoundingClientRect();
+      const cards = [...scroller.querySelectorAll(".cat-btn")];
+      const full = cards.filter((el) => {
+        const box = el.getBoundingClientRect();
+        return box.height > 20 && box.top >= view.top - 1 && box.bottom <= view.bottom + 1 && box.left >= view.left - 1 && box.right <= view.right + 1;
+      });
+      const tops = full.map((el) => Math.round(el.getBoundingClientRect().top));
+      const rows = tops.filter((top, index) => tops.indexOf(top) === index);
+      return { viewH: Math.round(view.height), viewTop: Math.round(view.top), full: full.length, rows: rows.length, cardH: full.length ? Math.round(full[0].getBoundingClientRect().height) : 0, rowTops: rows };
+    })()`);
+    return Object.assign({ width, height }, measured);
+  }
+  const deckWide = await measureDeck(844, 390);
+  check("deck list shows two full rows at 844x390", deckWide.rows >= 2, JSON.stringify(deckWide));
+  await setScheme("light");
+  await v81Shot("deck-light.png");
+  await setScheme("dark");
+  await v81Shot("deck-dark.png");
+  await setScheme("light");
+  const deckTall = await measureDeck(390, 844);
+  check("deck list shows two full rows at 390x844", deckTall.rows >= 2, JSON.stringify(deckTall));
+  await v81Shot("deck-portrait.png");
+  await setViewport(844, 390);
+  await delay(80);
+
+  const created = await ev(`(() => {
+    openSetup("deck");
+    const button = document.getElementById("btn-new-deck");
+    button.scrollIntoView({ block: "center" });
+    return { text: button.textContent, open: document.getElementById("deck-editor").hidden };
+  })()`);
+  check("the new deck tile is in the deck list", created.text === "+ New deck" && created.open === true, JSON.stringify(created));
+  await v81Shot("new-deck-closed.png");
+  const savedDeck = await ev(`(() => {
+    document.getElementById("btn-new-deck").click();
+    const opened = document.getElementById("deck-editor").hidden === false;
+    document.getElementById("deck-name").value = "Snacks";
+    document.getElementById("deck-prompts").value = "Pretzel\\nPopcorn\\nApple";
+    document.getElementById("btn-save-deck").click();
+    const tile = [...document.querySelectorAll("#my-deck-list .cat-btn")].find((el) => el.textContent === "Snacks");
+    return { opened, closed: document.getElementById("deck-editor").hidden === true, name: tile ? tile.textContent : "", count: tile ? tile.parentElement.querySelector(".cat-count").textContent : "" };
+  })()`);
+  check("saving a new deck adds its tile", savedDeck.opened === true && savedDeck.closed === true && savedDeck.name === "Snacks" && savedDeck.count === "3", JSON.stringify(savedDeck));
+  await ev(`document.getElementById("btn-new-deck").click()`);
+  await v81Shot("new-deck-open.png");
+  await ev(`document.getElementById("btn-deck-editor-close").click()`);
+  await ev(`(() => {
+    const tile = [...document.querySelectorAll("#my-deck-list .cat-btn")].find((el) => el.textContent === "Snacks");
+    tile.parentElement.querySelector(".deck-share").click();
+  })()`);
+  await waitFor("document.getElementById('share-modal').hidden === false && document.getElementById('share-link').value.indexOf('#d=') !== -1", 4000, "new deck share");
+  check("a new deck can still be shared", await ev("document.getElementById('share-link').value.indexOf('#d=') !== -1"), await ev("document.getElementById('share-link').value"));
+  await closeShotDialogs();
+
+  const humLabels = await ev(`(() => {
+    const hums = (list) => list.filter((text) => text === "Hum It").length;
+    const read = (style, category) => {
+      state.settings.style = style;
+      state.settings.category = category;
+      state.used = [];
+      queue = buildDeck();
+      currentCard = null;
+      document.body.dataset.phase = "prep";
+      document.body.classList.remove("portrait");
+      paintCategory();
+      const prep = document.getElementById("prep-style").textContent;
+      deal();
+      const play = document.getElementById("play-style").textContent;
+      const catEl = document.getElementById("prompt-cat");
+      const cat = catEl.hidden ? "" : catEl.textContent;
+      return { prep, prepHum: hums([prep]), play, cat, playHum: hums([play, cat]) };
+    };
+    return { same: read("hum", "Hum It"), other: read("hum", "Animals"), deck: read("describe", "Hum It") };
+  })()`);
+  check(
+    "Hum It is shown once when the style and the deck match",
+    humLabels.same.prep === "Hum It" && humLabels.same.prepHum === 1 && humLabels.same.play === "Hum It" && humLabels.same.cat === "" && humLabels.same.playHum === 1 && humLabels.other.play === "Hum It" && humLabels.other.cat === "Animals" && humLabels.other.playHum === 1 && humLabels.deck.prep === "Describe It" && humLabels.deck.cat === "Hum It" && humLabels.deck.playHum === 1,
+    JSON.stringify(humLabels)
+  );
+  await setViewport(844, 390);
+  await ev(`(() => {
+    state.settings.style = "hum";
+    state.settings.category = "Hum It";
+    state.used = [];
+    queue = buildDeck();
+    document.body.classList.remove("portrait");
+    document.body.classList.add("playing");
+    paintCategory();
+    deal();
+  })()`);
+  await assertDialogsClosed("v8.1 hum");
+  await setScheme("light");
+  await v81Shot("play-hum-light.png");
+  await setScheme("dark");
+  await v81Shot("play-hum-dark.png");
+  await setScheme("light");
+
+  const cachedPrompts = await ev(`(async () => {
+    const ready = await Promise.race([
+      navigator.serviceWorker.ready,
+      new Promise((resolve) => setTimeout(() => resolve(null), 8000))
+    ]);
+    if (!ready) return { ok: false, why: "not ready" };
+    const cache = await caches.open("charades-v8-1");
+    const url = new URL("prompts.js", location.href).href;
+    const res = await cache.match(url) || await cache.match("./prompts.js");
+    if (!res) return { ok: false, why: "missing", keys: await caches.keys() };
+    const text = await res.text();
+    return { ok: text.indexOf("Jesus Loves Me") !== -1 && text.indexOf("window.CHARADES_PROMPTS") !== -1, bytes: text.length };
+  })()`);
+  check("prompts.js loads from the service worker cache", cachedPrompts.ok === true, JSON.stringify(cachedPrompts));
 
   await delay(600);
   const errors = consoleEvents.filter((event) => event.type === "error");

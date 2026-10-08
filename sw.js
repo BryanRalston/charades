@@ -1,5 +1,5 @@
-const CACHE = "charades-v8";
-const ASSET_VERSION = "8";
+const CACHE = "charades-v8-1";
+const ASSET_VERSION = "8.1";
 const NETWORK_TIMEOUT_MS = 2500;
 const ASSETS = [
   "./",
@@ -8,6 +8,7 @@ const ASSETS = [
   "./icon-192.png",
   "./icon-512.png",
   "./splash.png",
+  "./prompts.js",
   "./assets/decks/bible-characters.webp",
   "./assets/decks/bible-stories.webp",
   "./assets/decks/miracles-parables.webp",
