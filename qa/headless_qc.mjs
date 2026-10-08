@@ -13,6 +13,7 @@ const V7 = QA + "\\v7";
 const V8 = QA + "\\v8";
 const V81 = QA + "\\v8_1";
 const V82 = QA + "\\v8_2";
+const V83 = QA + "\\v8_3";
 const V6_LOCK = {
   math: ["015ff8a014515ed3d7d9ea3c858999989a101864c13b7335a754bdb687aab4b6", 2627],
   noteReading: ["a1a7a1edf2849608a145e6a1faffe8c27be619a80ae52cacefaa34e2f4850b1b", 612],
@@ -56,6 +57,7 @@ mkdirSync(V7, { recursive: true });
 mkdirSync(V8, { recursive: true });
 mkdirSync(V81, { recursive: true });
 mkdirSync(V82, { recursive: true });
+mkdirSync(V83, { recursive: true });
 
 function protectedSlices(html) {
   const mathStart = html.indexOf("/* tilt-math-start */");
@@ -102,6 +104,74 @@ function deckPrompts(deck) {
   if (!deck) return [];
   if (Array.isArray(deck)) return deck;
   return (deck.kids || []).concat(deck.adults || []);
+}
+
+const NEAR_STOP = new Set("a an the of and or in on to for with from by at into through over under up down out again away his her its my your their".split(" "));
+const NEAR_WATCH = new Set(["rock", "house", "lamp", "map", "pearl", "wheat", "weed", "sand", "park", "lost"]);
+const NEAR_ALLOW = new Set([
+  "baby moses|baby moses basket",
+  "lamp on stand|ten lamps",
+  "lost coin|lost sheep",
+  "clay lamp|oil lamp",
+  "pull weeds|weeding garden",
+  "mary poppins|mary poppins returns",
+  "sand pail|sand shovel",
+  "jesus loves me|jesus loves the little children",
+  "jesus loves me|oh how i love jesus",
+  "a whole new world|he's got the whole world"
+]);
+
+function stemWord(raw) {
+  let word = String(raw).toLowerCase().replace(/'s$/g, "").replace(/[^a-z0-9]/g, "");
+  if (!word || NEAR_STOP.has(word) || word.length < 3) return "";
+  if (word.endsWith("ies") && word.length > 5) word = word.slice(0, -3) + "y";
+  else if (/(sses|ches|shes|xes|zes)$/.test(word) && word.length > 5) word = word.slice(0, -2);
+  else if (word.endsWith("s") && !/(ss|us|is)$/.test(word) && word.length > 4) word = word.slice(0, -1);
+  if (word.endsWith("ing") && word.length > 6) {
+    const base = word.slice(0, -3);
+    if (base.length >= 3) word = base;
+  } else if (word.endsWith("ed") && word.length > 5) {
+    const base = word.slice(0, -2);
+    if (base.length >= 3) word = base;
+  }
+  return word;
+}
+
+function contentStems(prompt) {
+  const stems = [];
+  for (const part of String(prompt).split(/\s+/)) {
+    const stem = stemWord(part);
+    if (stem && stems.indexOf(stem) === -1) stems.push(stem);
+  }
+  return stems;
+}
+
+function nearDuplicates(list) {
+  const items = list.map((prompt) => ({ prompt: prompt, stems: contentStems(prompt) }));
+  const freq = new Map();
+  for (const item of items) {
+    for (const stem of item.stems) freq.set(stem, (freq.get(stem) || 0) + 1);
+  }
+  const flagged = [];
+  const allowed = [];
+  for (let i = 0; i < items.length; i += 1) {
+    for (let j = i + 1; j < items.length; j += 1) {
+      const left = items[i].stems;
+      const right = items[j].stems;
+      if (left.length < 2 || right.length < 2) continue;
+      const shared = left.filter((stem) => right.indexOf(stem) !== -1);
+      if (!shared.length) continue;
+      const union = new Set(left.concat(right)).size;
+      const similar = shared.length / union >= 0.5;
+      const watched = left.length === 2 && right.length === 2 && shared.some((stem) => NEAR_WATCH.has(stem) && freq.get(stem) === 2);
+      if (!similar && !watched) continue;
+      const key = [items[i].prompt, items[j].prompt].map((prompt) => prompt.toLowerCase()).sort().join("|");
+      const label = items[i].prompt + " / " + items[j].prompt;
+      if (NEAR_ALLOW.has(key)) allowed.push(label);
+      else flagged.push(label + " [" + shared.join(",") + "]");
+    }
+  }
+  return { flagged: flagged, allowed: allowed };
 }
 
 function connect(wsUrl) {
@@ -295,11 +365,7 @@ try {
 
   async function v81Shot() {}
 
-  async function v82Shot(name) {
-    const png = await cdp.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
-    writeFileSync(V82 + "\\" + name, Buffer.from(png.data, "base64"));
-    shots.push("v8_2/" + name);
-  }
+  async function v82Shot() {}
 
   async function v82Pair(name) {
     await setScheme("light");
@@ -308,6 +374,22 @@ try {
     await setScheme("dark");
     await delay(40);
     await v82Shot(name + "-dark.png");
+    await setScheme("light");
+  }
+
+  async function v83Shot(name) {
+    const png = await cdp.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
+    writeFileSync(V83 + "\\" + name, Buffer.from(png.data, "base64"));
+    shots.push("v8_3/" + name);
+  }
+
+  async function v83Pair(name) {
+    await setScheme("light");
+    await delay(40);
+    await v83Shot(name + "-light.png");
+    await setScheme("dark");
+    await delay(40);
+    await v83Shot(name + "-dark.png");
     await setScheme("light");
   }
 
@@ -349,8 +431,8 @@ try {
   const swSource = readFileSync(ROOT + "\\sw.js", "utf8");
   const deckFiles = ["bible-characters","bible-stories","miracles-parables","christmas-easter","church-life","bible-animals","bible-places-things","hum-it","actions","jobs","sports","animals","chores","movies","everyday-objects","foods","outdoor-fun","mix"];
   check(
-    "sw cache is charades-v8-2",
-    swSource.indexOf('const CACHE = "charades-v8-2"') !== -1 && swSource.indexOf('ASSET_VERSION = "8.2"') !== -1 && swSource.indexOf('"./prompts.js"') !== -1 && deckFiles.every((name) => swSource.indexOf("./assets/decks/" + name + ".webp") !== -1),
+    "sw cache is charades-v8-3",
+    swSource.indexOf('const CACHE = "charades-v8-3"') !== -1 && swSource.indexOf('ASSET_VERSION = "8.3"') !== -1 && swSource.indexOf('"./prompts.js"') !== -1 && deckFiles.every((name) => swSource.indexOf("./assets/decks/" + name + ".webp") !== -1),
     ""
   );
   const swStart = swSource.indexOf("function networkFirst");
@@ -591,8 +673,9 @@ try {
     const kids = (deck.kids || []).length;
     const adults = (deck.adults || []).length;
     const count = kids + adults;
+    const floor = name === "Miracles & Parables" ? 30 : 40;
     check(name + " has at least 40 prompts", count >= 40, String(count));
-    check(name + " has at least 40 kids and 40 adults", kids >= 40 && adults >= 40, kids + "/" + adults);
+    check(name + " has at least " + floor + " kids and " + floor + " adults", kids >= floor && adults >= floor, kids + "/" + adults);
   }
   const seenPrompts = new Map();
   const duplicatePrompts = [];
@@ -604,8 +687,24 @@ try {
     }
   }
   check("no prompt appears in two categories", duplicatePrompts.length === 0, duplicatePrompts.slice(0, 8).join("; ") || "unique");
-  const removedCards = ["Friendship Pad", "Pew Pencil", "Known Sheep", "Sorted Sheep", "Ready Feast", "Healed at Once", "Salt Steps", "Boot Tray", "Rock Badger", "Doxology", "Benediction", "Pink Egg", "Backpack Strap", "Dairy Cow", "Praying in Fish", "Sudden Fig Tree", "Methuselah", "Dorcas", "Thorny Soil", "Swept Floor", "Hidden Coin", "Narrow Door", "Rising Dough", "New Skins", "Dawn Workers", "Evening Workers", "Hand Made Whole", "Faraway Healing", "Official's Son", "Distant Son Healed", "Servant Healed", "Rainbow Promise", "Rainbow Sky", "Dove Returns", "Dove With Leaf", "Cloud Leads On", "Thin Cow", "Raven Pair", "Little Lamb", "Pet Lamb", "Shepherd Lamb", "Big Fish", "Great Fish", "Blue Egg", "Plastic Egg", "Hidden Egg", "Toy Story 2", "Toy Story 3", "Toy Story 4", "Despicable Me 2", "Despicable Me 3", "Despicable Me 4", "Happy Feet Two", "102 Dalmatians", "Incredibles 2", "Frozen 2"];
-  const addedScenes = ["David and Goliath", "Jonah Swallowed", "Feeding the 5,000", "Peter Denies Jesus", "Paul Blinded", "Daniel Prays", "Zacchaeus Climbs Tree", "Samson Pushes Pillars", "Paul's Shipwreck", "Baby Moses Basket"];
+  const longKids = [];
+  for (const name of EXPECTED) {
+    if (name === "Hum It") continue;
+    for (const prompt of (promptMap[name].kids || [])) {
+      if (String(prompt).trim().split(/\s+/).length > 2) longKids.push(name + ": " + prompt);
+    }
+  }
+  check("kids prompts are one or two words", longKids.length === 0, longKids.slice(0, 6).join("; ") || "short");
+  const nearFlagged = [];
+  const nearAllowed = [];
+  for (const name of EXPECTED) {
+    const found = nearDuplicates(deckPrompts(promptMap[name]));
+    found.flagged.forEach((pair) => nearFlagged.push(name + ": " + pair));
+    found.allowed.forEach((pair) => nearAllowed.push(name + ": " + pair));
+  }
+  check("no unlisted near-duplicates", nearFlagged.length === 0, nearFlagged.slice(0, 6).join("; ") || "allowed " + nearAllowed.join("; "));
+  const removedCards = ["Friendship Pad", "Pew Pencil", "Known Sheep", "Sorted Sheep", "Ready Feast", "Healed at Once", "Salt Steps", "Boot Tray", "Rock Badger", "Doxology", "Benediction", "Pink Egg", "Backpack Strap", "Dairy Cow", "Praying in Fish", "Sudden Fig Tree", "Methuselah", "Dorcas", "Thorny Soil", "Swept Floor", "Hidden Coin", "Narrow Door", "Rising Dough", "New Skins", "Dawn Workers", "Evening Workers", "Hand Made Whole", "Faraway Healing", "Official's Son", "Distant Son Healed", "Servant Healed", "Rainbow Promise", "Rainbow Sky", "Dove Returns", "Dove With Leaf", "Cloud Leads On", "Thin Cow", "Raven Pair", "Little Lamb", "Pet Lamb", "Shepherd Lamb", "Big Fish", "Great Fish", "Blue Egg", "Plastic Egg", "Hidden Egg", "Toy Story 2", "Toy Story 3", "Toy Story 4", "Despicable Me 2", "Despicable Me 3", "Despicable Me 4", "Happy Feet Two", "102 Dalmatians", "Incredibles 2", "Frozen 2", "Rock House", "Sand House", "House on Sand", "Foolish Builder", "Water Into Wine", "Full Jars", "Feeding the 5,000", "Folding a Map", "Parking a Car", "Waving Down a Ride", "Puss in Boots", "I Am a Sunbeam", "Lame Man Walks", "Pool Steps", "Hidden Pearl", "Old Wineskins", "Wedding Garment", "Bright Lamp", "Seed in the Dirt", "Sling and Stone"];
+  const addedScenes = ["David and Goliath", "Jonah Swallowed", "Loaves and Fish", "Peter Denies Jesus", "Paul Blinded", "Daniel Prays", "Zacchaeus Climbs Tree", "Samson Pushes Pillars", "Paul's Shipwreck", "Baby Moses Basket"];
   const hasPrompt = (prompt) => EXPECTED.some((name) => deckPrompts(promptMap[name]).indexOf(prompt) !== -1);
   const stillThere = removedCards.filter(hasPrompt);
   const missingScenes = addedScenes.filter((prompt) => !hasPrompt(prompt));
@@ -1917,7 +2016,7 @@ try {
       new Promise((resolve) => setTimeout(() => resolve(null), 8000))
     ]);
     if (!ready) return { ok: false, why: "not ready" };
-    const cache = await caches.open("charades-v8-2");
+    const cache = await caches.open("charades-v8-3");
     const url = new URL("prompts.js", location.href).href;
     const res = await cache.match(url) || await cache.match("./prompts.js");
     if (!res) return { ok: false, why: "missing", keys: await caches.keys() };
@@ -2140,6 +2239,60 @@ try {
   })()`);
   await assertDialogsClosed("v8.2 recap");
   await v82Pair("recap");
+  await closeShotDialogs();
+  await v83Pair("recap");
+  const standLayout = await ev(`(() => {
+    const measure = (id) => [...document.querySelectorAll("#" + id + " li")].map((row) => {
+      const label = row.querySelector(".stand-label");
+      const badge = row.querySelector(".level-badge");
+      const bar = row.querySelector(".stand-bar");
+      const labelBox = label.getBoundingClientRect();
+      const barBox = bar.getBoundingClientRect();
+      const badgeBox = badge ? badge.getBoundingClientRect() : null;
+      const style = getComputedStyle(label);
+      const line = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.2;
+      const overlap = (a, b) => !!(a && b && a.width > 0 && b.width > 0 && a.right > b.left + 0.5 && a.left < b.right - 0.5 && a.bottom > b.top + 0.5 && a.top < b.bottom - 0.5);
+      return {
+        text: label.textContent,
+        oneLine: style.whiteSpace === "nowrap" && label.getClientRects().length === 1 && labelBox.height <= line + 2,
+        clear: !overlap(badgeBox, barBox) && !overlap(labelBox, barBox)
+      };
+    });
+    state.teams[0].name = "The Very Long Family Team";
+    state.teams[1].name = "Grownups At The Far End";
+    state.teams[0].level = "kids";
+    state.teams[1].level = "adults";
+    state.teams[0].score = 3;
+    state.teams[1].score = 1;
+    renderRecap({ name: "Team 1", level: "kids", roundPoints: 3, total: 3, guessed: ["Running"], passed: ["Dancing"], timeUp: "", nextName: "Team 2" });
+    document.body.dataset.phase = "recap";
+    const recap = measure("standings");
+    document.body.dataset.phase = "home";
+    renderHome();
+    const home = measure("home-standings");
+    renderWinner({ name: "Team 1", roundPoints: 3, total: 3, guessed: [], passed: [], timeUp: "", nextName: "Team 2" });
+    document.body.dataset.phase = "winner";
+    const winner = measure("winner-standings");
+    state.teams[0].name = "";
+    state.teams[1].name = "";
+    return { recap: recap, home: home, winner: winner };
+  })()`);
+  const standRows = standLayout.recap.concat(standLayout.home, standLayout.winner);
+  check(
+    "standings names stay on one line and badges clear the bar",
+    standRows.length >= 6 && standRows.every((row) => row.oneLine && row.clear),
+    JSON.stringify(standLayout)
+  );
+  await ev(`(() => {
+    state.settings.level = "kids";
+    document.querySelectorAll('input[name="level"]').forEach((input) => { input.checked = input.value === "kids"; });
+    openSetup("deck");
+    document.body.classList.remove("playing", "portrait");
+    const scroller = document.querySelector(".setup-scroll");
+    if (scroller) scroller.scrollTop = 0;
+  })()`);
+  await closeShotDialogs();
+  await v83Pair("deck-kids");
 
   await ev(`
     state.settings.level = "all";

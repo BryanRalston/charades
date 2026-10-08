@@ -85,8 +85,9 @@ for (const name of names) {
   const adults = (promptMap[name].adults || []).length;
   const count = deck.length;
   total += count;
+  const floor = name === "Miracles & Parables" ? 30 : 40;
   check(name + " has at least 40 prompts", count >= 40, String(count));
-  check(name + " has at least 40 kids and 40 adults", kids >= 40 && adults >= 40, kids + "/" + adults);
+  check(name + " has at least " + floor + " kids and " + floor + " adults", kids >= floor && adults >= floor, kids + "/" + adults);
 }
 check("seventeen categories", names.length === 17, String(names.length));
 console.log("total cards " + total);

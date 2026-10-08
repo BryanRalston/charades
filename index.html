@@ -732,7 +732,7 @@
   #home-standings, #standings, #winner-standings { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
   #home-standings li, #standings li, #winner-standings li {
     display: grid;
-    grid-template-columns: 18px 12px minmax(64px, 0.9fr) minmax(40px, 1.4fr) 2rem;
+    grid-template-columns: 18px 12px minmax(0, 1fr) minmax(48px, 1.2fr) 2rem;
     align-items: center;
     gap: 8px;
     min-height: 28px;
@@ -752,7 +752,26 @@
   }
   @keyframes barGrow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
   .stand-name, .stand-score { color: var(--ink); opacity: 1; }
-  .stand-name { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+  .stand-name {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 2px;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    line-height: 1.15;
+  }
+  .stand-label {
+    display: block;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  #home-standings .level-badge, #standings .level-badge, #winner-standings .level-badge { margin-left: 0; }
   .stand-score { text-align: right; font-variant-numeric: tabular-nums; }
   #home-standings li.zero .stand-bar,
   #standings li.zero .stand-bar,
@@ -2821,9 +2840,12 @@
         dot.style.background = TEAM_COLORS[row.index % TEAM_COLORS.length];
         const name = document.createElement("span");
         name.className = "stand-name";
-        name.appendChild(document.createTextNode(teamLabel(row.team, row.index)));
         const badge = levelBadge(teamLevel(row.team));
         if (badge) name.appendChild(badge);
+        const label = document.createElement("span");
+        label.className = "stand-label";
+        label.textContent = teamLabel(row.team, row.index);
+        name.appendChild(label);
         const bar = document.createElement("span");
         bar.className = "stand-bar";
         const fill = document.createElement("span");
