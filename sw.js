@@ -1,4 +1,4 @@
-const CACHE = "charades-v2";
+const CACHE = "charades-v3";
 const ASSETS = [
   "./",
   "./index.html",
@@ -21,11 +21,40 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+function isNavigation(request, url) {
+  if (request.mode === "navigate") return true;
+  const path = url.pathname;
+  return path.endsWith("/") || path.endsWith("/index.html");
+}
+
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   if (request.method !== "GET") return;
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
+
+  if (isNavigation(request, url)) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response && response.ok && !response.redirected) {
+            const copy = response.clone();
+            caches.open(CACHE).then((cache) => cache.put(request, copy)).catch(() => {});
+          }
+          return response;
+        })
+        .catch(async () => {
+          const cache = await caches.open(CACHE);
+          return (
+            (await cache.match(request)) ||
+            (await cache.match("./index.html")) ||
+            (await cache.match("./")) ||
+            new Response("Offline", { status: 503, headers: { "Content-Type": "text/plain" } })
+          );
+        })
+    );
+    return;
+  }
 
   event.respondWith(
     caches.open(CACHE).then(async (cache) => {
@@ -33,13 +62,12 @@ self.addEventListener("fetch", (event) => {
       if (cached) return cached;
       try {
         const response = await fetch(request);
-        if (response && response.ok) cache.put(request, response.clone());
+        if (response && response.ok && !response.redirected) {
+          cache.put(request, response.clone()).catch(() => {});
+        }
         return response;
       } catch (err) {
-        return cached || (await cache.match("./index.html")) || new Response("Offline", {
-          status: 503,
-          headers: { "Content-Type": "text/plain" }
-        });
+        return cached || new Response("Offline", { status: 503, headers: { "Content-Type": "text/plain" } });
       }
     })
   );

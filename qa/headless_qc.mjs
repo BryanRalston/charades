@@ -26,8 +26,8 @@ const EXPECTED = [
   "Outdoor Fun"
 ];
 const POSES = {
-  90: { neutral: [0, 90], small: [180, -80], down: [180, -50], up: [0, 50] },
-  270: { neutral: [0, -90], small: [180, 80], down: [180, 50], up: [0, -50] }
+  90: { neutral: [0, -90], small: [0, -80], down: [180, 50], up: [0, -50] },
+  270: { neutral: [0, 90], small: [0, 80], down: [180, -50], up: [0, 50] }
 };
 
 mkdirSync(QA, { recursive: true });
@@ -220,20 +220,67 @@ try {
   check("Tap to start is present", rendered.start.text === "Tap to start" && rendered.start.width > 40 && rendered.start.height > 40, JSON.stringify(rendered.start));
   check("screen angle is landscape-left 90", rendered.angle === 90, "angle " + rendered.angle + " " + rendered.orientError);
   check("player UI does not link the feature map", rendered.links.every((href) => !href || href.indexOf("FEATURE_MAP") === -1), rendered.links.join(", "));
+  const landscapeHint = await ev("getComputedStyle(document.querySelector('.rotate-hint')).display");
+  check("landscape hides the sideways note", landscapeHint === "none", landscapeHint);
+  const debugOff = await ev(`({
+    hidden: document.getElementById('tilt-debug').hidden,
+    display: getComputedStyle(document.getElementById('tilt-debug')).display
+  })`);
+  check("debug readout stays hidden without the flag", debugOff.hidden === true && debugOff.display === "none", JSON.stringify(debugOff));
   await shot("01-setup.png");
+
+  const debugUrl = new URL(BASE);
+  debugUrl.searchParams.set("debug", "1");
+  await cdp.send("Page.navigate", { url: debugUrl.href });
+  await waitFor("document.readyState === 'complete' && document.getElementById('tilt-debug') && document.getElementById('tilt-debug').hidden === false", 10000, "debug page");
+  await delay(200);
+  const debugOn = await ev(`({
+    hidden: document.getElementById('tilt-debug').hidden,
+    text: document.getElementById('tilt-debug').textContent
+  })`);
+  check("debug readout is visible with ?debug=1", debugOn.hidden === false && debugOn.text.indexOf("beta") !== -1 && debugOn.text.indexOf("source") !== -1, debugOn.text);
+  await cdp.send("Page.navigate", { url: BASE });
+  await waitFor("document.readyState === 'complete' && !!document.getElementById('btn-tap-start') && document.querySelectorAll('.cat-btn').length >= 16", 10000, "return from debug");
+  await delay(200);
 
   const promptMap = promptsFromHtml();
   for (const name of EXPECTED) {
     const count = (promptMap[name] || []).length;
     check(name + " has at least 40 prompts", count >= 40, String(count));
   }
+  const seenPrompts = new Map();
+  const duplicatePrompts = [];
+  for (const name of EXPECTED) {
+    for (const prompt of promptMap[name] || []) {
+      const key = String(prompt).trim().toLowerCase();
+      if (seenPrompts.has(key)) duplicatePrompts.push(prompt + " in " + seenPrompts.get(key) + " and " + name);
+      else seenPrompts.set(key, name);
+    }
+  }
+  check("no prompt appears in two categories", duplicatePrompts.length === 0, duplicatePrompts.slice(0, 8).join("; ") || "unique");
 
   await ev(`
     window.__permCalls = 0;
-    const DOE = window.DeviceOrientationEvent;
-    function grant() { window.__permCalls += 1; return Promise.resolve('granted'); }
-    try { DOE.requestPermission = grant; }
-    catch (err) { Object.defineProperty(DOE, 'requestPermission', { configurable: true, writable: true, value: grant }); }
+    window.__permSync = 0;
+    function grant() {
+      window.__permCalls += 1;
+      window.__permSync += 1;
+      return Promise.resolve('granted');
+    }
+    function install(Ctor) {
+      if (!Ctor) return false;
+      try { Ctor.requestPermission = grant; return true; }
+      catch (err) {
+        try {
+          Object.defineProperty(Ctor, 'requestPermission', { configurable: true, writable: true, value: grant });
+          return true;
+        } catch (err2) { return false; }
+      }
+    }
+    window.__permInstalled = {
+      orientation: install(window.DeviceOrientationEvent),
+      motion: install(window.DeviceMotionEvent)
+    };
   `);
   await ev(`
     const input = document.querySelector('input[name="seconds"][value="30"]');
@@ -241,14 +288,18 @@ try {
     const button = [...document.querySelectorAll('.cat-btn')].find((node) => node.textContent === 'Actions');
     button.click();
   `);
-  await ev("document.getElementById('btn-tap-start').click()");
-  await delay(50);
-  const permCalls = await ev("window.__permCalls || 0");
-  check("Tap to start calls requestPermission", permCalls >= 1, "calls " + permCalls);
+  const permSync = await ev(`
+    window.__permSync = 0;
+    document.getElementById('btn-tap-start').click();
+    window.__permSync
+  `);
+  check("Tap to start calls requestPermission synchronously", permSync >= 1, "sync calls " + permSync + " installed " + JSON.stringify(await ev("window.__permInstalled")));
   await waitFor("document.body.dataset.phase === 'play' && document.getElementById('prompt').textContent.length > 0", 8000, "round start");
   await shot("02-play.png");
 
   const pose = POSES[90];
+  const pillOff = await ev("document.getElementById('tilt-status').textContent");
+  check("tilt stays off until a sensor event", pillOff === "Tilt off, use buttons", pillOff);
   async function fire(beta, gamma) {
     return ev(`
       (() => {
@@ -274,8 +325,18 @@ try {
     `);
   }
 
-  const opened = await fire(pose.neutral[0], pose.neutral[1]);
+  async function burst(beta, gamma, count) {
+    let last;
+    for (let i = 0; i < count; i += 1) last = await fire(beta, gamma);
+    return last;
+  }
+
+  const opened = await burst(pose.neutral[0], pose.neutral[1], 6);
   const firstPrompt = opened.prompt;
+  const pillOn = await ev("document.getElementById('tilt-status').textContent");
+  check("tilt status shows on while events arrive", pillOn === "Tilt on", pillOn);
+  await delay(450);
+  await fire(pose.neutral[0], pose.neutral[1]);
   const small = await fire(pose.small[0], pose.small[1]);
   check("a 10 degree tilt does not score", small.score === "0" && small.prompt === firstPrompt, "tilt " + small.tilt + " score " + small.score);
   const correct = await fire(pose.down[0], pose.down[1]);
@@ -357,6 +418,66 @@ try {
   check("turn and settings survive a refresh", kept.up.indexOf("Team 2") !== -1 && kept.seconds === "30" && kept.category === "Actions", JSON.stringify(kept));
   await shot("07-refresh.png");
 
+  await ev(`
+    window.__screenAngle = 90;
+    function grant() {
+      window.__permCalls = (window.__permCalls || 0) + 1;
+      return Promise.resolve('granted');
+    }
+    function install(Ctor) {
+      if (!Ctor) return;
+      try { Ctor.requestPermission = grant; }
+      catch (err) {
+        try { Object.defineProperty(Ctor, 'requestPermission', { configurable: true, writable: true, value: grant }); }
+        catch (err2) {}
+      }
+    }
+    install(window.DeviceOrientationEvent);
+    install(window.DeviceMotionEvent);
+    document.getElementById('btn-tap-start').click();
+  `);
+  await waitFor("document.body.dataset.phase === 'play' && document.getElementById('prompt').textContent.length > 0", 8000, "motion round");
+  await ev("window.removeEventListener('deviceorientation', onOrientation)");
+  await delay(1100);
+  const beforeMotion = await ev("document.getElementById('play-score').textContent");
+  async function fireMotion(beta, gamma) {
+    return ev(`
+      (() => {
+        const up = upFromOrientation(${beta}, ${gamma});
+        const x = up.x * 9.8;
+        const y = up.y * 9.8;
+        const z = up.z * 9.8;
+        let event;
+        try {
+          event = new DeviceMotionEvent('devicemotion', { accelerationIncludingGravity: { x: x, y: y, z: z } });
+          const got = event.accelerationIncludingGravity;
+          if (!got || !Number.isFinite(got.x)) throw new Error('empty motion');
+        } catch (err) {
+          event = new Event('devicemotion');
+          Object.defineProperty(event, 'accelerationIncludingGravity', { configurable: true, get: () => ({ x: x, y: y, z: z }) });
+        }
+        window.dispatchEvent(event);
+        return {
+          score: document.getElementById('play-score').textContent,
+          last: document.documentElement.dataset.lastResult || '',
+          source: document.documentElement.dataset.tiltSource || '',
+          tilt: document.documentElement.dataset.tilt || '',
+          orientAt: window.sensor ? 0 : 0
+        };
+      })()
+    `);
+  }
+  for (let i = 0; i < 6; i += 1) await fireMotion(POSES[90].neutral[0], POSES[90].neutral[1]);
+  await delay(450);
+  const motionHit = await fireMotion(POSES[90].down[0], POSES[90].down[1]);
+  check(
+    "motion fallback counts face-down as correct",
+    motionHit.last === "correct" && motionHit.source === "motion" && Number(motionHit.score) === Number(beforeMotion) + 1,
+    JSON.stringify(motionHit) + " from " + beforeMotion
+  );
+  await ev("endRound()");
+  await ev("document.getElementById('btn-next').click()");
+
   await cdp.send("Emulation.setDeviceMetricsOverride", {
     width: 420,
     height: 800,
@@ -365,12 +486,21 @@ try {
     screenOrientation: { type: "portraitPrimary", angle: 0 }
   });
   await ev("window.__screenAngle = 90");
+  const portraitHint = await ev("getComputedStyle(document.querySelector('.rotate-hint')).display");
+  check("portrait still shows the sideways note", portraitHint !== "none", portraitHint);
   await ev(`
     window.__permCalls = 0;
-    const DOE = window.DeviceOrientationEvent;
     function grant() { window.__permCalls += 1; return Promise.resolve('granted'); }
-    try { DOE.requestPermission = grant; }
-    catch (err) { Object.defineProperty(DOE, 'requestPermission', { configurable: true, writable: true, value: grant }); }
+    function install(Ctor) {
+      if (!Ctor) return;
+      try { Ctor.requestPermission = grant; }
+      catch (err) {
+        try { Object.defineProperty(Ctor, 'requestPermission', { configurable: true, writable: true, value: grant }); }
+        catch (err2) {}
+      }
+    }
+    install(window.DeviceOrientationEvent);
+    install(window.DeviceMotionEvent);
     document.getElementById('btn-tap-start').click();
   `);
   await waitFor("document.body.classList.contains('playing') && document.body.classList.contains('portrait')", 8000, "portrait overlay");

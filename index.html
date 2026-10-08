@@ -65,6 +65,9 @@
     padding: 10px 12px;
     font-weight: 700;
   }
+  @media (orientation: landscape) {
+    .rotate-hint { display: none; }
+  }
   fieldset {
     border: 3px solid var(--ink);
     border-radius: 16px;
@@ -162,6 +165,17 @@
     justify-content: space-between;
     align-items: flex-start;
     gap: 12px;
+  }
+  #tilt-status {
+    margin: 0;
+    align-self: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.16);
+    font-size: 0.8rem;
+    font-weight: 800;
+    line-height: 1.3;
+    white-space: nowrap;
   }
   #play-team { font-size: clamp(1.1rem, 3vh, 1.8rem); font-weight: 800; }
   #timer {
@@ -291,6 +305,21 @@
   @media (max-width: 800px) {
     body[data-phase="setup"] #setup { grid-template-columns: 1fr; }
   }
+  #tilt-debug {
+    position: fixed;
+    left: 8px;
+    bottom: 8px;
+    z-index: 35;
+    max-width: min(440px, 94vw);
+    margin: 0;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: rgba(20, 16, 40, 0.9);
+    color: #fff;
+    font: 12px/1.35 ui-monospace, Consolas, monospace;
+    white-space: pre-wrap;
+  }
+  #tilt-debug[hidden] { display: none !important; }
   @media (prefers-reduced-motion: reduce) {
     #timer.urgent, .phone-icon { animation: none; }
   }
@@ -336,6 +365,7 @@
         <div id="play-team">Team 1</div>
         <div>Score <strong id="play-score">0</strong></div>
       </div>
+      <p id="tilt-status" role="status">Tilt off, use buttons</p>
       <div id="timer" aria-label="Seconds left">60</div>
     </div>
     <div id="stage">
@@ -390,12 +420,16 @@
     </div>
   </div>
 
+  <pre id="tilt-debug" hidden></pre>
   <noscript><p>Charades needs JavaScript.</p></noscript>
   <script>
     const STORAGE_KEY = "charades.v1";
-    const NEUTRAL_DEG = 20;
-    const DEBOUNCE_MS = 600;
     const REPEAT_GAP = 24;
+    const CALIBRATE_MS = 300;
+    const MIN_SAMPLES = 5;
+    const SENSOR_FRESH_MS = 1000;
+    const MOTION_WAIT_MS = 1000;
+    const TILT_DEBUG = new URLSearchParams(location.search).get("debug") === "1";
     const GROUPS = [
       ["Christian", ["Bible Characters", "Bible Stories", "Miracles & Parables", "Christmas & Easter", "Church Life", "Bible Animals", "Bible Places & Things"]],
       ["Classic", ["Actions", "Jobs", "Sports", "Animals", "Chores", "Movies", "Everyday Objects", "Foods", "Outdoor Fun"]],
@@ -403,22 +437,22 @@
     ];
     const CATEGORY_NAMES = GROUPS[0][1].concat(GROUPS[1][1]);
     const PROMPTS = {
-      "Bible Characters": ["Noah","Moses","Abraham","Sarah","Isaac","Rebekah","Jacob","Rachel","Leah","Joseph","Benjamin","Miriam","Aaron","Joshua","Caleb","Rahab","Deborah","Gideon","Samson","Ruth","Naomi","Boaz","Samuel","Hannah","David","Goliath","Jonathan","Solomon","Elijah","Elisha","Esther","Mordecai","Daniel","Jonah","Mary","Peter","Andrew","James","John","Martha","Lazarus","Zacchaeus","Paul","Timothy","Lydia","Dorcas","Barnabas","Nicodemus","Bartimaeus","Stephen","Pharaoh","Gabriel","Adam","Eve","Cain","Abel","Seth","Enoch","Methuselah","Lot","Lot's Wife","Ishmael","Esau","Laban","Judah","Reuben","Simeon","Levi","Dinah","Jochebed","Zipporah","Jethro","Bezalel","Balaam","Othniel","Barak","Jael","Delilah","Eli","Saul","Jesse","Absalom","Nathan","Abigail","Naaman","Hezekiah","Josiah","Isaiah","Jeremiah","Ezekiel","Hosea","Amos","Obadiah","Micah","Nehemiah","Ezra","Job","Shadrach","Meshach","Abednego","Haman","Vashti","Belshazzar","Darius","Cyrus","Herod","Pilate","Judas","Thomas","Matthew","Philip","Bartholomew","Mary Magdalene","John the Baptist","Silas","Luke","Mark","Elizabeth","Anna","Cornelius","Priscilla","Aquila","Apollos","Titus","Phoebe","Melchizedek","Asa","Jehoshaphat","Manasseh","Ephraim"],
-      "Bible Stories": ["Noah's Ark","Baby Moses","Burning Bush","Red Sea","Coat of Colors","Lion's Den","Fiery Furnace","Walls of Jericho","Ten Commandments","Golden Calf","David's Harp","Sling and Stone","Queen Esther","Jacob's Ladder","Tower of Babel","Garden of Eden","Noah's Rainbow","Olive Branch","Balaam's Donkey","Elijah's Chariot","Widow's Oil","Boy's Lunch","Upper Room","Empty Tomb","Rolled Stone","Palm Parade","Bethlehem Star","Wise Men","Baby in Manger","Two by Two","Basket Boat","Moses' Staff","Water from Rock","Morning Manna","Cloud by Day","Fire by Night","Spies with Grapes","Trumpet Blast","Marching Around","Writing on Wall","Ship in Storm","Prison Song","Dove Returns","Ark Door","Shepherd Boy","Giant Soldier","Fish Swallow","Rainbow Promise","Creation Lights","Naming Animals","Garden Walk","Forbidden Fruit","Building the Ark","Forty Day Rain","Raven Sent Out","Dove With Leaf","Rainbow Sky","Brick by Brick","Counting Stars","Three Visitors","Water Jar Welcome","Bowl of Stew","Dream Ladder","Grain Bags","Hidden Silver Cup","Big Family Hug","River Basket","Princess Finds Baby","Snake Staff","Path Through Sea","Bread from Sky","Evening Quail","Shining Face","Giant Grapes","Red Cord","Seven Day March","Sun Stays Still","Dry Fleece","Wet Fleece","Torches and Jars","Gleaning Barley","Extra Grain","Night Call","Little Lost Donkeys","Oil on Head","Five Stones","Quiet Cave","Two Women","Faraway Queen","Bread from Ravens","Flour Jar","Boy Awake","Chariot Ride","Seven Washes","Ax Head Floats","Upstairs Room","Brave Queen","New City Wall","Running Prophet","Praying in Fish","Sorry City","Shepherds at Night","Follow the Star","Treasure Gifts","Boy in Temple","River Baptism","Short Man Tree","Emmaus Walk","Fish Breakfast","Rising Cloud","Mighty Wind","Singing at Midnight","Animals Enter Ark","Door Shuts","Well Kindness","Spotted Sheep","Brothers Bow","Palace Dreams","Seven Good Years","Baby Cries","Hopping Frogs","Night Leaving","Shore Song","Bitter Made Sweet","New Stone Tablets","Twelve Stones","Horns Blow","Cloud Leads On","Fire Leads On","Family Reunion"],
-      "Miracles & Parables": ["Walking on Water","Calming the Storm","Water to Wine","Loaves and Fish","Healing Blind Eyes","Man Through Roof","Raising Lazarus","Catch of Fish","Coin in Fish","Withered Hand","Ten Lepers","Centurion's Servant","Jairus Daughter","Woman Touches Hem","Mute Man Speaks","Deaf Ears Open","Lame Man Walks","Fig Tree","The Good Samaritan","The Prodigal Son","Lost Sheep","Lost Coin","Mustard Seed","The Sower","Priceless Pearl","House on Rock","House on Sand","Lamp on Stand","Hidden Treasure","The Talents","Wedding Feast","Wise Builder","Foolish Builder","Two Sons","Persistent Widow","Friend at Midnight","Rich Fool","Good Shepherd","Narrow Gate","Yeast in Dough","Sheep and Goats","Banquet Guests","New Wineskins","Old Wineskins","Vine and Branches","Ten Lamps","Vineyard Workers","Lost Son Home","Muddy Eyes Open","Mat Through Roof","Four Friends","Come Forth","Breaking Nets","Coin from Mouth","Hand Made Whole","One Man Thanks","Faraway Healing","Girl Awakes","Cloak Touch","Opened Ears","Freed Tongue","Rolled Up Mat","Sudden Fig Tree","Kind Stranger","Father Runs","Searching Shepherd","Swept Floor","Growing Seed","Path Seeds","Thorny Soil","Good Ground","Costly Pearl","Rock House","Sandy House","Covered Lamp","Buried Treasure","Faithful Servants","Hidden Coin","Wedding Garment","Yes Then No","No Then Yes","Widow Keeps Asking","Knock at Midnight","Full Barns","Known Sheep","Narrow Door","Rising Dough","Sorted Sheep","Open Chairs","New Skins","Grape Vine","Extra Oil","Dawn Workers","Evening Workers","Fair Pay","Ready Feast","Warm Welcome","Best Robe","Jealous Brother","Forgiven Debt","Kept Grudge","Wheat Together","Weeds Together","Dragnet of Fish","Wise Lamps","Empty Lamps","Shut Door","Low Seat","Healed at Once","Pool Steps","Bed Carried Home","Distant Son Healed","Walking Wave","Helping Hand Up","Mouth Coin","Shared Lunch","Quiet Storm","Full Jars","Thank You Return","Little Girl Up"],
-      "Christmas & Easter": ["Baby Jesus","Manger Bed","Bethlehem Star","Wise Men","Shepherds","Angel Choir","Christmas Tree","Candy Cane","Stocking","Wrapped Gift","Sleigh Bells","Snowman","Nativity Scene","Gold Gift","Frankincense","Myrrh","Drummer Boy","Christmas Cookie","Holly Wreath","Advent Candle","Jingle Bells","Gingerbread House","Christmas Carol","Ornament","Wreath","Reindeer","North Star","Swaddling Cloth","Palm Branch","Easter Egg","Empty Tomb","Rolled Away Stone","Easter Lily","Easter Basket","Jelly Beans","Sunrise Service","Hosanna","Donkey Ride","Last Supper","Foot Washing","Garden Prayer","Rooster Crows","Linen Cloth","Angel at Tomb","He Is Risen","Bread and Cup","Hot Cross Bun","Easter Sunrise","Christmas Lights","Star Topper","Ribbon Bow","Gift Tag","Toy Train","Nutcracker","Sugar Cookie","Hot Cocoa","Gingerbread Man","Icing Smile","Cookie Cutter","Paper Chain","Popcorn Garland","Pine Cone","Christmas Card","Sleigh Ride","Santa Hat","Santa Sack","Milk and Cookies","Carrot Snack","Snowflake","Winter Scarf","Mitten","Cozy Blanket","Christmas Eve","Christmas Morning","Wrapping Paper","Tape and Bow","Tree Skirt","Glass Ball","Handmade Ornament","Cookie Plate","Note for Santa","Christmas Pajamas","Christmas Pageant","Shepherd Costume","Angel Costume","Paper Crown","Advent Calendar","Poinsettia","Cinnamon Stick","Wreath on Door","Light Strings","Bells Ring","Carol Singers","Silent Night","Deck the Halls","We Three Kings","Little Drum","Hay in Manger","Angel Wings","Three Gifts","Camel Ride","Easter Dress","Easter Bonnet","Egg Hunt","Hidden Egg","Plastic Egg","Pink Egg","Blue Egg","Basket Grass","Chocolate Bunny","Marshmallow Chick","Carrot Cake","Empty Cross","White Lily","Sunrise Hymn","Flower Cross","Alleluia","Palm Leaves","Hosanna Shout","Servant Towel","Basin of Water","Clean Feet","Joyful Morning","Folded Cloth","Go and Tell","Name Called"],
+      "Bible Characters": ["Noah","Moses","Abraham","Sarah","Isaac","Rebekah","Jacob","Rachel","Leah","Joseph","Benjamin","Miriam","Aaron","Joshua","Caleb","Rahab","Deborah","Gideon","Samson","Ruth","Naomi","Boaz","Samuel","Hannah","David","Goliath","Jonathan","Solomon","Elijah","Elisha","Esther","Mordecai","Daniel","Jonah","Mary","Peter","Andrew","James","John","Martha","Lazarus","Zacchaeus","Paul","Timothy","Lydia","Dorcas","Barnabas","Nicodemus","Bartimaeus","Stephen","Pharaoh","Gabriel","Adam","Eve","Cain","Abel","Seth","Enoch","Methuselah","Lot","Lot's Wife","Ishmael","Esau","Laban","Judah","Reuben","Simeon","Levi","Zipporah","Jethro","Balaam","Barak","Jael","Delilah","Eli","Saul","Jesse","Absalom","Nathan","Abigail","Naaman","Hezekiah","Josiah","Isaiah","Jeremiah","Ezekiel","Hosea","Amos","Micah","Nehemiah","Ezra","Job","Shadrach","Meshach","Abednego","Haman","Vashti","Belshazzar","Darius","Cyrus","Herod","Pilate","Judas","Thomas","Matthew","Philip","Bartholomew","Mary Magdalene","John the Baptist","Silas","Luke","Mark","Elizabeth","Anna","Cornelius","Priscilla","Titus"],
+      "Bible Stories": ["Noah's Ark","Baby Moses","Burning Bush","Red Sea","Coat of Colors","Lion's Den","Fiery Furnace","Walls of Jericho","Ten Commandments","Golden Calf","David's Harp","Sling and Stone","Queen Esther","Jacob's Ladder","Tower of Babel","Garden of Eden","Noah's Rainbow","Olive Branch","Balaam's Donkey","Elijah's Chariot","Widow's Oil","Boy's Lunch","Upper Room","Empty Tomb","Rolled Stone","Palm Parade","Bethlehem Star","Wise Men","Baby in Manger","Two by Two","Basket Boat","Moses' Staff","Water from Rock","Morning Manna","Cloud by Day","Fire by Night","Spies with Grapes","Trumpet Blast","Marching Around","Writing on Wall","Ship in Storm","Prison Song","Dove Returns","Ark Door","Shepherd Boy","Rainbow Promise","Creation Lights","Naming Animals","Garden Walk","Forbidden Fruit","Building the Ark","Forty Day Rain","Raven Sent Out","Dove With Leaf","Rainbow Sky","Brick by Brick","Counting Stars","Three Visitors","Water Jar Welcome","Bowl of Stew","Dream Ladder","Grain Bags","Hidden Silver Cup","Big Family Hug","River Basket","Princess Finds Baby","Snake Staff","Path Through Sea","Bread from Sky","Evening Quail","Shining Face","Giant Grapes","Red Cord","Seven Day March","Sun Stays Still","Dry Fleece","Wet Fleece","Torches and Jars","Gleaning Barley","Little Lost Donkeys","Oil on Head","Five Stones","Bread from Ravens","Flour Jar","Chariot Ride","Seven Washes","Ax Head Floats","Upstairs Room","Brave Queen","New City Wall","Praying in Fish","Shepherds at Night","Follow the Star","Treasure Gifts","Boy in Temple","River Baptism","Emmaus Walk","Fish Breakfast","Rising Cloud","Mighty Wind","Singing at Midnight","Animals Enter Ark","Spotted Sheep","Palace Dreams","Seven Good Years","Hopping Frogs","Shore Song","Bitter Made Sweet","New Stone Tablets","Twelve Stones","Cloud Leads On","Fire Leads On"],
+      "Miracles & Parables": ["Walking on Water","Calming the Storm","Water to Wine","Loaves and Fish","Healing Blind Eyes","Man Through Roof","Raising Lazarus","Catch of Fish","Coin in Fish","Withered Hand","Ten Lepers","Centurion's Servant","Jairus Daughter","Woman Touches Hem","Mute Man Speaks","Deaf Ears Open","Lame Man Walks","Fig Tree","The Good Samaritan","The Prodigal Son","Lost Sheep","Lost Coin","Mustard Seed","The Sower","Priceless Pearl","House on Rock","House on Sand","Lamp on Stand","Hidden Treasure","The Talents","Wedding Feast","Two Sons","Persistent Widow","Friend at Midnight","Rich Fool","Good Shepherd","Narrow Gate","Yeast in Dough","Sheep and Goats","Banquet Guests","New Wineskins","Old Wineskins","Vine and Branches","Ten Lamps","Vineyard Workers","Muddy Eyes Open","Breaking Nets","Hand Made Whole","Faraway Healing","Cloak Touch","Opened Ears","Freed Tongue","Sudden Fig Tree","Kind Stranger","Searching Shepherd","Swept Floor","Growing Seed","Path Seeds","Thorny Soil","Good Ground","Covered Lamp","Faithful Servants","Hidden Coin","Wedding Garment","Full Barns","Known Sheep","Narrow Door","Rising Dough","Sorted Sheep","New Skins","Grape Vine","Dawn Workers","Evening Workers","Ready Feast","Warm Welcome","Jealous Brother","Forgiven Debt","Wheat Together","Weeds Together","Dragnet of Fish","Shut Door","Healed at Once","Pool Steps","Bed Carried Home","Distant Son Healed","Helping Hand Up","Shared Lunch","Full Jars","Wedding at Cana","Official's Son","Peter's Mother","Bent Woman","Two Blind Men","Leper Healed","Servant Healed","Great Catch","Five Loaves","Two Fish","Bread Multiplied","Cana Wedding"],
+      "Christmas & Easter": ["Baby Jesus","Manger Bed","Shepherds","Angel Choir","Christmas Tree","Candy Cane","Stocking","Wrapped Gift","Sleigh Bells","Snowman","Nativity Scene","Gold Gift","Frankincense","Myrrh","Drummer Boy","Christmas Cookie","Holly Wreath","Advent Candle","Jingle Bells","Gingerbread House","Christmas Carol","Ornament","Wreath","Reindeer","North Star","Swaddling Cloth","Palm Branch","Easter Egg","Rolled Away Stone","Easter Lily","Easter Basket","Jelly Beans","Sunrise Service","Hosanna","Donkey Ride","Last Supper","Foot Washing","Garden Prayer","Rooster Crows","Linen Cloth","Angel at Tomb","He Is Risen","Bread and Cup","Hot Cross Bun","Easter Sunrise","Christmas Lights","Star Topper","Ribbon Bow","Gift Tag","Toy Train","Nutcracker","Sugar Cookie","Hot Cocoa","Gingerbread Man","Icing Smile","Cookie Cutter","Paper Chain","Popcorn Garland","Pine Cone","Christmas Card","Sleigh Ride","Santa Hat","Santa Sack","Milk and Cookies","Carrot Snack","Snowflake","Winter Scarf","Mitten","Cozy Blanket","Christmas Eve","Christmas Morning","Wrapping Paper","Tape and Bow","Tree Skirt","Glass Ball","Handmade Ornament","Cookie Plate","Note for Santa","Christmas Pajamas","Christmas Pageant","Shepherd Costume","Angel Costume","Paper Crown","Advent Calendar","Poinsettia","Cinnamon Stick","Wreath on Door","Light Strings","Bells Ring","Carol Singers","Silent Night","Deck the Halls","We Three Kings","Little Drum","Hay in Manger","Angel Wings","Three Gifts","Camel Ride","Easter Dress","Easter Bonnet","Egg Hunt","Hidden Egg","Plastic Egg","Pink Egg","Blue Egg","Basket Grass","Chocolate Bunny","Marshmallow Chick","Carrot Cake","Empty Cross","White Lily","Sunrise Hymn","Flower Cross","Alleluia","Palm Leaves","Hosanna Shout","Servant Towel","Basin of Water"],
       "Church Life": ["Singing Hymns","Passing Offering","Prayer Hands","Communion Cup","Baptism","Church Pew","Choir Robe","Organ Music","Handbells","Sunday School","Memory Verse","Handshake Peace","Church Potluck","Casserole","Greeter Smile","Church Bulletin","Pew Bible","Cross Necklace","Stained Glass","Steeple","Church Bell","Pastor Preaching","Usher Seating","Bible Craft","Gold Star","Flannel Board","Youth Group","Church Camp","Campfire Song","Saying Grace","Amen","Hallelujah","Raising Hands","Clapping Praise","Kneeling Prayer","Lighting Candle","Flower Duty","Nursery Rocking","Fellowship Hall","Coffee Hour","Name Tag","Welcome Table","Food Pantry","Choir Practice","Scripture Reading","Offering Plate","Hymnal","Sunday Best","Church Van","Potluck Dessert","Altar Flowers","Welcome Hug","Door Holder","Opening Prayer","Closing Prayer","Benediction","Doxology","Psalm Reading","Kids Sermon","Object Lesson","Puppet Show","Coloring Page","Verse Card","Sticker Chart","Offering Envelope","Prayer Request","Prayer Circle","Eyes Closed","Bowed Head","Folded Hands","Hymn Number","Piano Keys","Choir Director","Music Stand","Pulpit","Microphone","Baptism Pool","White Robe","Communion Tray","Little Cup","Broken Bread","Candle Lighter","Candle Snuffer","Church Steps","Children's Church","Craft Table","Cotton Ball Sheep","Verse Bracelet","Youth Room","Game Night","Camp Cabin","Camp Song","Canned Food","Coat Drive","Mitten Tree","Shoe Box","Visitor Card","Pew Pencil","Donut Box","Juice Pitcher","Serving Line","Folding Chair","Ice Cream Social","Church Picnic","Christmas Play","Bell Choir","Kids Choir","Solo Singer","Welcome Bag","Bible Cover","Ribbon Bookmark","Prayer Journal","Bedtime Prayer","Mealtime Grace","Banana Pudding","After Church","Church Bus","Sunday Hat","Lyrics Screen","Friendship Pad"],
-      "Bible Animals": ["Dove","Lamb","Lion","Donkey","Whale","Fish","Raven","Sheep","Goat","Camel","Horse","Colt","Ox","Sparrow","Eagle","Rooster","Hen","Locust","Frog","Quail","Deer","Wolf","Bear","Fox","Pig","Dog","Ant","Calf","Ram","Pigeon","Mule","Turtledove","Fatted Calf","Talking Donkey","Big Fish","Lost Lamb","Noah's Dove","Jonah's Fish","Balaam's Donkey","Shepherd Dog","Pair of Doves","Work Horse","Young Colt","Mother Hen","Baby Chick","Little Lamb","Wild Goat","Bull","Dairy Cow","Heifer","Wild Ox","Chariot Horse","Riding Donkey","Loaded Camel","Ewe","Goat Kid","Spotted Goat","Speckled Sheep","Fat Cow","Thin Cow","Grazing Sheep","Pet Lamb","Lion Cub","Bear Cub","Fawn","Gazelle","Mountain Goat","Rock Badger","Hare","Stork","Swallow","Two Sparrows","Raven Pair","Homing Pigeon","Soaring Eagle","Partridge","Quail Flock","Hen Chicks","Ostrich","Strutting Peacock","Pelican","Grasshopper","Moth","Gnat","Honeybee","Hornet","Ant Hill","Locust Cloud","Caterpillar","Worm","Spider","Great Fish","Little Fish","Net of Fish","Donkey Colt","Plow Ox","Yoke Team","Wandering Sheep","Muddy Pigs","Noah Raven","Ark Dove","Morning Quail","Red Heifer","Scapegoat","Young Bull","Manger Ox","Manger Donkey","Playful Calf","Twin Goats","Stable Ox","Shepherd Lamb"],
-      "Bible Places & Things": ["Manger","Stable","Temple","Tabernacle","Stone Altar","Ark of Covenant","Stone Tablets","Wooden Staff","Sling","Harp","Crown","Throne","Water Well","Desert Tent","Holy Mountain","Jordan River","Red Sea","Garden Tomb","Wooden Cup","Unleavened Bread","Scroll","Oil Lamp","Clay Jar","Reed Basket","Fig Tree","Grapevine","Olive Branch","Rainbow","Pillar of Fire","Pillar of Cloud","Trumpet","Shofar","Menorah","Temple Veil","Fishing Boat","Fishing Net","Sycamore Tree","Upper Room","Empty Jar","Mustard Plant","City Gate","City Wall","Shepherd Staff","Prayer Shawl","Sandal","Water Jar","Alabaster Jar","Sheepfold","Bethlehem","Nazareth","Jerusalem","Galilee","Jericho","Egypt","Canaan","Sinai","Bethel","Hebron","Nineveh","Babylon","Damascus","Mount Carmel","Mount of Olives","Sea of Galilee","Dead Sea","Nile River","Promised Land","Wooden Ark","Grassy Hill","Bethany","Cana","Capernaum","Emmaus","Gethsemane","Lampstand","Incense Altar","Bronze Basin","Anointing Oil","Barley Loaf","Twelve Baskets","Stone Jars","Hand Mill","Mud Brick","Well Rope","Clay Lamp","Reed Pen","Stone Pillow","Altar Stones","Memorial Stones","Smooth Stone","Shepherd Bag","Lyre","Tambourine","Silver Trumpet","Blue Tassel","Sandal Strap","Oil Flask","Palm Tree","Cedar Tree","Hyssop Branch","Lily of Field","Olive Press","Winepress","Threshing Floor","Winnowing Fork","Storehouse","Cornerstone","Watchtower","Vineyard","Mustard Tree","Lost Coin Purse","Widow Coin","Fish Coin","Roof Tiles","Sleeping Mat","Jericho Road","Oil and Wine","Two Coins","Bushel Basket","Budding Staff","Mercy Seat","Carrying Poles","Sheep Gate","Pool of Siloam"],
+      "Bible Animals": ["Dove","Lamb","Lion","Donkey","Whale","Fish","Raven","Sheep","Goat","Camel","Horse","Colt","Ox","Sparrow","Eagle","Rooster","Hen","Locust","Frog","Quail","Deer","Wolf","Bear","Fox","Pig","Dog","Ant","Calf","Ram","Pigeon","Mule","Turtledove","Fatted Calf","Talking Donkey","Big Fish","Lost Lamb","Noah's Dove","Jonah's Fish","Shepherd Dog","Pair of Doves","Work Horse","Young Colt","Mother Hen","Baby Chick","Little Lamb","Wild Goat","Bull","Dairy Cow","Heifer","Wild Ox","Chariot Horse","Riding Donkey","Loaded Camel","Ewe","Goat Kid","Spotted Goat","Speckled Sheep","Fat Cow","Thin Cow","Grazing Sheep","Pet Lamb","Lion Cub","Bear Cub","Fawn","Gazelle","Mountain Goat","Rock Badger","Hare","Stork","Swallow","Two Sparrows","Raven Pair","Homing Pigeon","Soaring Eagle","Partridge","Quail Flock","Hen Chicks","Ostrich","Strutting Peacock","Pelican","Grasshopper","Moth","Gnat","Honeybee","Hornet","Ant Hill","Locust Cloud","Caterpillar","Worm","Spider","Great Fish","Little Fish","Net of Fish","Donkey Colt","Plow Ox","Yoke Team","Wandering Sheep","Muddy Pigs","Noah Raven","Ark Dove","Morning Quail","Scapegoat","Young Bull","Manger Ox","Manger Donkey","Playful Calf","Twin Goats","Stable Ox","Shepherd Lamb"],
+      "Bible Places & Things": ["Manger","Stable","Temple","Tabernacle","Stone Altar","Ark of Covenant","Stone Tablets","Wooden Staff","Sling","Harp","Crown","Throne","Water Well","Desert Tent","Holy Mountain","Jordan River","Garden Tomb","Wooden Cup","Unleavened Bread","Scroll","Oil Lamp","Clay Jar","Reed Basket","Grapevine","Rainbow","Pillar of Fire","Pillar of Cloud","Trumpet","Shofar","Menorah","Temple Veil","Fishing Boat","Fishing Net","Sycamore Tree","Empty Jar","Mustard Plant","City Gate","City Wall","Shepherd Staff","Prayer Shawl","Sandal","Water Jar","Alabaster Jar","Sheepfold","Bethlehem","Nazareth","Jerusalem","Galilee","Jericho","Egypt","Canaan","Sinai","Bethel","Hebron","Nineveh","Babylon","Damascus","Mount Carmel","Mount of Olives","Sea of Galilee","Dead Sea","Nile River","Promised Land","Wooden Ark","Grassy Hill","Bethany","Cana","Capernaum","Emmaus","Gethsemane","Lampstand","Incense Altar","Bronze Basin","Anointing Oil","Barley Loaf","Twelve Baskets","Stone Jars","Hand Mill","Mud Brick","Well Rope","Clay Lamp","Reed Pen","Stone Pillow","Altar Stones","Memorial Stones","Smooth Stone","Shepherd Bag","Lyre","Tambourine","Silver Trumpet","Blue Tassel","Sandal Strap","Oil Flask","Palm Tree","Cedar Tree","Lily of Field","Olive Press","Winepress","Threshing Floor","Winnowing Fork","Storehouse","Cornerstone","Watchtower","Vineyard","Mustard Tree","Lost Coin Purse","Widow Coin","Fish Coin","Roof Tiles","Sleeping Mat","Jericho Road","Oil and Wine","Two Coins","Bushel Basket","Budding Staff","Carrying Poles","Sheep Gate","Pool of Siloam"],
       "Actions": ["Running","Jumping","Swimming","Dancing","Sleeping","Sneezing","Laughing","Crying","Eating","Drinking","Climbing","Crawling","Hopping","Skipping","Waving","Clapping","Marching","Tiptoeing","Spinning","Stretching","Yawning","Brushing Teeth","Combing Hair","Tying Shoes","Blowing Bubbles","Flying Kite","Riding Bike","Rowing Boat","Pitching Tent","Reading Book","Writing Letter","Taking Photo","Opening Gift","Wrapping Present","Baking Cookies","Flipping Pancakes","Walking Dog","Washing Hands","Blowing Nose","Hiccuping","Balancing","Juggling","Bowling","Ice Skating","Pushing Swing","Catching Ball","Throwing Ball","Blowing Candles","Peeling Banana","Zipping Jacket","High Five","Making Faces","Whistling","Humming","Singing","Whispering","Shouting","Giggling","Hugging","Galloping","Jumping Jacks","Touching Toes","Somersault","Crab Walk","Bear Crawl","Frog Jump","Bunny Hop","Duck Walk","Bowing","Curtsying","Saluting","Nodding","Shrugging","Pointing","Thumbs Up","Blowing Kiss","Winking","Scratching Head","Covering Eyes","Peeking","Robot Walk","Silly Walk","Moonwalk","Dizzy Spin","Hop One Foot","Double Dutch","Kicking Ball","Bouncing Ball","Dribbling","Shooting Hoop","Swinging Bat","Tennis Swing","Golf Swing","Finger Painting","Coloring","Cutting Paper","Folding Paper","Paper Airplane","Blowing Balloon","Buttoning Coat","Putting On Hat","Opening Umbrella","Puddle Splash","Pillow Fight","Blanket Fort","Turning Pages","Raising Hand","Sitting Crisscross","Stomping","Snapping Fingers","Rubbing Tummy","Patting Head","Washing Face","Gargling","Slurping","Sipping Straw","Stirring Pot","Pouring Milk","Cracking Egg","Rolling Dough","Licking Spoon","Waving Goodbye","Shaking Gift","Tying Bow","Knocking","Answering Door","Copying Leader","Melting Down","Growing Tall","Robot Dance"],
       "Jobs": ["Firefighter","Teacher","Doctor","Nurse","Chef","Farmer","Pilot","Astronaut","Police Officer","Mail Carrier","Dentist","Veterinarian","Librarian","Baker","Painter","Musician","Singer","Builder","Carpenter","Plumber","Electrician","Mechanic","Bus Driver","Sailor","Fisher","Judge","Scientist","Photographer","Reporter","Cashier","Server","Lifeguard","Coach","Zookeeper","Florist","Barber","Janitor","Principal","Pastor","Crossing Guard","Flight Attendant","Park Ranger","Miner","Blacksmith","Tailor","Potter","Shepherd","Beekeeper","Gardener","Conductor","Paramedic","School Nurse","Eye Doctor","Pharmacist","Pet Groomer","Dog Trainer","Cowboy","Cowgirl","Stable Hand","Jockey","Lighthouse Keeper","Ship Captain","Astronomer","Weather Reporter","News Anchor","Camera Operator","Actor","Dancer","Ballerina","Clown","Magician","Puppeteer","Storyteller","Author","Illustrator","Cartoonist","Toymaker","Jeweler","Watchmaker","Cobbler","Quilter","Grocer","Ice Cream Seller","Barista","Babysitter","Daycare Teacher","Tutor","Counselor","Lunch Server","Taxi Driver","Train Engineer","Ticket Taker","Director","Drummer","Violinist","Pianist","Guitarist","Music Teacher","Art Teacher","Gym Teacher","Referee","Umpire","Mascot","Camp Counselor","Trail Guide","Aquarium Keeper","Inventor","Engineer","Architect","Bricklayer","Roofer","Locksmith","Delivery Driver","Pizza Driver","Bank Teller","Museum Guide","Organist","Groundskeeper","Cake Decorator","Candy Maker","Explorer","Detective","Sign Interpreter","Forest Ranger"],
-      "Sports": ["Soccer","Basketball","Baseball","Tennis","Golf","Swim Race","Bowling","Volleyball","Hockey","Softball","Kickball","Dodgeball","Frisbee","Relay Race","Hurdles","Long Jump","High Jump","Shot Put","Archery","Cartwheel","Balance Beam","Cheerleading","Ice Skating","Skiing","Sledding","Surfing","Canoeing","Rowing","Horseback Riding","Ping Pong","Badminton","Croquet","Mini Golf","Tee Ball","Free Throw","Slam Dunk","Home Run","Touchdown","Goalie","Penalty Kick","Batting","Pitching","Gymnastics","Martial Arts","Skateboarding","Jump Rope","Tug of War","Sack Race","Egg and Spoon","Lacrosse","Rugby","Cricket","Field Hockey","Curling","Speed Skating","Figure Skating","Slap Shot","Hat Trick","Bicycle Kick","Corner Kick","Throw In","Layup","Three Pointer","Bounce Pass","Pop Fly","Stolen Base","Catcher Mitt","Volleyball Serve","Spike","Forehand","Backhand","Golf Putt","Hole in One","Bowling Strike","Gutter Ball","Bullseye","Relay Baton","Finish Line","Triple Jump","Pole Vault","Discus","Javelin","Sprint","Marathon","Floor Routine","Trampoline","Diving Board","Cannonball","Backstroke","Breaststroke","Freestyle","Water Polo","Kayak","Paddle Board","Snowboarding","Horseshoe","Corn Hole","Four Square","Pickleball","Handstand","Backflip","Medal Podium","Gold Medal","Team Huddle","Referee Whistle","Field Goal","Quarterback","Kickoff","Touchdown Dance","Warm Up","Obstacle Course","Three Legged Race","Wheelbarrow Race","Ultimate Frisbee","Disc Golf","Starting Blocks","Shuttle Run"],
-      "Animals": ["Dog","Cat","Puppy","Kitten","Horse","Pony","Cow","Pig","Chicken","Duck","Goose","Turkey","Rabbit","Mouse","Hamster","Frog","Turtle","Goldfish","Dolphin","Shark","Octopus","Crab","Butterfly","Bumblebee","Ladybug","Parrot","Penguin","Flamingo","Elephant","Giraffe","Tiger","Monkey","Gorilla","Zebra","Kangaroo","Koala","Panda","Hippo","Rhino","Crocodile","Squirrel","Raccoon","Owl","Seal","Walrus","Otter","Peacock","Swan","Hedgehog","Llama","Burro","Billy Goat","Woolly Sheep","Spring Lamb","Barnyard Rooster","Chick","Duckling","Piglet","Foal","Beaver","Chipmunk","Porcupine","Skunk","Arctic Fox","Grey Wolf","Coyote","Elk","Moose","Caribou","Bison","Dromedary","Lioness","Cheetah","Leopard","Jaguar","Cougar","Meerkat","Sloth","Orangutan","Lemur","Red Panda","Polar Bear","Grizzly","Wallaby","Wombat","Platypus","Emu","Toucan","Macaw","Parakeet","Hummingbird","Seagull","Puffin","Woodpecker","Whale","Lobster","Jellyfish","Seahorse","Sea Turtle","Manatee","Orca","Stingray","Clownfish","Firefly","Dragonfly","Inchworm","Snail","Guinea Pig","Gecko","Chameleon","Tadpole","Salamander","Narwhal","Beluga","Armadillo","Hyena","Blue Jay","Cardinal"],
-      "Chores": ["Washing Dishes","Drying Dishes","Sweeping Floor","Mopping Floor","Vacuuming","Dusting Shelves","Taking Out Trash","Sorting Recycling","Making the Bed","Folding Laundry","Ironing Shirt","Washing Clothes","Hanging Laundry","Matching Socks","Setting the Table","Clearing Table","Washing Windows","Cleaning Mirror","Scrubbing Tub","Feeding Pet","Walking Dog","Watering Plants","Mowing Lawn","Raking Leaves","Shoveling Snow","Weeding Garden","Loading Dishwasher","Unloading Dishwasher","Wiping Counters","Cleaning Fridge","Sorting Mail","Packing Lunch","Unpacking Groceries","Washing Car","Drying Car","Sweeping Porch","Shaking Rug","Fluffing Pillows","Organizing Books","Cleaning Shoes","Emptying Trash","Picking Up Toys","Changing Sheets","Watering Flowers","Wiping Table","Putting Toys Away","Feeding Fish","Making Sandwich","Dusting Fan","Dusting Blinds","Sweeping Steps","Sweeping Garage","Sorting Toys","Lego Sort","Rinsing Bottles","Flattening Boxes","Compost Scraps","Scraping Plates","Loading Washer","Adding Soap","Cleaning Lint","Folding Towels","Hanging Shirts","Pairing Socks","Sewing Button","Putting Clothes Away","Shoe Pairing","Polishing Shoes","Fresh Water Bowl","Brushing Dog","Making Breakfast","Washing Fruit","Packing Snack","Empty Lunchbox","Setting Napkins","Pouring Drinks","Sweeping Crumbs","Shining Sink","Wiping Microwave","New Trash Bag","Sorting Cans","Grocery List","Putting Milk Away","Pantry Tidy","Refill Soap","Cleaning Toilet","Scrubbing Sink","Washing Rug","Vacuum Stairs","Vacuum Couch","Tuck Sheets","Pillow Cases","Pull Weeds","Bag Leaves","Wash Bike","Put Bike Away","Coil Hose","Salt Steps","Boot Tray","Feed Birds","Fill Feeder","Stack Books","Wipe Spills","Sort Crayons","Make Guest Bed","Empty Dish Rack","Shake the Mat","Bring in Mail","Water the Lawn","Sweep the Drive","Fold Blankets","Close the Closet"],
-      "Movies": ["Frozen","Moana","Cars","Up","Coco","Brave","Tangled","Encanto","Luca","Soul","Onward","Hercules","Mulan","Aladdin","Bambi","Dumbo","Pinocchio","Cinderella","Peter Pan","Mary Poppins","The Lion King","Finding Nemo","Toy Story","Ratatouille","WALL-E","Inside Out","Monsters Inc","The Incredibles","Shrek","Madagascar","Kung Fu Panda","Minions","Sing","Trolls","Paddington","Matilda","Home Alone","The Sandlot","Space Jam","Jumanji","Hook","Babe","Beethoven","Lassie","Happy Feet","Zootopia","Sleeping Beauty","Snow White","The Lorax","Elf","Ice Age","The Croods","Boss Baby","Despicable Me","Big Hero 6","Wreck-It Ralph","Charlotte's Web","Stuart Little","The Polar Express","Arthur Christmas","Bolt","Chicken Little","Meet the Robinsons","Brother Bear","Treasure Planet","Lilo and Stitch","Tarzan","Pocahontas","The Little Mermaid","The Rescuers","The Aristocats","Oliver and Company","The Jungle Book","Robin Hood","Winnie the Pooh","101 Dalmatians","102 Dalmatians","Pete's Dragon","Bedknobs and Broomsticks","Alice in Wonderland","Mary Poppins Returns","Christopher Robin","The Peanuts Movie","Finding Dory","Monsters University","Toy Story 2","Toy Story 3","Toy Story 4","Cars 2","Cars 3","Incredibles 2","Frozen 2","Moana 2","Inside Out 2","Turning Red","Elemental","Wish","The Good Dinosaur","Puss in Boots","Shrek 2","Shrek the Third","Shrek Forever After","Hotel Transylvania","The Lego Movie","The BFG","Fantastic Mr Fox","Chicken Run","Bee Movie","Megamind","The Grinch","Despicable Me 2","Despicable Me 3","Despicable Me 4","Trolls World Tour","Trolls Band Together","Migration","Sonic the Hedgehog","Paddington 2","The Karate Kid","The Mighty Ducks","Cool Runnings","Remember the Titans","Little Giants","Air Bud","Homeward Bound","Annie","Enchanted","Ella Enchanted","The Princess Diaries","Freaky Friday","The Parent Trap","Old Yeller","Pollyanna","Swiss Family Robinson","The Princess Bride","Spy Kids","Agent Cody Banks","Daddy Day Care","Nanny McPhee","Evan Almighty","Stuart Little 2","Rio","Rio 2","Turbo","Abominable","Smallfoot","Missing Link","Early Man","The Willoughbys","Over the Moon","Klaus","The Christmas Chronicles","The Star","The Nativity Story","Fantasia","Fantasia 2000","Curious George","Sing 2","The Wild Robot","Lightyear","Strange World","The Bad Guys","Wonka","The Iron Giant","The Santa Clause","A Bug's Life","Planes","The Ten Commandments","My Neighbor Totoro","Ponyo","Balto","Free Willy","The Secret Garden","Benji","Shark Tale","Over the Hedge","Happy Feet Two","Peter Rabbit","Dog Man","Elio"],
+      "Sports": ["Soccer","Basketball","Baseball","Tennis","Golf","Swim Race","Volleyball","Hockey","Softball","Kickball","Dodgeball","Frisbee","Relay Race","Hurdles","Long Jump","High Jump","Shot Put","Archery","Cartwheel","Balance Beam","Cheerleading","Skiing","Sledding","Surfing","Canoeing","Rowing","Horseback Riding","Ping Pong","Badminton","Croquet","Mini Golf","Tee Ball","Free Throw","Slam Dunk","Home Run","Touchdown","Goalie","Penalty Kick","Batting","Pitching","Gymnastics","Martial Arts","Skateboarding","Jump Rope","Tug of War","Sack Race","Egg and Spoon","Lacrosse","Rugby","Cricket","Field Hockey","Curling","Speed Skating","Figure Skating","Slap Shot","Hat Trick","Bicycle Kick","Corner Kick","Throw In","Layup","Three Pointer","Bounce Pass","Pop Fly","Stolen Base","Catcher Mitt","Volleyball Serve","Spike","Forehand","Backhand","Golf Putt","Hole in One","Bowling Strike","Gutter Ball","Bullseye","Relay Baton","Finish Line","Triple Jump","Pole Vault","Discus","Javelin","Sprint","Marathon","Floor Routine","Trampoline","Diving Board","Cannonball","Backstroke","Breaststroke","Freestyle","Water Polo","Kayak","Paddle Board","Snowboarding","Horseshoe","Corn Hole","Four Square","Pickleball","Handstand","Backflip","Medal Podium","Gold Medal","Team Huddle","Referee Whistle","Field Goal","Quarterback","Kickoff","Touchdown Dance","Warm Up","Obstacle Course","Three Legged Race","Wheelbarrow Race","Ultimate Frisbee","Disc Golf","Starting Blocks","Shuttle Run"],
+      "Animals": ["Cat","Puppy","Kitten","Pony","Cow","Chicken","Duck","Goose","Turkey","Rabbit","Mouse","Hamster","Turtle","Goldfish","Dolphin","Shark","Octopus","Crab","Butterfly","Bumblebee","Ladybug","Parrot","Penguin","Flamingo","Elephant","Giraffe","Tiger","Monkey","Gorilla","Zebra","Kangaroo","Koala","Panda","Hippo","Rhino","Crocodile","Squirrel","Raccoon","Owl","Seal","Walrus","Otter","Peacock","Swan","Hedgehog","Llama","Burro","Billy Goat","Woolly Sheep","Spring Lamb","Barnyard Rooster","Chick","Duckling","Piglet","Foal","Beaver","Chipmunk","Porcupine","Skunk","Arctic Fox","Grey Wolf","Coyote","Elk","Moose","Caribou","Bison","Dromedary","Lioness","Cheetah","Leopard","Jaguar","Cougar","Meerkat","Sloth","Orangutan","Lemur","Red Panda","Polar Bear","Grizzly","Wallaby","Wombat","Platypus","Emu","Toucan","Macaw","Parakeet","Hummingbird","Seagull","Puffin","Woodpecker","Lobster","Jellyfish","Seahorse","Sea Turtle","Manatee","Orca","Stingray","Clownfish","Firefly","Dragonfly","Inchworm","Snail","Guinea Pig","Gecko","Chameleon","Tadpole","Salamander","Narwhal","Beluga","Armadillo","Hyena","Blue Jay","Cardinal"],
+      "Chores": ["Washing Dishes","Drying Dishes","Sweeping Floor","Mopping Floor","Vacuuming","Dusting Shelves","Taking Out Trash","Sorting Recycling","Making the Bed","Folding Laundry","Ironing Shirt","Washing Clothes","Hanging Laundry","Matching Socks","Setting the Table","Clearing Table","Washing Windows","Cleaning Mirror","Scrubbing Tub","Feeding Pet","Watering Plants","Mowing Lawn","Raking Leaves","Shoveling Snow","Weeding Garden","Loading Dishwasher","Unloading Dishwasher","Wiping Counters","Cleaning Fridge","Sorting Mail","Packing Lunch","Unpacking Groceries","Washing Car","Drying Car","Sweeping Porch","Shaking Rug","Fluffing Pillows","Organizing Books","Cleaning Shoes","Picking Up Toys","Changing Sheets","Watering Flowers","Wiping Table","Putting Toys Away","Feeding Fish","Making Sandwich","Dusting Fan","Dusting Blinds","Sweeping Steps","Sweeping Garage","Sorting Toys","Lego Sort","Rinsing Bottles","Flattening Boxes","Compost Scraps","Scraping Plates","Loading Washer","Adding Soap","Cleaning Lint","Folding Towels","Hanging Shirts","Sewing Button","Putting Clothes Away","Polishing Shoes","Fresh Water Bowl","Brushing Dog","Making Breakfast","Washing Fruit","Packing Snack","Empty Lunchbox","Setting Napkins","Pouring Drinks","Sweeping Crumbs","Shining Sink","Wiping Microwave","New Trash Bag","Sorting Cans","Grocery List","Putting Milk Away","Pantry Tidy","Refill Soap","Cleaning Toilet","Scrubbing Sink","Washing Rug","Vacuum Stairs","Vacuum Couch","Tuck Sheets","Pillow Cases","Pull Weeds","Bag Leaves","Wash Bike","Put Bike Away","Coil Hose","Salt Steps","Boot Tray","Feed Birds","Fill Feeder","Stack Books","Wipe Spills","Sort Crayons","Make Guest Bed","Empty Dish Rack","Shake the Mat","Bring in Mail","Water the Lawn","Sweep the Drive","Fold Blankets","Close the Closet"],
+      "Movies": ["Frozen","Moana","Cars","Up","Coco","Brave","Tangled","Encanto","Luca","Soul","Onward","Hercules","Mulan","Aladdin","Bambi","Dumbo","Pinocchio","Cinderella","Peter Pan","Mary Poppins","The Lion King","Finding Nemo","Toy Story","Ratatouille","WALL-E","Inside Out","Monsters Inc","The Incredibles","Madagascar","Kung Fu Panda","Minions","Sing","Trolls","Paddington","Matilda","Home Alone","The Sandlot","Space Jam","Jumanji","Hook","Babe","Beethoven","Lassie","Happy Feet","Zootopia","Sleeping Beauty","Snow White","The Lorax","Elf","Ice Age","The Croods","Boss Baby","Despicable Me","Big Hero 6","Wreck-It Ralph","Charlotte's Web","Stuart Little","The Polar Express","Arthur Christmas","Bolt","Chicken Little","Meet the Robinsons","Brother Bear","Treasure Planet","Lilo and Stitch","Tarzan","Pocahontas","The Little Mermaid","The Rescuers","The Aristocats","Oliver and Company","The Jungle Book","Robin Hood","Winnie the Pooh","101 Dalmatians","102 Dalmatians","Pete's Dragon","Alice in Wonderland","Mary Poppins Returns","Christopher Robin","The Peanuts Movie","Finding Dory","Monsters University","Toy Story 2","Toy Story 3","Toy Story 4","Cars 2","Cars 3","Incredibles 2","Frozen 2","Moana 2","Inside Out 2","Elemental","Wish","The Good Dinosaur","Puss in Boots","The Lego Movie","The BFG","Fantastic Mr Fox","Chicken Run","Bee Movie","Megamind","The Grinch","Despicable Me 2","Despicable Me 3","Despicable Me 4","Trolls World Tour","Trolls Band Together","Migration","Sonic the Hedgehog","Paddington 2","The Mighty Ducks","Cool Runnings","Remember the Titans","Little Giants","Air Bud","Homeward Bound","Annie","Enchanted","Ella Enchanted","The Princess Diaries","Freaky Friday","The Parent Trap","Old Yeller","Pollyanna","Swiss Family Robinson","The Princess Bride","Spy Kids","Agent Cody Banks","Daddy Day Care","Nanny McPhee","Evan Almighty","Stuart Little 2","Rio","Rio 2","Turbo","Abominable","Smallfoot","Missing Link","Early Man","The Willoughbys","Over the Moon","Klaus","The Christmas Chronicles","The Star","The Nativity Story","Fantasia 2000","Curious George","Sing 2","The Wild Robot","The Bad Guys","Wonka","The Iron Giant","The Santa Clause","A Bug's Life","Planes","The Ten Commandments","My Neighbor Totoro","Ponyo","Balto","Free Willy","The Secret Garden","Benji","Shark Tale","Over the Hedge","Happy Feet Two","Peter Rabbit","Dog Man","Elio"],
       "Everyday Objects": ["Spoon","Fork","Plate","Bowl","Chair","Table","Lamp","Clock","Phone","House Key","Book","Pencil","Shoe","Hat","Glasses","Umbrella","Pillow","Blanket","Toothbrush","Comb","Mirror","Towel","Bar of Soap","Ball","Teddy Bear","Scissors","Glue Stick","Crayon","Notebook","Lunchbox","Water Bottle","Backpack","Door","Window","TV Remote","Television","Couch","Rug","Broom","Bucket","Sponge","Hammer","Flashlight","Candle","Picture Frame","Flower Pot","Calendar","Wristwatch","Bicycle","Stroller","Coffee Mug","Toothpaste","Hairbrush","Pencil Case","Rubber Duck","Doorknob","Light Switch","Tissue Box","Alarm Clock","Piggy Bank","Napkin","Mug","Straw","Pitcher","Cutting Board","Spatula","Whisk","Ladle","Measuring Cup","Mixing Bowl","Oven Mitt","Apron","Paper Towel","Trash Can","Step Stool","High Chair","Night Light","Light Bulb","Fan","Thermometer","Bandage","Shampoo","Bathtub","Faucet","Washcloth","Hanger","Dresser","Scarf","Raincoat","Slippers","Lunch Bag","Thermos","Eraser","Ruler","Marker","Paintbrush","Chalk","Magnet","Stapler","Envelope","Globe","Bookmark","Camera","Headphones","Puzzle","Dice","Yo Yo","Balloon","Wagon","Helmet","Doll","Building Bricks","Toy Car","Rattle","Quilt","Curtain","Mailbox","Laundry Basket","Clothesline","Dustpan","Spray Bottle","Birdhouse","Wind Chime","Compass","Lantern","Suitcase","Sun Hat","Whistle","Trophy","Drum","Guitar","Backpack Strap","Coin Jar","Sticky Note","Keyboard","Flash Card"],
       "Foods": ["Pizza","Taco","Burger","Hot Dog","Sandwich","Tomato Soup","Garden Salad","Spaghetti","Mac and Cheese","Pancakes","Waffles","French Toast","Scrambled Eggs","Bacon","Cereal","Oatmeal","Toast","Bagel","Donut","Muffin","Cookie","Birthday Cake","Apple Pie","Ice Cream","Popsicle","Apple","Banana","Grapes","Orange","Strawberry","Watermelon","Carrot","Broccoli","Corn Cob","Baked Potato","French Fries","Popcorn","Pretzel","Nachos","Cheese","Yogurt","Milk","Apple Juice","Lemonade","Hot Chocolate","Marshmallow","Peanut Butter","Grape Jelly","Chicken Nuggets","Grilled Cheese","Fruit Salad","Bread Roll","Mashed Potatoes","Green Beans","Quesadilla","Burrito","Fried Rice","Noodles","Dumpling","Chili","Cornbread","Biscuit","Meatballs","Fish Sticks","Tuna Salad","Egg Salad","String Cheese","Honey","Syrup","Brownie","Cupcake","Cinnamon Roll","Croissant","Hash Brown","Blueberry","Peach","Pear","Pineapple","Mango","Kiwi","Applesauce","Smoothie","Milkshake","Pudding","Chocolate Milk","Orange Juice","Cucumber","Celery","Pumpkin","Sweet Potato","Garlic Bread","Breadstick","Tortilla","Salsa","Crackers","Granola Bar","Trail Mix","Pickle","Lasagna","Ravioli","Chicken Soup","Baked Beans","Potato Salad","Soft Pretzel","Cotton Candy","Caramel Apple","Churro","Egg Roll","Banana Bread","Cinnamon Toast","Watermelon Slice","Bean Burrito","Cheeseburger","Waffle Cone","Fruit Cup","Yogurt Cup","Oatmeal Cookie","Pumpkin Pie","Rice Bowl","Taco Salad","Grilled Chicken","Lemon Slice","Cheese Cubes","Apple Slices"],
-      "Outdoor Fun": ["Camping","Hiking","Fishing","Picnic","Kite Flying","Bike Ride","Scooter Ride","Skateboard","Jump Rope","Hopscotch","Playing Tag","Hide and Seek","Simon Says","Red Rover","Capture the Flag","Nature Walk","Bird Watching","Star Gazing","Roasting Marshmallows","Campfire","Canoe Ride","Paddle Boat","Sandcastle","Beach Ball","Finding Shells","Sunscreen","Sunglasses","Tossing Frisbee","Playground Slide","Swing Set","Seesaw","Monkey Bars","Climbing Tree","Leaf Pile","Building Snowman","Sledding Hill","Roller Skating","Planting Seeds","Watering Can","Butterfly Net","Bug Hunt","Skipping Stones","Treasure Hunt","Flashlight Walk","Blowing Bubbles","Picnic Blanket","Trail Walk","Tent Camping","Sleeping Bag","Collecting Leaves","Puddle Jump","Rain Boots","Creek Walk","Log Balance","Compass Walk","Backyard Camp","Lemonade Stand","Sprinkler Run","Water Balloon","Hose Spray","Pool Day","Pool Noodle","Sand Pail","Sand Shovel","Shell Necklace","Tide Pool","Wave Jump","Beach Walk","Kite String","Windy Hill","Bike Parade","Snow Angel","Snow Fort","Saucer Sled","Frozen Pond","Bird Feeder","Cloud Watching","Sunset Watch","Moon Watch","Firefly Hunt","Creek Splash","Stick Raft","Leaf Boat","Tadpole Look","Leaf Rubbing","Acorn Hunt","Painted Rock","Chalk Drawing","Whiffle Ball","Soccer Goal","Flying Disc","Balloon Volleyball","Scavenger Hunt","Color Hunt","Listening Walk","Picnic Lunch","Roasted Hot Dog","Making Smores","Graham Cracker","Sticky Fingers","Tent Zipper","Morning Dew","Trail Snack","Lookout Point","Feed the Ducks","Hayride","Corn Maze","Pumpkin Patch","Apple Picking","Berry Picking","Petting Zoo","Sunflower Row","Ladybug Find","Rain Gauge","Giant Bubble","Splash Pad","Paper Boat","Pinwheel","Shadow Tag","Park Bench","Mud Pie","Duck Pond"]
+      "Outdoor Fun": ["Camping","Hiking","Fishing","Picnic","Kite Flying","Bike Ride","Scooter Ride","Skateboard","Hopscotch","Playing Tag","Hide and Seek","Simon Says","Red Rover","Capture the Flag","Nature Walk","Bird Watching","Star Gazing","Roasting Marshmallows","Campfire","Canoe Ride","Paddle Boat","Sandcastle","Beach Ball","Finding Shells","Sunscreen","Sunglasses","Tossing Frisbee","Playground Slide","Swing Set","Seesaw","Monkey Bars","Climbing Tree","Leaf Pile","Building Snowman","Sledding Hill","Roller Skating","Planting Seeds","Watering Can","Butterfly Net","Bug Hunt","Skipping Stones","Treasure Hunt","Flashlight Walk","Picnic Blanket","Trail Walk","Tent Camping","Sleeping Bag","Collecting Leaves","Puddle Jump","Rain Boots","Creek Walk","Log Balance","Compass Walk","Backyard Camp","Lemonade Stand","Sprinkler Run","Water Balloon","Hose Spray","Pool Day","Pool Noodle","Sand Pail","Sand Shovel","Shell Necklace","Tide Pool","Wave Jump","Beach Walk","Kite String","Windy Hill","Bike Parade","Snow Angel","Snow Fort","Saucer Sled","Frozen Pond","Bird Feeder","Cloud Watching","Sunset Watch","Moon Watch","Firefly Hunt","Creek Splash","Stick Raft","Leaf Boat","Tadpole Look","Leaf Rubbing","Acorn Hunt","Painted Rock","Chalk Drawing","Whiffle Ball","Soccer Goal","Flying Disc","Balloon Volleyball","Scavenger Hunt","Color Hunt","Listening Walk","Picnic Lunch","Roasted Hot Dog","Making Smores","Graham Cracker","Sticky Fingers","Tent Zipper","Morning Dew","Trail Snack","Lookout Point","Feed the Ducks","Hayride","Corn Maze","Pumpkin Patch","Apple Picking","Berry Picking","Petting Zoo","Sunflower Row","Ladybug Find","Rain Gauge","Giant Bubble","Splash Pad","Paper Boat","Pinwheel","Shadow Tag","Park Bench","Mud Pie","Duck Pond"]
     };
 
     let state = loadState();
@@ -433,8 +467,29 @@
     let flashHandle = 0;
     let startLock = false;
     let audioCtx = null;
-    let tiltGate = { neutral: true, last: 0 };
     let lastSummary = null;
+    const sensor = {
+      permission: "unknown",
+      listening: false,
+      lastBeta: null,
+      lastGamma: null,
+      lastUpZ: null,
+      pitch: null,
+      neutral: 0,
+      delta: 0,
+      source: "none",
+      lastTrigger: "",
+      lastOrientAt: 0,
+      lastMotionAt: 0,
+      lastUsableAt: 0,
+      eventTimes: [],
+      samples: [],
+      calibrated: false,
+      armed: false,
+      lastFire: 0,
+      playStartedAt: 0,
+      calibTimer: 0
+    };
 
     function defaultState() {
       return {
@@ -490,12 +545,6 @@
       return state.teams[state.turnIndex] || state.teams[0];
     }
 
-    function normAngle(angle) {
-      const n = ((Math.round(angle) % 360) + 360) % 360;
-      if (n === 90 || n === 180 || n === 270) return n;
-      return 0;
-    }
-
     function screenAngle() {
       try {
         if (screen.orientation && typeof screen.orientation.angle === "number") {
@@ -506,51 +555,215 @@
       return window.innerWidth >= window.innerHeight ? 90 : 0;
     }
 
-    // W3C deviceorientation: beta/gamma describe the portrait device frame.
-    // Earth-up is rotated into the current screen orientation so landscape-left
-    // (90) and landscape-right (270) share one sign. Positive means the screen
-    // has turned face-down from upright. Negative means face-up.
-    function tiltDegrees(betaDeg, gammaDeg) {
+    /* tilt-math-start */
+    const TRIGGER_DEG = 35;
+    const RETURN_DEG = 15;
+    const DEBOUNCE_MS = 600;
+    const NEUTRAL_CLAMP = 50;
+
+    function normAngle(angle) {
+      const n = ((Math.round(angle) % 360) + 360) % 360;
+      if (n === 90 || n === 180 || n === 270) return n;
+      return 0;
+    }
+
+    // Earth-up in the device frame. screen.orientation.angle is counter-clockwise,
+    // so at 90 the phone's +x side points up. Positive tilt is face-down.
+    function upFromOrientation(betaDeg, gammaDeg) {
       if (!Number.isFinite(betaDeg) || !Number.isFinite(gammaDeg)) return null;
       const beta = (betaDeg * Math.PI) / 180;
       const gamma = (gammaDeg * Math.PI) / 180;
-      const upX = -Math.cos(beta) * Math.sin(gamma);
-      const upY = Math.sin(beta);
-      const upZ = Math.cos(beta) * Math.cos(gamma);
-      const angle = screenAngle();
+      return {
+        x: -Math.cos(beta) * Math.sin(gamma),
+        y: Math.sin(beta),
+        z: Math.cos(beta) * Math.cos(gamma)
+      };
+    }
+
+    function signedTilt(upX, upY, upZ, angle) {
+      if (!Number.isFinite(upX) || !Number.isFinite(upY) || !Number.isFinite(upZ)) return null;
+      angle = normAngle(angle);
       let sy;
       const sz = upZ;
-      if (angle === 90) sy = -upX;
-      else if (angle === 270) sy = upX;
+      if (angle === 90) sy = upX;
+      else if (angle === 270) sy = -upX;
       else if (angle === 180) sy = -upY;
       else sy = upY;
       return (Math.atan2(-sz, sy) * 180) / Math.PI;
     }
 
-    function resetTiltGate() {
-      tiltGate = { neutral: true, last: 0 };
+    function tiltDegrees(betaDeg, gammaDeg, angle) {
+      const up = upFromOrientation(betaDeg, gammaDeg);
+      if (!up) return null;
+      return signedTilt(up.x, up.y, up.z, angle);
+    }
+
+    function clampNeutral(value) {
+      if (!Number.isFinite(value)) return 0;
+      if (value > NEUTRAL_CLAMP) return NEUTRAL_CLAMP;
+      if (value < -NEUTRAL_CLAMP) return -NEUTRAL_CLAMP;
+      return value;
+    }
+
+    function normalizeUp(x, y, z) {
+      if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) return null;
+      const mag = Math.hypot(x, y, z);
+      if (!(mag > 0)) return null;
+      return { x: x / mag, y: y / mag, z: z / mag };
+    }
+
+    function triggerFromDelta(delta, armed, lastFire, now) {
+      if (!Number.isFinite(delta) || !Number.isFinite(now)) {
+        return { fire: "", armed: Boolean(armed), lastFire: lastFire };
+      }
+      if (Math.abs(delta) <= RETURN_DEG) return { fire: "", armed: true, lastFire: lastFire };
+      if (!armed) return { fire: "", armed: false, lastFire: lastFire };
+      if (Math.abs(delta) < TRIGGER_DEG) return { fire: "", armed: true, lastFire: lastFire };
+      if (now - lastFire < DEBOUNCE_MS) return { fire: "", armed: true, lastFire: lastFire };
+      const fire = delta >= TRIGGER_DEG ? "correct" : "pass";
+      return { fire: fire, armed: false, lastFire: now };
+    }
+    /* tilt-math-end */
+
+    function fmtSensor(value) {
+      return Number.isFinite(value) ? String(Math.round(value * 10) / 10) : "none";
+    }
+
+    function sensorFresh(now) {
+      return now - sensor.lastUsableAt <= SENSOR_FRESH_MS;
+    }
+
+    function refreshSensorUi() {
+      const now = Date.now();
+      sensor.eventTimes = sensor.eventTimes.filter((stamp) => now - stamp <= SENSOR_FRESH_MS);
+      const pill = document.getElementById("tilt-status");
+      if (pill) pill.textContent = sensorFresh(now) ? "Tilt on" : "Tilt off, use buttons";
+      const box = document.getElementById("tilt-debug");
+      if (!box || !TILT_DEBUG) return;
+      box.textContent = [
+        "beta " + fmtSensor(sensor.lastBeta),
+        "gamma " + fmtSensor(sensor.lastGamma),
+        "angle " + screenAngle(),
+        "up.z " + fmtSensor(sensor.lastUpZ),
+        "pitch " + fmtSensor(sensor.pitch),
+        "neutral " + fmtSensor(sensor.neutral),
+        "delta " + fmtSensor(sensor.delta),
+        "source " + (sensorFresh(now) ? sensor.source : "none"),
+        "permission " + sensor.permission,
+        "eps " + sensor.eventTimes.length,
+        "last trigger " + (sensor.lastTrigger || "none")
+      ].join("\n");
+    }
+
+    function beginCalibration() {
+      if (sensor.calibTimer) window.clearTimeout(sensor.calibTimer);
+      sensor.samples = [];
+      sensor.calibrated = false;
+      sensor.armed = false;
+      sensor.neutral = 0;
+      sensor.delta = 0;
+      sensor.lastFire = 0;
+      sensor.lastTrigger = "";
+      sensor.playStartedAt = Date.now();
+      sensor.calibTimer = window.setTimeout(tryFinishCalibration, CALIBRATE_MS + 20);
+    }
+
+    function tryFinishCalibration() {
+      if (sensor.calibrated) return;
+      if (document.body.dataset.phase !== "play") return;
+      if (sensor.samples.length < MIN_SAMPLES) return;
+      if (Date.now() - sensor.playStartedAt < CALIBRATE_MS) return;
+      let sum = 0;
+      for (let i = 0; i < sensor.samples.length; i += 1) sum += sensor.samples[i];
+      sensor.neutral = clampNeutral(sum / sensor.samples.length);
+      const last = sensor.samples[sensor.samples.length - 1];
+      sensor.delta = last - sensor.neutral;
+      sensor.armed = Math.abs(sensor.delta) <= RETURN_DEG;
+      sensor.calibrated = true;
+      sensor.samples = [];
+      document.documentElement.dataset.tilt = String(Math.round(sensor.delta));
+      refreshSensorUi();
+    }
+
+    function considerTilt(pitch, now) {
+      document.documentElement.dataset.tiltSource = sensor.source;
+      if (!sensor.calibrated) {
+        sensor.samples.push(pitch);
+        document.documentElement.dataset.tilt = String(Math.round(pitch));
+        tryFinishCalibration();
+        refreshSensorUi();
+        return;
+      }
+      sensor.delta = pitch - sensor.neutral;
+      document.documentElement.dataset.tilt = String(Math.round(sensor.delta));
+      const result = triggerFromDelta(sensor.delta, sensor.armed, sensor.lastFire, now);
+      sensor.armed = result.armed;
+      sensor.lastFire = result.lastFire;
+      refreshSensorUi();
+      if (!result.fire) return;
+      sensor.lastTrigger = result.fire;
+      resolveRound(result.fire);
+    }
+
+    function noteReading(source, beta, gamma, up) {
+      const pitch = signedTilt(up.x, up.y, up.z, screenAngle());
+      if (pitch === null) return;
+      const now = Date.now();
+      sensor.lastBeta = beta;
+      sensor.lastGamma = gamma;
+      sensor.lastUpZ = up.z;
+      sensor.pitch = pitch;
+      sensor.source = source;
+      sensor.lastUsableAt = now;
+      sensor.eventTimes.push(now);
+      if (source === "orientation") sensor.lastOrientAt = now;
+      else sensor.lastMotionAt = now;
+      if (document.body.dataset.phase === "play") considerTilt(pitch, now);
+      else refreshSensorUi();
+    }
+
+    function orientationLeads(now) {
+      return sensor.lastOrientAt >= sensor.playStartedAt && now - sensor.lastOrientAt < SENSOR_FRESH_MS;
     }
 
     function onOrientation(event) {
-      if (document.body.dataset.phase !== "play") return;
-      const tilt = tiltDegrees(event.beta, event.gamma);
-      if (tilt === null) return;
-      document.documentElement.dataset.tilt = String(Math.round(tilt));
-      if (Math.abs(tilt) <= NEUTRAL_DEG) {
-        tiltGate.neutral = true;
-        return;
-      }
-      if (!tiltGate.neutral) return;
-      const now = Date.now();
-      if (now - tiltGate.last < DEBOUNCE_MS) return;
-      tiltGate.neutral = false;
-      tiltGate.last = now;
-      resolveRound(tilt > NEUTRAL_DEG ? "correct" : "pass");
+      if (event.beta == null || event.gamma == null) return;
+      const up = upFromOrientation(event.beta, event.gamma);
+      if (!up) return;
+      noteReading("orientation", event.beta, event.gamma, up);
     }
 
-    function listenTilt() {
+    function onMotion(event) {
+      const accel = event.accelerationIncludingGravity;
+      if (!accel) return;
+      const up = normalizeUp(accel.x, accel.y, accel.z);
+      if (!up) return;
+      const now = Date.now();
+      if (orientationLeads(now)) {
+        sensor.lastMotionAt = now;
+        return;
+      }
+      if (document.body.dataset.phase === "play" && now - sensor.playStartedAt < MOTION_WAIT_MS) {
+        sensor.lastMotionAt = now;
+        sensor.lastUsableAt = now;
+        sensor.source = "motion";
+        sensor.eventTimes.push(now);
+        refreshSensorUi();
+        return;
+      }
+      noteReading("motion", null, null, up);
+    }
+
+    function attachSensors(orientOk, motionOk) {
       window.removeEventListener("deviceorientation", onOrientation);
-      window.addEventListener("deviceorientation", onOrientation);
+      window.removeEventListener("devicemotion", onMotion);
+      if (orientOk) window.addEventListener("deviceorientation", onOrientation);
+      if (motionOk) window.addEventListener("devicemotion", onMotion);
+      sensor.listening = Boolean(orientOk || motionOk);
+    }
+
+    function permissionApi(ctor) {
+      return typeof ctor !== "undefined" && typeof ctor.requestPermission === "function";
     }
 
     function setHint(text) {
@@ -753,7 +966,6 @@
       roundPassed = [];
       roundPoints = 0;
       currentCard = null;
-      resetTiltGate();
       document.documentElement.dataset.lastResult = "";
       const countdownTimer = document.getElementById("timer");
       countdownTimer.textContent = String(state.settings.seconds);
@@ -783,6 +995,7 @@
       timerHandle = window.setInterval(onTimer, 100);
       onTimer();
       updatePlayHud();
+      beginCalibration();
       deal();
       fitSoon();
     }
@@ -986,6 +1199,7 @@
       queue = [];
       stopTimer();
       window.clearTimeout(countdownHandle);
+      if (sensor.calibTimer) window.clearTimeout(sensor.calibTimer);
       document.getElementById("deck-empty").hidden = true;
       document.getElementById("confirm-modal").hidden = true;
       document.getElementById("flash").className = "";
@@ -1000,41 +1214,48 @@
     }
 
     function onTapStart() {
-      if (document.body.dataset.phase !== "setup" || startLock) return;
-      startLock = true;
-      let permPromise;
+      let orientPromise = null;
+      let motionPromise = null;
       try {
-        const DOE = window.DeviceOrientationEvent;
-        if (DOE && typeof DOE.requestPermission === "function") permPromise = DOE.requestPermission();
-        else permPromise = Promise.resolve("granted");
+        if (typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
+          orientPromise = DeviceOrientationEvent.requestPermission();
+        }
       } catch (err) {
-        permPromise = Promise.resolve("denied");
+        orientPromise = Promise.reject(err);
       }
+      try {
+        if (typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission === "function") {
+          motionPromise = DeviceMotionEvent.requestPermission();
+        }
+      } catch (err) {
+        motionPromise = Promise.reject(err);
+      }
+      if (document.body.dataset.phase !== "setup" || startLock) return;
+      if (!state.settings.category) {
+        setHint("Pick a category first.");
+        return;
+      }
+      if (!state.teams.length) {
+        setHint("Add a team first.");
+        return;
+      }
+      startLock = true;
       primeAudio();
-      Promise.resolve(permPromise).then((result) => {
+      const asked = orientPromise !== null || motionPromise !== null;
+      Promise.all([
+        Promise.resolve(orientPromise == null ? "granted" : orientPromise).catch(() => "denied"),
+        Promise.resolve(motionPromise == null ? "granted" : motionPromise).catch(() => "denied")
+      ]).then((results) => {
         startLock = false;
         if (document.body.dataset.phase !== "setup") return;
-        if (!state.settings.category) {
-          setHint("Pick a category first.");
-          return;
-        }
-        if (!state.teams.length) {
-          setHint("Add a team first.");
-          return;
-        }
-        if (result === "denied") setHint("Motion controls are off. Use Correct and Pass.");
-        else setHint("");
-        listenTilt();
-        startCountdown();
-      }).catch(() => {
-        startLock = false;
-        if (document.body.dataset.phase !== "setup") return;
-        if (!state.settings.category) {
-          setHint("Pick a category first.");
-          return;
-        }
-        setHint("Motion controls are off. Use Correct and Pass.");
-        listenTilt();
+        const orientOk = results[0] === "granted";
+        const motionOk = results[1] === "granted";
+        attachSensors(orientOk, motionOk);
+        if (!asked) sensor.permission = "not-required";
+        else if (!orientOk && !motionOk) sensor.permission = "denied";
+        else sensor.permission = "granted";
+        setHint(!orientOk && !motionOk && asked ? "Tilt off, use buttons" : "");
+        refreshSensorUi();
         startCountdown();
       });
     }
@@ -1099,7 +1320,16 @@
     applySettings();
     applySelection();
     renderTeams();
-    listenTilt();
+    if (!permissionApi(window.DeviceOrientationEvent) && !permissionApi(window.DeviceMotionEvent)) {
+      attachSensors(true, true);
+      sensor.permission = "not-required";
+    }
+    if (TILT_DEBUG) {
+      const debugBox = document.getElementById("tilt-debug");
+      if (debugBox) debugBox.hidden = false;
+    }
+    refreshSensorUi();
+    window.setInterval(refreshSensorUi, 250);
     registerSW();
     updatePortrait();
   </script>
