@@ -158,7 +158,7 @@
     {
       "name": "holding the tilt does not score again",
       "ok": true,
-      "detail": "Making Faces"
+      "detail": "Blanket Fort"
     },
     {
       "name": "the opposite tilt does not count before neutral",
@@ -178,7 +178,7 @@
     {
       "name": "holding pass does not advance again",
       "ok": true,
-      "detail": "Brushing Teeth"
+      "detail": "Saluting"
     },
     {
       "name": "landscape-right face-down counts as correct",
@@ -208,12 +208,12 @@
     {
       "name": "recap lists the guessed prompt",
       "ok": true,
-      "detail": "Tying Shoes, Brushing Teeth, Hugging"
+      "detail": "Hop One Foot, Saluting, Duck Walk"
     },
     {
       "name": "recap lists the passed prompt",
       "ok": true,
-      "detail": "Making Faces, Time's up"
+      "detail": "Blanket Fort, Time's up"
     },
     {
       "name": "recap shows the round total",
@@ -228,7 +228,7 @@
     {
       "name": "time-up card is passed and used",
       "ok": true,
-      "detail": "Walking Dog | Making Faces, Time's up"
+      "detail": "Somersault | Blanket Fort, Time's up"
     },
     {
       "name": "score survives a refresh",
@@ -263,12 +263,12 @@
     {
       "name": "reshuffle deals a prompt again",
       "ok": true,
-      "detail": "Yawning"
+      "detail": "Writing Letter"
     },
     {
       "name": "refresh mid-round resumes at prep",
       "ok": true,
-      "detail": "{\"before\":{\"team\":\"Team 2\",\"turnIndex\":1,\"used\":[\"Actions\\nRaising Hand\",\"Actions\\nSitting Crisscross\",\"Actions\\nStomping\",\"Actions\\nSnapping Fingers\",\"Actions\\nRubbing Tummy\",\"Actions\\nPatting Head\",\"Actions\\nWashing Face\",\"Actions\\nGargling\",\"Actions\\nSlurping\",\"Actions\\nSipping Straw\",\"Actions\\nStirring Pot\",\"Actions\\nPouring Milk\",\"Actions\\nCracking Egg\",\"Actions\\nRolling Dough\",\"Actions\\nLicking Spoon\",\"Actions\\nWaving Goodbye\",\"Actions\\nShaking Gift\",\"Actions\\nTying Bow\",\"Actions\\nKnocking\",\"Actions\\nAnswering Door\",\"Actions\\nCopying Leader\",\"Actions\\nMelting Down\",\"Actions\\nGrowing Tall\",\"Actions\\nRobot Dance\",\"Actions\\nYawning\"]},\"resumed\":{\"phase\":\"prep\",\"team\":\"Team 2\",\"turnIndex\":1,\"used\":[\"Actions\\nRaising Hand\",\"Actions\\nSitting Crisscross\",\"Actions\\nStomping\",\"Actions\\nSnapping Fingers\",\"Actions\\nRubbing Tummy\",\"Actions\\nPatting Head\",\"Actions\\nWashing Face\",\"Actions\\nGargling\",\"Actions\\nSlurping\",\"Actions\\nSipping Straw\",\"Actions\\nStirring Pot\",\"Actions\\nPouring Milk\",\"Actions\\nCracking Egg\",\"Actions\\nRolling Dough\",\"Actions\\nLicking Spoon\",\"Actions\\nWaving Goodbye\",\"Actions\\nShaking Gift\",\"Actions\\nTying Bow\",\"Actions\\nKnocking\",\"Actions\\nAnswering Door\",\"Actions\\nCopying Leader\",\"Actions\\nMelting Down\",\"Actions\\nGrowing Tall\",\"Actions\\nRobot Dance\",\"Actions\\nYawning\"]}}"
+      "detail": "{\"before\":{\"team\":\"Team 2\",\"turnIndex\":1,\"used\":[\"Actions\\nRaising Hand\",\"Actions\\nSitting Crisscross\",\"Actions\\nStomping\",\"Actions\\nSnapping Fingers\",\"Actions\\nRubbing Tummy\",\"Actions\\nPatting Head\",\"Actions\\nWashing Face\",\"Actions\\nGargling\",\"Actions\\nSlurping\",\"Actions\\nSipping Straw\",\"Actions\\nStirring Pot\",\"Actions\\nPouring Milk\",\"Actions\\nCracking Egg\",\"Actions\\nRolling Dough\",\"Actions\\nLicking Spoon\",\"Actions\\nWaving Goodbye\",\"Actions\\nShaking Gift\",\"Actions\\nTying Bow\",\"Actions\\nKnocking\",\"Actions\\nAnswering Door\",\"Actions\\nCopying Leader\",\"Actions\\nMelting Down\",\"Actions\\nGrowing Tall\",\"Actions\\nRobot Dance\",\"Actions\\nWriting Letter\"]},\"resumed\":{\"phase\":\"prep\",\"team\":\"Team 2\",\"turnIndex\":1,\"used\":[\"Actions\\nRaising Hand\",\"Actions\\nSitting Crisscross\",\"Actions\\nStomping\",\"Actions\\nSnapping Fingers\",\"Actions\\nRubbing Tummy\",\"Actions\\nPatting Head\",\"Actions\\nWashing Face\",\"Actions\\nGargling\",\"Actions\\nSlurping\",\"Actions\\nSipping Straw\",\"Actions\\nStirring Pot\",\"Actions\\nPouring Milk\",\"Actions\\nCracking Egg\",\"Actions\\nRolling Dough\",\"Actions\\nLicking Spoon\",\"Actions\\nWaving Goodbye\",\"Actions\\nShaking Gift\",\"Actions\\nTying Bow\",\"Actions\\nKnocking\",\"Actions\\nAnswering Door\",\"Actions\\nCopying Leader\",\"Actions\\nMelting Down\",\"Actions\\nGrowing Tall\",\"Actions\\nRobot Dance\",\"Actions\\nWriting Letter\"]}}"
     },
     {
       "name": "zero console errors",

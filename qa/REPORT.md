@@ -229,3 +229,54 @@ Landscape frames are 844×390. The rotate overlay is portrait. Files are in `qa/
 - On a 390px-tall landscape screen the category list scrolls, so Mix starts below the first view. The Setup title card is hidden at that height so the timer, both teams, Add Team, and Tap to start stay on screen.
 - The iPhone permission prompt and a real denied-sensor round were not exercised on a phone. This run used the headless sensor stubs.
 - Audio and vibration still depend on the device. A pass does not subtract a point. The card still showing when time runs out is not marked used.
+
+## v5 polish
+
+Live page after `8d26446`. https://bryanralston.github.io/charades/ serves the polished player. `sw.js` is cache `charades-v5`, still network-first for navigations and `index.html`. No 402 or 429.
+
+### What changed
+
+Home has an animated color mesh, the app icon, and a standings card with team colors and mini bars. A crown shows on a team that is strictly ahead. A fresh game shows Play. A game with a category, a used card, or a score shows Continue and New Game. Continue opens the round step when a deck is already chosen.
+
+Setup is two steps, each with a title and a back chevron. Choose a Deck leads with Mix as a full-width card, then large category cards with a glyph, a count, and a ring plus a check when selected. Round has the 30/60/90 control, an inset team list with a color dot, rename, swipe-to-delete, an Add Team row, and the Tap to start pill.
+
+Play fills the screen with a deep version of the active category color in light and dark. The bottom hint fades after the first card. The ring timer is larger, with a thin track, and still pulses in the last 10 seconds.
+
+The recap headline is the round score. Three or more points plays a short confetti burst. Guessed and passed lists stay. Standings use the same bars and crown. The card still on screen at time-up is marked used and listed as "Time's up". The extra Next up line is gone. The button remains.
+
+A refresh during a round resumes at the prep screen for the same team and keeps that round's used cards. The flag is `sessionStorage` key `charades.round`. A finished round clears it, so a later refresh opens Home. An empty deck stays on Home and shows the empty-deck dialog. Pass still scores 0. `localStorage` key `charades.v1` is unchanged. The tilt math, sensor handlers, calibration, motion fallback, and the permission calls at the start of Tap to start are byte-identical to v4.
+
+### Screenshots
+
+Landscape frames are 844×390 unless noted. Files are in `qa/v5/`:
+
+- `home-light.png`, `home-dark.png`, `home-932.png` (932×430)
+- `setup-deck-light.png`, `setup-deck-dark.png`
+- `setup-round-light.png`, `setup-round-dark.png`
+- `prep-light.png`, `prep-dark.png`
+- `play-light.png`, `play-dark.png`, `play-932.png` (932×430)
+- `recap-light.png`, `recap-dark.png`
+- `rotate-overlay.png` (portrait)
+
+The v4 frames in `qa/redesign/` are unchanged.
+
+### Size and counts
+
+`index.html` on the live site is 101363 bytes. Miracles & Parables has 92 prompts. Movies has 168. Mix draws 1924 cards. Every category is still at least 40, and no prompt is in two categories.
+
+### Tests
+
+| Check | Result |
+| --- | --- |
+| `node qa/tilt_math_check.mjs` | 34 passed |
+| `node qa/headless_qc.mjs` on http://127.0.0.1:8765/ | 55 passed, 0 console errors. Includes the v4 tilt poses, the byte-identical tilt check, the time-up card, and refresh-resume. |
+| `node qa/shuffle_check.mjs` | 28 passed, 0 console errors. The mid-round reload lands on prep. The exhausted deck still opens on Home. |
+| Live `CHARADES_URL=https://bryanralston.github.io/charades/ node qa/headless_qc.mjs` | 55 passed, 0 console errors |
+| Live `sw.js` | HTTP 200, cache `charades-v5` |
+
+### Open limits
+
+- Rotation lock can keep the screen angle at 0 while the phone is sideways. Turn rotation lock off, or use the buttons.
+- On a 390px-tall screen the round step hides the secondary New game button so Add Team and Tap to start both stay on screen. Home still offers New Game once a game is in progress. Category cards below the first row scroll. Mix is the first card and is fully visible.
+- Mid-round resume is stored for that tab. A new tab opens the saved game on Home with Continue.
+- The iPhone permission prompt was not exercised on a phone. This run used the headless sensor stubs.
