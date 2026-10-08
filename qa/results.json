@@ -6,14 +6,14 @@
       "detail": "{\"math\":[\"015ff8a014515ed3d7d9ea3c858999989a101864c13b7335a754bdb687aab4b6\",2627],\"noteReading\":[\"a1a7a1edf2849608a145e6a1faffe8c27be619a80ae52cacefaa34e2f4850b1b\",612],\"orientationLeads\":[\"f1a607bc77870bd1c831b52dbe5ffd03e327f09cf075617ea98856dadd40c36c\",149],\"onOrientation\":[\"4f67f723eb4867fff0dc5e9d01331c4dc7ee2ac0bd385806ed994577c940ca7f\",251],\"onMotion\":[\"38a8a44d7a950d2e33244ad64212c3fdd6e1db11e04a112efb1b19dba3508d16\",660],\"attachSensors\":[\"e7f4c8dd03a561dca848cff9a3fea5a1cc767f18601027399e25d28e867a4e4a\",394]}"
     },
     {
-      "name": "sw cache is charades-v8-5",
+      "name": "sw cache is charades-v8-5-1",
       "ok": true,
       "detail": ""
     },
     {
       "name": "sw network timeout falls back after 2.5s",
       "ok": true,
-      "detail": "2514ms true"
+      "detail": "2503ms true"
     },
     {
       "name": "headings render as Christian, Classic, Mix",
@@ -363,7 +363,7 @@
     {
       "name": "holding the tilt does not score again",
       "ok": true,
-      "detail": "Eating"
+      "detail": "Tying a Necktie"
     },
     {
       "name": "the opposite tilt does not count before neutral",
@@ -388,7 +388,7 @@
     {
       "name": "holding pass does not advance again",
       "ok": true,
-      "detail": "Rolling Dough"
+      "detail": "Yawning"
     },
     {
       "name": "calibration re-arms after a screen angle change",
@@ -433,12 +433,12 @@
     {
       "name": "recap lists the guessed prompt",
       "ok": true,
-      "detail": "Coloring, Rolling Dough, Knocking"
+      "detail": "Pillow Fight, Yawning, Conducting an Orchestra"
     },
     {
       "name": "recap lists the passed prompt",
       "ok": true,
-      "detail": "Eating, Snapping Fingerstime's up"
+      "detail": "Tying a Necktie, Silly Walktime's up"
     },
     {
       "name": "recap shows the round total",
@@ -453,7 +453,7 @@
     {
       "name": "time-up card shows its name and a tag",
       "ok": true,
-      "detail": "Snapping Fingers | [{\"prompt\":\"Eating\",\"tag\":\"\"},{\"prompt\":\"Snapping Fingers\",\"tag\":\"time's up\"}]"
+      "detail": "Silly Walk | [{\"prompt\":\"Tying a Necktie\",\"tag\":\"\"},{\"prompt\":\"Silly Walk\",\"tag\":\"time's up\"}]"
     },
     {
       "name": "score survives a refresh",
@@ -498,12 +498,12 @@
     {
       "name": "reshuffle deals a prompt again",
       "ok": true,
-      "detail": "Washing Face"
+      "detail": "Singing"
     },
     {
       "name": "refresh mid-round resumes at prep",
       "ok": true,
-      "detail": "{\"before\":{\"team\":\"Team 2\",\"turnIndex\":1,\"used\":[\"Actions\\nUsing Chopsticks\",\"Actions\\nShuffling Cards\",\"Actions\\nDealing Cards\",\"Actions\\nConducting an Orchestra\",\"Actions\\nSealing an Envelope\",\"Actions\\nAddressing a Letter\",\"Actions\\nSetting an Alarm\",\"Actions\\nFolding a Fitted Sheet\",\"Actions\\nPumping a Tire\",\"Actions\\nSending a Package\",\"Actions\\nBuckling a Seatbelt\",\"Actions\\nCarrying Groceries\",\"Actions\\nLoading a Trunk\",\"Actions\\nReading a Menu\",\"Actions\\nChecking a Compass\",\"Actions\\nPitching a Curve\",\"Actions\\nKeeping the Beat\",\"Actions\\nMending a Hem\",\"Actions\\nFollowing Directions\",\"Actions\\nIroning a Shirt\",\"Actions\\nUnlocking a Door\",\"Actions\\nHanging a Picture\",\"Actions\\nFlipping a Coin\",\"Actions\\nWalking a Tightrope\",\"Actions\\nWashing Face\"]},\"resumed\":{\"phase\":\"prep\",\"team\":\"Team 2\",\"turnIndex\":1,\"used\":[\"Actions\\nUsing Chopsticks\",\"Actions\\nShuffling Cards\",\"Actions\\nDealing Cards\",\"Actions\\nConducting an Orchestra\",\"Actions\\nSealing an Envelope\",\"Actions\\nAddressing a Letter\",\"Actions\\nSetting an Alarm\",\"Actions\\nFolding a Fitted Sheet\",\"Actions\\nPumping a Tire\",\"Actions\\nSending a Package\",\"Actions\\nBuckling a Seatbelt\",\"Actions\\nCarrying Groceries\",\"Actions\\nLoading a Trunk\",\"Actions\\nReading a Menu\",\"Actions\\nChecking a Compass\",\"Actions\\nPitching a Curve\",\"Actions\\nKeeping the Beat\",\"Actions\\nMending a Hem\",\"Actions\\nFollowing Directions\",\"Actions\\nIroning a Shirt\",\"Actions\\nUnlocking a Door\",\"Actions\\nHanging a Picture\",\"Actions\\nFlipping a Coin\",\"Actions\\nWalking a Tightrope\",\"Actions\\nWashing Face\"]}}"
+      "detail": "{\"before\":{\"team\":\"Team 2\",\"turnIndex\":1,\"used\":[\"Actions\\nUsing Chopsticks\",\"Actions\\nShuffling Cards\",\"Actions\\nDealing Cards\",\"Actions\\nConducting an Orchestra\",\"Actions\\nSealing an Envelope\",\"Actions\\nAddressing a Letter\",\"Actions\\nSetting an Alarm\",\"Actions\\nFolding a Fitted Sheet\",\"Actions\\nPumping a Tire\",\"Actions\\nSending a Package\",\"Actions\\nBuckling a Seatbelt\",\"Actions\\nCarrying Groceries\",\"Actions\\nLoading a Trunk\",\"Actions\\nReading a Menu\",\"Actions\\nChecking a Compass\",\"Actions\\nPitching a Curve\",\"Actions\\nKeeping the Beat\",\"Actions\\nMending a Hem\",\"Actions\\nFollowing Directions\",\"Actions\\nIroning a Shirt\",\"Actions\\nUnlocking a Door\",\"Actions\\nHanging a Picture\",\"Actions\\nFlipping a Coin\",\"Actions\\nWalking a Tightrope\",\"Actions\\nSinging\"]},\"resumed\":{\"phase\":\"prep\",\"team\":\"Team 2\",\"turnIndex\":1,\"used\":[\"Actions\\nUsing Chopsticks\",\"Actions\\nShuffling Cards\",\"Actions\\nDealing Cards\",\"Actions\\nConducting an Orchestra\",\"Actions\\nSealing an Envelope\",\"Actions\\nAddressing a Letter\",\"Actions\\nSetting an Alarm\",\"Actions\\nFolding a Fitted Sheet\",\"Actions\\nPumping a Tire\",\"Actions\\nSending a Package\",\"Actions\\nBuckling a Seatbelt\",\"Actions\\nCarrying Groceries\",\"Actions\\nLoading a Trunk\",\"Actions\\nReading a Menu\",\"Actions\\nChecking a Compass\",\"Actions\\nPitching a Curve\",\"Actions\\nKeeping the Beat\",\"Actions\\nMending a Hem\",\"Actions\\nFollowing Directions\",\"Actions\\nIroning a Shirt\",\"Actions\\nUnlocking a Door\",\"Actions\\nHanging a Picture\",\"Actions\\nFlipping a Coin\",\"Actions\\nWalking a Tightrope\",\"Actions\\nSinging\"]}}"
     },
     {
       "name": "resume keeps the remaining time",
@@ -526,9 +526,14 @@
       "detail": "{\"paused\":\"\",\"wakes\":3,\"before\":1}"
     },
     {
-      "name": "pause button resumes and can end the round",
+      "name": "leave sheet pauses, blocks tilt and keys, and returns home",
       "ok": true,
-      "detail": "{\"open\":true,\"held\":true,\"resumed\":true,\"phase\":\"recap\"}"
+      "detail": "{\"visible\":{\"prep\":true,\"countdown\":true,\"play\":true,\"empty\":true,\"recap\":true},\"clear\":true,\"open\":true,\"held\":true,\"resumed\":true,\"delta\":0,\"menu\":true,\"snap\":{\"score\":\"4,0\",\"turn\":0,\"names\":\"Team 1|Team 2\",\"ms\":14900}}"
+    },
+    {
+      "name": "resume restores the score, turn, teams and time",
+      "ok": true,
+      "detail": "{\"resumedGame\":{\"setup\":true,\"phase\":\"setup\"},\"restored\":{\"score\":\"4,0\",\"turn\":0,\"names\":\"Team 1|Team 2\",\"left\":14892},\"snap\":{\"score\":\"4,0\",\"turn\":0,\"names\":\"Team 1|Team 2\",\"ms\":14900}}"
     },
     {
       "name": "countdown waits until the phone is upright",
@@ -543,7 +548,7 @@
     {
       "name": "correct and pass ignore a second tap inside 600ms",
       "ok": true,
-      "detail": "{\"before\":0,\"once\":1} then 2"
+      "detail": "{\"before\":4,\"once\":5} then 6"
     },
     {
       "name": "play hint fades after the first card",
@@ -553,12 +558,12 @@
     {
       "name": "undo chip restores the last tilt",
       "ok": true,
-      "detail": "{\"chip\":\"Undo last card\",\"hit\":\"3\",\"after\":2,\"before\":2}"
+      "detail": "{\"chip\":\"Undo last card\",\"hit\":\"7\",\"after\":6,\"before\":6}"
     },
     {
       "name": "always use buttons ignores tilt and keeps the button",
       "ok": true,
-      "detail": "{\"buttonsOnly\":\"Tilt off, use buttons\",\"ignored\":\"2\",\"buttonScore\":{\"before\":2,\"after\":3,\"pill\":\"Tilt off, use buttons\"}}"
+      "detail": "{\"buttonsOnly\":\"Tilt off, use buttons\",\"ignored\":\"6\",\"buttonScore\":{\"before\":6,\"after\":7,\"pill\":\"Tilt off, use buttons\"}}"
     },
     {
       "name": "fitPrompt scales in one step",
@@ -638,7 +643,7 @@
     {
       "name": "Bible Stories play shot uses a real prompt",
       "ok": true,
-      "detail": "Queen Esther"
+      "detail": "Jesus Blesses the Children"
     },
     {
       "name": "no dialog is open before v7 play-bible-stories",
@@ -648,7 +653,7 @@
     {
       "name": "Actions play shot uses a real prompt",
       "ok": true,
-      "detail": "Three Point Turn"
+      "detail": "Dealing Cards"
     },
     {
       "name": "no dialog is open before v7 play-actions",
@@ -658,7 +663,7 @@
     {
       "name": "Animals play shot uses a real prompt",
       "ok": true,
-      "detail": "Wombat"
+      "detail": "Owl"
     },
     {
       "name": "no dialog is open before v7 play-animals",
@@ -668,7 +673,7 @@
     {
       "name": "play shots use three different prompts",
       "ok": true,
-      "detail": "{\"Bible Stories\":\"Queen Esther\",\"Actions\":\"Three Point Turn\",\"Animals\":\"Wombat\"}"
+      "detail": "{\"Bible Stories\":\"Jesus Blesses the Children\",\"Actions\":\"Dealing Cards\",\"Animals\":\"Owl\"}"
     },
     {
       "name": "no dialog is open before v7 recap",
@@ -723,7 +728,7 @@
     {
       "name": "record toggle is visible on the round step",
       "ok": true,
-      "detail": "{\"top\":242.421142578125,\"bottom\":255.421142578125,\"width\":13}"
+      "detail": "{\"top\":241.00852966308594,\"bottom\":254.00852966308594,\"width\":13}"
     },
     {
       "name": "all 18 deck pictures load at 640 pixels",
@@ -758,7 +763,7 @@
     {
       "name": "Actions style shot uses a real prompt",
       "ok": true,
-      "detail": "Hugging"
+      "detail": "Walking Dog"
     },
     {
       "name": "no dialog is open before v8 play-act",
@@ -768,7 +773,7 @@
     {
       "name": "Animals style shot uses a real prompt",
       "ok": true,
-      "detail": "Kitten"
+      "detail": "Butterfly"
     },
     {
       "name": "no dialog is open before v8 play-describe",
@@ -778,7 +783,7 @@
     {
       "name": "Hum It style shot uses a real prompt",
       "ok": true,
-      "detail": "I've Got the Joy Down in My Heart"
+      "detail": "This Is the Day"
     },
     {
       "name": "no dialog is open before v8 play-hum",
@@ -788,7 +793,7 @@
     {
       "name": "style shots use three different prompts",
       "ok": true,
-      "detail": "{\"act\":\"Hugging\",\"describe\":\"Kitten\",\"hum\":\"I've Got the Joy Down in My Heart\"}"
+      "detail": "{\"act\":\"Walking Dog\",\"describe\":\"Butterfly\",\"hum\":\"This Is the Day\"}"
     },
     {
       "name": "getUserMedia stays unused when record is off",
@@ -808,7 +813,7 @@
     {
       "name": "a fake camera records a capped clip and stops the tracks",
       "ok": true,
-      "detail": "{\"stop\":\"cap\",\"blob\":\"33140\",\"tracks\":\"ended,ended\",\"cap\":\"1000\"}"
+      "detail": "{\"stop\":\"cap\",\"blob\":\"31395\",\"tracks\":\"ended,ended\",\"cap\":\"1000\"}"
     },
     {
       "name": "the recap shows the reaction preview",
@@ -838,7 +843,7 @@
     {
       "name": "index.html is under 150 KB",
       "ok": true,
-      "detail": "146337"
+      "detail": "149461"
     },
     {
       "name": "deck list shows two full rows at 844x390",
@@ -946,10 +951,7 @@
       "detail": "none"
     }
   ],
-  "shots": [
-    "v8_4/play-kids.png",
-    "v8_4/deck-kids.png"
-  ],
+  "shots": [],
   "rendered": {
     "headings": [
       "Christian",

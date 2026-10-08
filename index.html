@@ -490,7 +490,7 @@
   body[data-phase="play"] #play,
   body[data-phase="practice"] #play,
   body[data-phase="empty"] #play { display: flex; }
-  .play-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 72px; }
+  .play-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 72px; padding-left: 72px; }
   #tilt-status {
     margin: 0;
     padding: 6px 12px;
@@ -710,7 +710,7 @@
     max-width: 860px;
     margin: 0 auto;
     min-height: 100%;
-    padding: max(20px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+    padding: max(64px, calc(env(safe-area-inset-top) + 52px)) 16px max(24px, env(safe-area-inset-bottom));
   }
   .recap-score { font-size: clamp(28px, 5vh, 40px); letter-spacing: -0.04em; font-weight: 700; }
   #confetti { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
@@ -841,17 +841,28 @@
   }
   #rotate-overlay strong { font-size: clamp(28px, 6vh, 40px); letter-spacing: -0.04em; }
   #btn-pause {
-    width: 36px;
-    height: 36px;
-    flex: none;
-    border: 0;
+    display: none;
+    position: fixed;
+    z-index: 40;
+    top: max(10px, env(safe-area-inset-top));
+    left: max(36px, calc(env(safe-area-inset-left) + 16px));
+    width: 44px;
+    height: 44px;
+    place-items: center;
+    border: 1px solid rgba(0, 0, 0, 0.16);
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.16);
-    color: #fff;
-    font-size: 18px;
+    background: #fff;
+    color: #1c1c1e;
+    font-size: 20px;
     font-weight: 700;
     line-height: 1;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
   }
+  body[data-phase="prep"] #btn-pause,
+  body[data-phase="countdown"] #btn-pause,
+  body[data-phase="play"] #btn-pause,
+  body[data-phase="empty"] #btn-pause,
+  body[data-phase="recap"] #btn-pause { display: grid; }
   .undo-chip {
     position: fixed;
     left: 50%;
@@ -900,6 +911,7 @@
     box-shadow: var(--shadow);
   }
   .dialog p { font-size: 20px; font-weight: 700; letter-spacing: -0.03em; }
+  #pause-note { margin: -8px 0 0; font-size: 16px; font-weight: 500; color: #636366; }
   .dialog-actions { display: flex; gap: 8px; }
   .dialog-actions button { flex: 1; }
   #btn-reshuffle, #confirm-yes, #btn-resume { background: var(--accent); color: #fff; border: 0; }
@@ -1014,7 +1026,7 @@
     <p class="lede">Hold the phone to your forehead. Friends call out the guess.</p>
     <div class="home-actions">
       <button type="button" id="btn-play" class="pill">Play</button>
-      <button type="button" id="btn-continue" class="pill" hidden>Continue</button>
+      <button type="button" id="btn-continue" class="pill" hidden>Resume</button>
       <button type="button" id="btn-home-new" class="pill secondary" hidden>New Game</button>
     </div>
     <section class="standings-card glass" aria-label="Standings">
@@ -1091,9 +1103,9 @@
     </div>
   </main>
 
+  <button type="button" id="btn-pause" aria-label="Leave game">✕</button>
   <section id="play" aria-label="Round">
     <div class="play-top">
-      <button type="button" id="btn-pause" aria-label="Pause">✕</button>
       <div id="score-chip">
         <span id="play-team">Team 1</span>
         <span>Score <strong id="play-score">0</strong></span>
@@ -1215,10 +1227,11 @@
 
   <div id="pause-modal" hidden>
     <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="pause-text">
-      <p id="pause-text">Paused</p>
+      <p id="pause-text">Leave game?</p>
+      <p id="pause-note">Your scores are saved.</p>
       <div class="dialog-actions">
-        <button type="button" id="btn-resume">Resume</button>
-        <button type="button" id="btn-pause-end">End round</button>
+        <button type="button" id="btn-resume">Keep Playing</button>
+        <button type="button" id="btn-pause-end">Main Menu</button>
       </div>
     </div>
   </div>
@@ -2169,7 +2182,9 @@
       const play = document.getElementById("btn-play");
       const cont = document.getElementById("btn-continue");
       const fresh = document.getElementById("btn-home-new");
-      const going = gameInProgress();
+      let pendingRound = false;
+      try { pendingRound = sessionStorage.getItem(ROUND_KEY) === "1"; } catch (err) {}
+      const going = gameInProgress() || pendingRound;
       if (play) play.hidden = going;
       if (cont) cont.hidden = !going;
       if (fresh) fresh.hidden = !going;
@@ -3550,8 +3565,17 @@
       tutorialReady = false;
       freeReaction();
       startLock = true;
-      pendingResumeMs = 0;
-      try { sessionStorage.removeItem(ROUND_MS_KEY); } catch (err) {}
+      let keptMs = 0;
+      let keepTurn = false;
+      try {
+        keepTurn = sessionStorage.getItem(ROUND_KEY) === "1";
+        keptMs = Number(sessionStorage.getItem(ROUND_MS_KEY)) || 0;
+      } catch (err) {}
+      if (keepTurn && keptMs > 0) pendingResumeMs = keptMs;
+      else {
+        pendingResumeMs = 0;
+        try { sessionStorage.removeItem(ROUND_MS_KEY); } catch (err) {}
+      }
       let orientPromise = null;
       let motionPromise = null;
       try {
@@ -3586,7 +3610,7 @@
         else sensor.permission = "granted";
         setHint(!orientOk && !motionOk && asked ? "Tilt off, use buttons" : "");
         refreshSensorUi();
-        if (!state.settings.tutorialSeen) {
+        if (!state.settings.tutorialSeen && !gameInProgress()) {
           startPractice();
           return;
         }
@@ -3665,6 +3689,68 @@
         if (modal) modal.hidden = false;
       }
       releaseWakeLock();
+    }
+
+    function openLeaveSheet() {
+      const phase = document.body.dataset.phase;
+      if (document.body.dataset.paused === "user") return;
+      if (phase === "play" || phase === "empty") {
+        pauseRound("user");
+        return;
+      }
+      if (phase !== "prep" && phase !== "countdown" && phase !== "recap") return;
+      if (phase === "prep" || phase === "countdown") {
+        window.clearTimeout(countdownHandle);
+        countdownHandle = 0;
+        const ms = pendingResumeMs > 0 ? pendingResumeMs : state.settings.seconds * 1000;
+        pendingResumeMs = ms;
+        saveRoundMs(ms);
+        try { sessionStorage.setItem(ROUND_KEY, "1"); } catch (err) {}
+      }
+      document.body.dataset.paused = "user";
+      const modal = document.getElementById("pause-modal");
+      if (modal) modal.hidden = false;
+    }
+
+    function keepPlaying() {
+      const phase = document.body.dataset.phase;
+      const modal = document.getElementById("pause-modal");
+      if (modal) modal.hidden = true;
+      if (phase === "play" || phase === "empty") {
+        resumeRound();
+        return;
+      }
+      delete document.body.dataset.paused;
+      if (phase !== "prep" && phase !== "countdown") return;
+      let ms = pendingResumeMs;
+      if (!(ms > 0)) {
+        try { ms = Number(sessionStorage.getItem(ROUND_MS_KEY)) || 0; } catch (err) {}
+      }
+      if (ms > 0) pendingResumeMs = ms;
+      startCountdown();
+    }
+
+    function leaveToMenu() {
+      const phase = document.body.dataset.phase;
+      const modal = document.getElementById("pause-modal");
+      if (modal) modal.hidden = true;
+      if (phase === "play" || phase === "empty") {
+        if (!timerMark) timerLeftMs = timerRemaining();
+        else {
+          timerLeftMs = timerRemaining();
+          timerMark = 0;
+        }
+        stopTimer();
+        saveRoundMs(timerLeftMs);
+        try { sessionStorage.setItem(ROUND_KEY, "1"); } catch (err) {}
+      }
+      delete document.body.dataset.paused;
+      document.body.classList.remove("playing");
+      releaseWakeLock();
+      document.body.dataset.phase = "home";
+      updatePortrait();
+      renderHome();
+      saveState();
     }
 
     function resumeRound() {
@@ -3779,13 +3865,9 @@
     });
     document.getElementById("btn-correct").addEventListener("click", () => onResultButton("correct"));
     document.getElementById("btn-pass").addEventListener("click", () => onResultButton("pass"));
-    document.getElementById("btn-pause").addEventListener("click", () => pauseRound("user"));
-    document.getElementById("btn-resume").addEventListener("click", resumeRound);
-    document.getElementById("btn-pause-end").addEventListener("click", () => {
-      const modal = document.getElementById("pause-modal");
-      if (modal) modal.hidden = true;
-      endRound();
-    });
+    document.getElementById("btn-pause").addEventListener("click", openLeaveSheet);
+    document.getElementById("btn-resume").addEventListener("click", keepPlaying);
+    document.getElementById("btn-pause-end").addEventListener("click", leaveToMenu);
     document.getElementById("undo-chip").addEventListener("click", undoLast);
     document.getElementById("team-undo").addEventListener("click", undoRemoveTeam);
     document.getElementById("btn-new-game").addEventListener("click", () => {

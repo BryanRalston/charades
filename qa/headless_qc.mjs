@@ -383,11 +383,7 @@ try {
 
   async function v83Shot() {}
 
-  async function v84Shot(name) {
-    const png = await cdp.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
-    writeFileSync(V84 + "\\" + name, Buffer.from(png.data, "base64"));
-    shots.push("v8_4/" + name);
-  }
+  async function v84Shot() {}
 
   async function v83Pair(name) {
     await setScheme("light");
@@ -437,8 +433,8 @@ try {
   const swSource = readFileSync(ROOT + "\\sw.js", "utf8");
   const deckFiles = ["bible-characters","bible-stories","miracles-parables","christmas-easter","church-life","bible-animals","bible-places-things","hum-it","actions","jobs","sports","animals","chores","movies","everyday-objects","foods","outdoor-fun","mix"];
   check(
-    "sw cache is charades-v8-5",
-    swSource.indexOf('const CACHE = "charades-v8-5"') !== -1 && swSource.indexOf('ASSET_VERSION = "8.5"') !== -1 && swSource.indexOf('"./prompts.js"') !== -1 && deckFiles.every((name) => swSource.indexOf("./assets/decks/" + name + ".webp") !== -1),
+    "sw cache is charades-v8-5-1",
+    swSource.indexOf('const CACHE = "charades-v8-5-1"') !== -1 && swSource.indexOf('ASSET_VERSION = "8.5.1"') !== -1 && swSource.indexOf('"./prompts.js"') !== -1 && deckFiles.every((name) => swSource.indexOf("./assets/decks/" + name + ".webp") !== -1),
     ""
   );
   const swStart = swSource.indexOf("function networkFirst");
@@ -1189,18 +1185,79 @@ try {
   })()`);
   check("wake lock is re-acquired when the tab returns", shown.paused === "" && shown.wakes > shown.before, JSON.stringify(shown));
   const pauseUi = await ev(`(() => {
+    function shown() {
+      const el = document.getElementById('btn-pause');
+      const style = getComputedStyle(el);
+      const box = el.getBoundingClientRect();
+      return style.display !== 'none' && box.width >= 40 && box.width <= 44 && box.height >= 40 && box.height <= 44 && box.left >= 24;
+    }
+    function hits(a, b) {
+      if (!a || !b || a.width === 0 || b.width === 0) return false;
+      return !(a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top);
+    }
+    const savedPhase = document.body.dataset.phase;
+    const visible = {};
+    ['prep', 'countdown', 'play', 'empty', 'recap'].forEach((phase) => {
+      document.body.dataset.phase = phase;
+      visible[phase] = shown();
+    });
+    document.body.dataset.phase = savedPhase;
+    const box = document.getElementById('btn-pause').getBoundingClientRect();
+    const clear = !hits(box, document.getElementById('prompt').getBoundingClientRect()) && !hits(box, document.getElementById('btn-pass').getBoundingClientRect()) && !hits(box, document.getElementById('btn-correct').getBoundingClientRect());
+    const before = Math.round(timerRemaining());
     document.getElementById('btn-pause').click();
-    const open = document.getElementById('pause-modal').hidden === false && document.body.dataset.paused === 'user';
+    const open = document.getElementById('pause-modal').hidden === false && document.body.dataset.paused === 'user' && document.getElementById('pause-text').textContent === 'Leave game?' && document.getElementById('pause-note').textContent === 'Your scores are saved.' && document.getElementById('btn-resume').textContent === 'Keep Playing' && document.getElementById('btn-pause-end').textContent === 'Main Menu';
     const score = document.getElementById('play-score').textContent;
     document.getElementById('btn-correct').click();
+    resolveRound('correct', 'tilt');
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
     const held = document.getElementById('play-score').textContent === score;
     document.getElementById('btn-resume').click();
-    const resumed = document.getElementById('pause-modal').hidden === true && !document.body.dataset.paused;
+    const after = Math.round(timerRemaining());
+    const resumed = document.getElementById('pause-modal').hidden === true && !document.body.dataset.paused && Math.abs(after - before) <= 150;
     document.getElementById('btn-pause').click();
+    const snap = { score: state.teams.map((team) => team.score).join(','), turn: state.turnIndex, names: state.teams.map((team) => team.name).join('|'), ms: Math.round(timerLeftMs) };
     document.getElementById('btn-pause-end').click();
-    return { open: open, held: held, resumed: resumed, phase: document.body.dataset.phase };
+    const resumeBtn = document.getElementById('btn-continue');
+    const menu = document.body.dataset.phase === 'home' && resumeBtn.hidden === false && resumeBtn.textContent === 'Resume' && state.turnIndex === snap.turn;
+    return { visible: visible, clear: clear, open: open, held: held, resumed: resumed, delta: after - before, menu: menu, snap: snap };
   })()`);
-  check("pause button resumes and can end the round", pauseUi.open && pauseUi.held && pauseUi.resumed && pauseUi.phase === "recap", JSON.stringify(pauseUi));
+  check(
+    "leave sheet pauses, blocks tilt and keys, and returns home",
+    pauseUi.visible.prep && pauseUi.visible.countdown && pauseUi.visible.play && pauseUi.visible.empty && pauseUi.visible.recap && pauseUi.clear && pauseUi.open && pauseUi.held && pauseUi.resumed && pauseUi.menu,
+    JSON.stringify(pauseUi)
+  );
+  const resumedGame = await ev(`(async () => {
+    document.getElementById('btn-continue').click();
+    const setup = document.body.dataset.phase === 'setup' && document.getElementById('setup').dataset.step === 'round';
+    document.getElementById('btn-tap-start').click();
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    return { setup: setup, phase: document.body.dataset.phase };
+  })()`);
+  await waitFor("document.body.dataset.phase === 'play' && document.getElementById('prompt').textContent.length > 0", 12000, "resume from menu");
+  const restored = await ev(`({
+    score: state.teams.map((team) => team.score).join(','),
+    turn: state.turnIndex,
+    names: state.teams.map((team) => team.name).join('|'),
+    left: Math.round(timerRemaining())
+  })`);
+  check(
+    "resume restores the score, turn, teams and time",
+    resumedGame.setup && restored.score === pauseUi.snap.score && restored.turn === pauseUi.snap.turn && restored.names === pauseUi.snap.names && Math.abs(restored.left - pauseUi.snap.ms) < 2000,
+    JSON.stringify({ resumedGame: resumedGame, restored: restored, snap: pauseUi.snap })
+  );
+  await ev(`(() => {
+    clearRound();
+    pendingResumeMs = 0;
+    stopTimer();
+    document.body.dataset.phase = 'recap';
+    document.body.classList.remove('playing');
+    const modal = document.getElementById('pause-modal');
+    if (modal) modal.hidden = true;
+    return true;
+  })()`);
 
   await ev(`(async () => {
     function grant() { return Promise.resolve('granted'); }
@@ -2022,7 +2079,7 @@ try {
       new Promise((resolve) => setTimeout(() => resolve(null), 8000))
     ]);
     if (!ready) return { ok: false, why: "not ready" };
-    const cache = await caches.open("charades-v8-5");
+    const cache = await caches.open("charades-v8-5-1");
     const url = new URL("prompts.js", location.href).href;
     const res = await cache.match(url) || await cache.match("./prompts.js");
     if (!res) return { ok: false, why: "missing", keys: await caches.keys() };
