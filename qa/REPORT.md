@@ -280,3 +280,65 @@ The v4 frames in `qa/redesign/` are unchanged.
 - On a 390px-tall screen the round step hides the secondary New game button so Add Team and Tap to start both stay on screen. Home still offers New Game once a game is in progress. Category cards below the first row scroll. Mix is the first card and is fully visible.
 - Mid-round resume is stored for that tab. A new tab opens the saved game on Home with Continue.
 - The iPhone permission prompt was not exercised on a phone. This run used the headless sensor stubs.
+
+## v6 touch-up
+
+Live page after `ea2d8fa`. https://bryanralston.github.io/charades/ serves the v6 player. `sw.js` is cache `charades-v6`. Navigations and `index.html` stay network-first, and a slow network now gives up after about 2.5 seconds and uses the cache. No 402 or 429.
+
+### What changed
+
+The card still on screen at time-up is marked used and listed under its real name, with a gray "time's up" tag. Guessed and tilt-passed rows stay plain names.
+
+Play uses a radial gradient for every category, from a saturated core to a deeper edge. Actions is orange (`#EA580C` to `#C2410C`). Sports and Christmas & Easter stay red, and their urgent timer digits and ring are white. The other decks keep a red urgent timer. Prompt text stays white.
+
+Team names are borderless until the field is focused. A zero score keeps the name and the number at full contrast and dims only the bar. Deck cards share one grid: a fixed glyph row, a two-line name, and the count in the corner. The bottom play hint still fades after the first resolved card.
+
+Resume keeps the team's points and continues with the time left. The remaining milliseconds are `sessionStorage` key `charades.roundMs`, next to `charades.round`. A finished round clears both. An empty deck still opens on Home.
+
+Play requests a screen wake lock and asks for it again when the tab becomes visible. Hiding the tab pauses the timer. The ✕ on Play pauses too, with Resume and End round. The timer follows `performance.now()` and does not drain while paused.
+
+Neutral is captured during the countdown, and only after readings stay within ±3° for 400 ms. If no sensor reading arrives, the countdown still starts after the forehead pause so buttons and headless Chrome can play. A non-upright reading holds the countdown on "Hold to forehead" until the phone is upright. Changing the screen angle calibrates again. Cards do not resolve while the rotate overlay is up. The overlay's `aria-hidden` is false only while it is showing.
+
+Tap to start checks the deck and the teams before it asks for sensor permission. A second tap does not ask again. A start that will run also calls `requestFullscreen` and `screen.orientation.lock('landscape')` where the browser allows it, and ignores a failure. Correct and Pass ignore a second tap inside 600 ms. A long prompt is scaled in one step. Reduced motion shows the check and skip icons without the draw animation.
+
+An Undo last card chip stays up for 5 seconds after a tilt. Always use buttons is a saved setting and ignores tilt scoring. Continue appears only after a card has been played. Deleting a team can be undone, and the last team stays. `localStorage` key `charades.v1` is unchanged except for the optional `settings.buttonsOnly` flag. Pass still scores 0. The tilt math and the sensor handlers (`noteReading`, `orientationLeads`, `onOrientation`, `onMotion`, `attachSensors`) are byte-identical to v5.
+
+### Screenshots
+
+Landscape frames are 844×390 unless noted. Files are in `qa/v6/`:
+
+- `home-light.png`, `home-dark.png`, `home-932.png` (932×430)
+- `setup-deck-light.png`, `setup-deck-dark.png`
+- `setup-round-light.png`, `setup-round-dark.png`
+- `prep-light.png`, `prep-dark.png`
+- `play-light.png`, `play-dark.png`, `play-932.png` (932×430)
+- `play-actions-light.png`, `play-actions-dark.png`
+- `play-bible-stories-light.png`, `play-bible-stories-dark.png`
+- `play-animals-light.png`, `play-animals-dark.png`
+- `recap-light.png`, `recap-dark.png`
+- `rotate-overlay.png` (portrait)
+- `play-colors-contact.png` (all 16 category play backgrounds)
+
+The v5 frames in `qa/v5/` are unchanged.
+
+### Size and counts
+
+`index.html` on the live site is 116193 bytes. Miracles & Parables has 92 prompts. Movies has 168. Mix draws 1924 cards. Every category is still at least 40, and no prompt is in two categories.
+
+### Tests
+
+| Check | Result |
+| --- | --- |
+| `node qa/tilt_math_check.mjs` | 34 passed |
+| `node qa/headless_qc.mjs` on http://127.0.0.1:8765/ | 84 passed, 0 console errors. Includes the real-phone tilt poses at 90 and 270, the byte-identical tilt and sensor handlers, the time-up name and tag, refresh-resume with the time left, and a check for every A item. |
+| `node qa/shuffle_check.mjs` | 28 passed, 0 console errors. The mid-round reload lands on prep. The exhausted deck still opens on Home. |
+| Live `CHARADES_URL=https://bryanralston.github.io/charades/ node qa/headless_qc.mjs` | 84 passed, 0 console errors |
+| Live `sw.js` | HTTP 200, cache `charades-v6` |
+
+### Open limits
+
+- If rotation lock keeps the screen angle at 0, the mapping still does not see a landscape forehead pose. Start calls `screen.orientation.lock('landscape')` where the browser allows it. A refusal is ignored.
+- If no sensor reading arrives, the countdown starts after the forehead pause. A face-down reading during that pause holds the countdown until the phone is upright.
+- On a 390px-tall screen the round step hides the secondary New game button so Add Team and Tap to start both stay on screen. Home still offers New Game once a card has been played.
+- Mid-round resume, including the time left, is stored for that tab. A new tab opens the saved game on Home.
+- The iPhone permission prompt was not exercised on a phone. This run used the headless sensor stubs.

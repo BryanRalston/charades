@@ -13,7 +13,7 @@
     {
       "name": "sw network timeout falls back after 2.5s",
       "ok": true,
-      "detail": "2513ms true"
+      "detail": "2506ms true"
     },
     {
       "name": "headings render as Christian, Classic, Mix",
@@ -193,7 +193,7 @@
     {
       "name": "holding the tilt does not score again",
       "ok": true,
-      "detail": "Thumbs Up"
+      "detail": "Pitching Tent"
     },
     {
       "name": "the opposite tilt does not count before neutral",
@@ -213,7 +213,7 @@
     {
       "name": "holding pass does not advance again",
       "ok": true,
-      "detail": "Putting On Hat"
+      "detail": "Bowing"
     },
     {
       "name": "calibration re-arms after a screen angle change",
@@ -253,12 +253,12 @@
     {
       "name": "recap lists the guessed prompt",
       "ok": true,
-      "detail": "Whispering, Putting On Hat, Tiptoeing"
+      "detail": "Duck Walk, Bowing, Bear Crawl"
     },
     {
       "name": "recap lists the passed prompt",
       "ok": true,
-      "detail": "Thumbs Up, Balancingtime's up"
+      "detail": "Pitching Tent, Gallopingtime's up"
     },
     {
       "name": "recap shows the round total",
@@ -273,7 +273,7 @@
     {
       "name": "time-up card shows its name and a tag",
       "ok": true,
-      "detail": "Balancing | [{\"prompt\":\"Thumbs Up\",\"tag\":\"\"},{\"prompt\":\"Balancing\",\"tag\":\"time's up\"}]"
+      "detail": "Galloping | [{\"prompt\":\"Pitching Tent\",\"tag\":\"\"},{\"prompt\":\"Galloping\",\"tag\":\"time's up\"}]"
     },
     {
       "name": "score survives a refresh",
@@ -318,12 +318,12 @@
     {
       "name": "reshuffle deals a prompt again",
       "ok": true,
-      "detail": "Kicking Ball"
+      "detail": "Juggling"
     },
     {
       "name": "refresh mid-round resumes at prep",
       "ok": true,
-      "detail": "{\"before\":{\"team\":\"Team 2\",\"turnIndex\":1,\"used\":[\"Actions\\nRaising Hand\",\"Actions\\nSitting Crisscross\",\"Actions\\nStomping\",\"Actions\\nSnapping Fingers\",\"Actions\\nRubbing Tummy\",\"Actions\\nPatting Head\",\"Actions\\nWashing Face\",\"Actions\\nGargling\",\"Actions\\nSlurping\",\"Actions\\nSipping Straw\",\"Actions\\nStirring Pot\",\"Actions\\nPouring Milk\",\"Actions\\nCracking Egg\",\"Actions\\nRolling Dough\",\"Actions\\nLicking Spoon\",\"Actions\\nWaving Goodbye\",\"Actions\\nShaking Gift\",\"Actions\\nTying Bow\",\"Actions\\nKnocking\",\"Actions\\nAnswering Door\",\"Actions\\nCopying Leader\",\"Actions\\nMelting Down\",\"Actions\\nGrowing Tall\",\"Actions\\nRobot Dance\",\"Actions\\nKicking Ball\"]},\"resumed\":{\"phase\":\"prep\",\"team\":\"Team 2\",\"turnIndex\":1,\"used\":[\"Actions\\nRaising Hand\",\"Actions\\nSitting Crisscross\",\"Actions\\nStomping\",\"Actions\\nSnapping Fingers\",\"Actions\\nRubbing Tummy\",\"Actions\\nPatting Head\",\"Actions\\nWashing Face\",\"Actions\\nGargling\",\"Actions\\nSlurping\",\"Actions\\nSipping Straw\",\"Actions\\nStirring Pot\",\"Actions\\nPouring Milk\",\"Actions\\nCracking Egg\",\"Actions\\nRolling Dough\",\"Actions\\nLicking Spoon\",\"Actions\\nWaving Goodbye\",\"Actions\\nShaking Gift\",\"Actions\\nTying Bow\",\"Actions\\nKnocking\",\"Actions\\nAnswering Door\",\"Actions\\nCopying Leader\",\"Actions\\nMelting Down\",\"Actions\\nGrowing Tall\",\"Actions\\nRobot Dance\",\"Actions\\nKicking Ball\"]}}"
+      "detail": "{\"before\":{\"team\":\"Team 2\",\"turnIndex\":1,\"used\":[\"Actions\\nRaising Hand\",\"Actions\\nSitting Crisscross\",\"Actions\\nStomping\",\"Actions\\nSnapping Fingers\",\"Actions\\nRubbing Tummy\",\"Actions\\nPatting Head\",\"Actions\\nWashing Face\",\"Actions\\nGargling\",\"Actions\\nSlurping\",\"Actions\\nSipping Straw\",\"Actions\\nStirring Pot\",\"Actions\\nPouring Milk\",\"Actions\\nCracking Egg\",\"Actions\\nRolling Dough\",\"Actions\\nLicking Spoon\",\"Actions\\nWaving Goodbye\",\"Actions\\nShaking Gift\",\"Actions\\nTying Bow\",\"Actions\\nKnocking\",\"Actions\\nAnswering Door\",\"Actions\\nCopying Leader\",\"Actions\\nMelting Down\",\"Actions\\nGrowing Tall\",\"Actions\\nRobot Dance\",\"Actions\\nJuggling\"]},\"resumed\":{\"phase\":\"prep\",\"team\":\"Team 2\",\"turnIndex\":1,\"used\":[\"Actions\\nRaising Hand\",\"Actions\\nSitting Crisscross\",\"Actions\\nStomping\",\"Actions\\nSnapping Fingers\",\"Actions\\nRubbing Tummy\",\"Actions\\nPatting Head\",\"Actions\\nWashing Face\",\"Actions\\nGargling\",\"Actions\\nSlurping\",\"Actions\\nSipping Straw\",\"Actions\\nStirring Pot\",\"Actions\\nPouring Milk\",\"Actions\\nCracking Egg\",\"Actions\\nRolling Dough\",\"Actions\\nLicking Spoon\",\"Actions\\nWaving Goodbye\",\"Actions\\nShaking Gift\",\"Actions\\nTying Bow\",\"Actions\\nKnocking\",\"Actions\\nAnswering Door\",\"Actions\\nCopying Leader\",\"Actions\\nMelting Down\",\"Actions\\nGrowing Tall\",\"Actions\\nRobot Dance\",\"Actions\\nJuggling\"]}}"
     },
     {
       "name": "resume keeps the remaining time",
