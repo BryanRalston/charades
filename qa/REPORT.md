@@ -585,3 +585,104 @@ Files are in `qa/v8_1/`:
 - Jingle Bells is only in Christmas & Easter.
 - Projector mode and kids picture mode were left out.
 
+## v8.2
+
+Live page after `fd9281a`. https://bryanralston.github.io/charades/ serves the v8.2 player. `sw.js` is cache `charades-v8-2`, asset version `8.2`. Navigations stay network-first, and a slow network still gives up after 2.5 seconds (live fallback measured 2506 ms) and uses the cache. `prompts.js` and the 18 deck pictures are in that precache. No 402 or 429.
+
+### What changed
+
+Round setup has a Level control: Kids, Adults, or All. The default is All, and the choice is saved in localStorage. Deck counts on Choose a Deck follow that level. Mix is the sum of the built-in lists for the chosen level. Custom decks stay at their full count and ignore the level.
+
+Every built-in prompt is tagged Kids or Adults in `prompts.js`. Each deck has at least 40 of each. No prompt is repeated anywhere. Adults means harder cards (longer or less obvious), and the lists stay Christian and family-safe.
+
+Each team has its own level. A new team copies the global level. Changing the global level updates teams that still match the previous global level. On a team's turn, cards come from that team's level and the same chosen decks. One shared used-set keeps a prompt from coming back. Kids and Adults show a small badge on the pass-the-phone card, the prep line, the play HUD, the recap line, and the standings. A Kids turn uses slightly larger prompt text.
+
+The tilt math and the sensor handlers are byte-identical to v8.1. Calibration and the permission order are unchanged.
+
+The screenshot script treats the deck editor as one of the dialogs that must be closed. It writes only `qa/v8_2/`. The older screenshot folders are left as they were.
+
+### Deck counts
+
+| Deck | Kids | Adults | All |
+| --- | --- | --- | --- |
+| Bible Characters | 43 | 72 | 115 |
+| Bible Stories | 53 | 62 | 115 |
+| Miracles & Parables | 46 | 47 | 93 |
+| Christmas & Easter | 61 | 53 | 114 |
+| Church Life | 46 | 70 | 116 |
+| Bible Animals | 52 | 61 | 113 |
+| Bible Places & Things | 45 | 73 | 118 |
+| Actions | 115 | 45 | 160 |
+| Jobs | 51 | 83 | 134 |
+| Sports | 49 | 66 | 115 |
+| Animals | 59 | 54 | 113 |
+| Chores | 50 | 56 | 106 |
+| Movies | 55 | 95 | 150 |
+| Everyday Objects | 120 | 50 | 170 |
+| Foods | 72 | 52 | 124 |
+| Outdoor Fun | 50 | 70 | 120 |
+| Hum It | 55 | 45 | 100 |
+| Mix | 1022 | 1054 | 2076 |
+
+### Samples
+
+Bible Stories. Kids: Noah's Ark, Baby Moses, Burning Bush, Red Sea, Coat of Colors. Adults: Tower of Babel, Olive Branch, Balaam's Donkey, Elijah's Chariot, Widow's Oil.
+
+Actions. Kids: Running, Jumping, Swimming, Dancing, Sleeping. Adults: Rowing Boat, Pitching Tent, Juggling, Bowling, Ice Skating.
+
+Hum It. Kids: Jesus Loves Me, This Little Light of Mine, Father Abraham, Happy Birthday, Twinkle Twinkle. Adults: Amazing Grace, How Great Thou Art, Holy Holy Holy, Blessed Assurance, What a Friend.
+
+### Measurements
+
+| Viewport | Scroll area | Full rows | Card height | Row tops |
+| --- | --- | --- | --- | --- |
+| 844×390 | 280px, from y 64 | 2 | 94px | 77, 188 |
+| 390×844 | 722px, from y 56 | 3 | 167px | 77, 275, 453 |
+
+At 844×390, six cards sit fully inside the scroll area. A third row starts lower and is not fully on screen. At 390×844, five cards sit fully inside, across three rows. The Level control sits on the round step, above the deck list.
+
+### File sizes
+
+| File | Bytes |
+| --- | --- |
+| Live `index.html` | 145835 |
+| Live `prompts.js` | 28926 |
+
+145835 is under the 150 KB target. The 18 deck pictures remain separate files.
+
+### Screenshots
+
+Files are in `qa/v8_2/`, light and dark, at 844×390:
+
+- `setup-level-light.png`, `setup-level-dark.png` (Level control, All selected)
+- `teams-light.png`, `teams-dark.png` (Team 1 Kids, Team 2 Adults)
+- `pass-kids-light.png`, `pass-kids-dark.png`
+- `pass-adults-light.png`, `pass-adults-dark.png`
+- `play-kids-light.png`, `play-kids-dark.png` (Running, Kids badge)
+- `play-adults-light.png`, `play-adults-dark.png` (Parallel Parking, Adults badge)
+- `recap-light.png`, `recap-dark.png` (Team 1 scored 3, Kids badge, standings Kids and Adults)
+
+### Tests
+
+| Check | Result |
+| --- | --- |
+| `node qa/tilt_math_check.mjs` | 34 passed |
+| `node qa/headless_qc.mjs` on http://127.0.0.1:8765/ | 186 passed, 0 console errors. Includes the v8.1 checks, per-deck Kids and Adults counts, the Level control, kids-only and adults-only draws, per-team draws, badges, resume, custom decks ignoring the level, and closed dialogs on the v8.2 shots. |
+| `node qa/shuffle_check.mjs` | 46 passed, 0 console errors. Seventeen categories, 2076 cards. Mix reshuffle holds back the latest 24 (deck 2052). |
+| Live `CHARADES_URL=https://bryanralston.github.io/charades/ node qa/headless_qc.mjs` | 186 passed, 0 console errors |
+| Live `index.html` | HTTP 200, 145835 bytes |
+| Live `prompts.js` | HTTP 200, 28926 bytes |
+| Live `sw.js` | HTTP 200, cache `charades-v8-2`, asset version `8.2`, `NETWORK_TIMEOUT_MS` 2500 |
+
+### Open limits
+
+- At 844×390 a third deck row is only partly on screen. Two full rows are inside the scroll area.
+- Adults means a harder card. The lists stay family-safe. A badge appears for Kids and Adults. Custom decks ignore the level.
+- If rotation lock keeps the screen angle at 0, the mapping still does not see a landscape forehead pose.
+- Mid-round resume, including the time left and each team's level, is stored for that tab.
+- The iPhone permission prompt was not exercised on a phone. The camera path used a fake headless camera.
+- The inline QR covers versions 1 through 10.
+- Custom length is 10 to 300 seconds, in steps of 5.
+- Jingle Bells is only in Christmas & Easter.
+- Projector mode and kids picture mode were left out.
+
