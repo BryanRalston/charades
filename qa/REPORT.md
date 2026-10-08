@@ -419,3 +419,104 @@ The three play prompts are different cards from those decks. The v6 frames in `q
 - Mid-round resume, including the time left, is stored for that tab. A new tab opens the saved game on Home.
 - The iPhone permission prompt was not exercised on a phone. This run used the headless sensor stubs.
 
+## v8
+
+Live page after `ee5177a`. https://bryanralston.github.io/charades/ serves the v8 player. `sw.js` is cache `charades-v8`, asset version `8`. Navigations stay network-first, and a slow network still gives up after 2.5 seconds (live fallback measured 2506 ms) and uses the cache. The 18 deck pictures are in that precache. No 402 or 429.
+
+### 0a root cause
+
+The v7 recap frame was a screenshot setup. The helper called `renderRecap` with a 3-point summary and a single guessed card after `clearGame` had set both team scores to 0. The headline is taken from that summary. The standings are painted from `state.teams`. Those two inputs had been given different numbers.
+
+The scoring handlers already keep the headline, the lists, and the standings together. A correct guess increments the team score, the round points, and the guessed list in one step. A pass scores 0 and joins the passed list. When time runs out, the card on screen joins the passed list and is tagged "time's up".
+
+The recap screenshot now sets Team 1 to 3 and Team 2 to 0, lists Running, Jumping, and Swimming as guessed, and lists Dancing and Singing as passed, with Singing tagged "time's up". A separate check plays that same round through `resolveRound` and `endRound`. The headline is "Team 1 scored 3! Total: 3.", the lists match, and the standings read 3 and 0.
+
+### What changed
+
+Winner lines follow the match format. First to 20 reads "Team 1 wins with 20 points!" Three rounds with two teams reads "Team 1 wins, 14 to 9, after 3 rounds each." A tied score reads "It's a tie at 20 points!" A tied three-round match reads "It's a tie at 9 points after 3 rounds each." With more than two teams, a rounds win reads "Team N wins with N points after 3 rounds each."
+
+Light-mode standings keep the name and the score at full contrast. The measured color is `rgb(28, 28, 30)` and the opacity is 1 on Home, the recap, and the winner screen. Only the bar of a zero score is dimmed, to opacity 0.4.
+
+Bible Animals keeps one Dove and one Raven. The deck is 113 cards. No prompt is in two categories. Hum It is the eighth Christian deck, 60 songs, starting with Jesus Loves Me and This Little Light of Mine. Jingle Bells stays in Christmas & Easter, so Hum It does not repeat it.
+
+`briefs/` is in `.gitignore`. The briefs that were tracked are removed from the index. The files remain on disk. The player does not link `docs/FEATURE_MAP.md`.
+
+Record reactions is an opt-in checkbox on the round step, off by default. With it off, `getUserMedia` is never called. With it on, the orientation and motion permission calls still run first, then the camera. A denied camera still reaches the countdown. The clip is the front camera composited on a canvas with the last card names and a check or an x, capped at the round length, and kept on the device. The recap shows the preview. Share uses `navigator.share` when it can, and otherwise downloads the file. Practice rounds are not recorded. A one-second fake-camera round on the live page produced a clip, stopped both tracks, and stopped because the cap was reached.
+
+My Decks sits below the category picker. A named list of one prompt per line is stored in `localStorage` key `charades.v1` and can be dealt like any other deck. Mix includes those cards. Share writes a compressed `#d=` hash, or an uncompressed one when compression is missing, and draws an inline QR (versions 1 through 10). Opening the link offers Add deck, and the added prompts match the shared ones. A custom deck uses a gray gradient tile and has no image.
+
+The round style is Act It, Describe It, or Hum It. Describe It is the default. The same label shows on the prep screen and the play screen. The style does not change tilt scoring.
+
+Custom sits next to 30, 60, and 90. It opens a stepper from 10 to 300 seconds in steps of 5, shows the value on the segment (45s in the screenshot), and saves it in `charades.v1`. The default length is still 60. The timer ring and the last-10-second pulse follow the chosen length. The last five seconds still tick, and the round still ends on the buzzer.
+
+Each Choose-a-Deck card shows its picture on top, then the name, then the count. The name and the count are page text. Every picture is a 640×360 WebP from commit `377a1fd`, brought in as `assets/decks/` only. The 18 files total 154916 bytes. Images lazy-load with width and height set. Card size was the same before and after decode. Mix and Bible Characters are both 155px tall, and two rows are on screen at 844×390. The tilt math and the sensor handlers (`noteReading`, `orientationLeads`, `onOrientation`, `onMotion`, `attachSensors`) are byte-identical to v7. Calibration is unchanged. Pass still scores 0.
+
+### Screenshots
+
+Landscape frames are 844×390. Files are in `qa/v8/`:
+
+- `deck-light.png`, `deck-dark.png`
+- `deck-share-light.png`, `deck-share-dark.png`
+- `setup-style-light.png`, `setup-style-dark.png`
+- `stepper-light.png`, `stepper-dark.png` (custom length 45s)
+- `play-act-light.png`, `play-act-dark.png` (Act It, Actions prompt Bowling)
+- `play-describe-light.png`, `play-describe-dark.png` (Describe It, Animals prompt Toucan)
+- `play-hum-light.png`, `play-hum-dark.png` (Hum It, Hum It prompt Ants Go Marching)
+- `recap-light.png`, `recap-dark.png` (Team 1 scored 3, standings 3 and 0)
+- `recap-video-light.png`, `recap-video-dark.png` (fake-camera preview)
+- `winner-light.png`, `winner-dark.png` (Team 1 at 20, Team 2 at 9, "Team 1 wins with 20 points!")
+
+The three style prompts are different cards. The v7 frames in `qa/v7/` and the earlier folders are still there.
+
+### Size and counts
+
+`index.html` on the live site is 163805 bytes. That is over the 150 KB target. The deck pictures are separate files and are not part of that target.
+
+| Category | Prompts |
+| --- | --- |
+| Bible Characters | 115 |
+| Bible Stories | 115 |
+| Miracles & Parables | 58 |
+| Christmas & Easter | 114 |
+| Church Life | 116 |
+| Bible Animals | 113 |
+| Bible Places & Things | 118 |
+| Hum It | 60 |
+| Actions | 130 |
+| Jobs | 124 |
+| Sports | 115 |
+| Animals | 113 |
+| Chores | 106 |
+| Movies | 150 |
+| Everyday Objects | 135 |
+| Foods | 124 |
+| Outdoor Fun | 120 |
+| Mix | 1926 |
+
+Custom decks are saved on the device and are not part of the 1926.
+
+### Tests
+
+| Check | Result |
+| --- | --- |
+| `node qa/tilt_math_check.mjs` | 34 passed |
+| `node qa/headless_qc.mjs` on http://127.0.0.1:8765/ | 130 passed, 0 console errors. Includes the v7 checks, the honest recap, winner wording, light-mode contrast, the Bible Animals merge, Hum It, styles, the fake camera, the deck round-trip and QR, custom length, and the 18 deck pictures with stable card sizes. |
+| `node qa/shuffle_check.mjs` | 29 passed, 0 console errors. Seventeen categories, 1926 cards. Mix reshuffle holds back the latest 24 (deck 1902). The mid-round reload lands on prep. The exhausted deck still opens on Home. |
+| Live `CHARADES_URL=https://bryanralston.github.io/charades/ node qa/headless_qc.mjs` | 130 passed, 0 console errors |
+| Live `index.html` | HTTP 200, 163805 bytes |
+| Live `sw.js` | HTTP 200, cache `charades-v8`, asset version `8`, `NETWORK_TIMEOUT_MS` 2500 |
+
+### Open limits
+
+- Cards do not carry an easy, medium, or hard tag. The prompt lists stay strings, which is what the checks read.
+- If rotation lock keeps the screen angle at 0, the mapping still does not see a landscape forehead pose. Start calls `screen.orientation.lock('landscape')` where the browser allows it. A refusal is ignored.
+- If no sensor reading arrives, a first start still waits out the forehead pause. A later start skips that pause. A face-down reading during the pause holds the countdown until the phone is upright.
+- Mid-round resume, including the time left, is stored for that tab. A new tab opens the saved game on Home.
+- The iPhone permission prompt was not exercised on a phone. This run used the headless sensor stubs.
+- The camera path was exercised with a fake headless camera. It was not exercised on a phone.
+- The inline QR covers versions 1 through 10. A longer deck than that returns no code.
+- Custom length is 10 to 300 seconds, in steps of 5.
+- Jingle Bells is only in Christmas & Easter.
+- `index.html` is 163805 bytes, over the 150 KB target. The 18 deck pictures add 154916 bytes beside it.
+- Projector mode and kids picture mode were left out.
+

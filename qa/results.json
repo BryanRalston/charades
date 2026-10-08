@@ -13,7 +13,7 @@
     {
       "name": "sw network timeout falls back after 2.5s",
       "ok": true,
-      "detail": "2503ms true"
+      "detail": "2506ms true"
     },
     {
       "name": "headings render as Christian, Classic, Mix",
@@ -233,7 +233,7 @@
     {
       "name": "holding the tilt does not score again",
       "ok": true,
-      "detail": "Jumping"
+      "detail": "Singing"
     },
     {
       "name": "the opposite tilt does not count before neutral",
@@ -258,7 +258,7 @@
     {
       "name": "holding pass does not advance again",
       "ok": true,
-      "detail": "Knocking"
+      "detail": "Pouring Milk"
     },
     {
       "name": "calibration re-arms after a screen angle change",
@@ -298,12 +298,12 @@
     {
       "name": "recap lists the guessed prompt",
       "ok": true,
-      "detail": "Hopping, Knocking, Pillow Fight"
+      "detail": "Growing Tall, Pouring Milk, Rolling Dough"
     },
     {
       "name": "recap lists the passed prompt",
       "ok": true,
-      "detail": "Jumping, Robot Dancetime's up"
+      "detail": "Singing, Blowing Bubblestime's up"
     },
     {
       "name": "recap shows the round total",
@@ -318,7 +318,7 @@
     {
       "name": "time-up card shows its name and a tag",
       "ok": true,
-      "detail": "Robot Dance | [{\"prompt\":\"Jumping\",\"tag\":\"\"},{\"prompt\":\"Robot Dance\",\"tag\":\"time's up\"}]"
+      "detail": "Blowing Bubbles | [{\"prompt\":\"Singing\",\"tag\":\"\"},{\"prompt\":\"Blowing Bubbles\",\"tag\":\"time's up\"}]"
     },
     {
       "name": "score survives a refresh",
@@ -363,12 +363,12 @@
     {
       "name": "reshuffle deals a prompt again",
       "ok": true,
-      "detail": "Bunny Hop"
+      "detail": "Washing Hands"
     },
     {
       "name": "refresh mid-round resumes at prep",
       "ok": true,
-      "detail": "{\"before\":{\"team\":\"Team 2\",\"turnIndex\":1,\"used\":[\"Actions\\nRaising Hand\",\"Actions\\nSitting Crisscross\",\"Actions\\nStomping\",\"Actions\\nSnapping Fingers\",\"Actions\\nRubbing Tummy\",\"Actions\\nPatting Head\",\"Actions\\nWashing Face\",\"Actions\\nGargling\",\"Actions\\nSlurping\",\"Actions\\nSipping Straw\",\"Actions\\nStirring Pot\",\"Actions\\nPouring Milk\",\"Actions\\nCracking Egg\",\"Actions\\nRolling Dough\",\"Actions\\nLicking Spoon\",\"Actions\\nWaving Goodbye\",\"Actions\\nShaking Gift\",\"Actions\\nTying Bow\",\"Actions\\nKnocking\",\"Actions\\nAnswering Door\",\"Actions\\nCopying Leader\",\"Actions\\nMelting Down\",\"Actions\\nGrowing Tall\",\"Actions\\nRobot Dance\",\"Actions\\nBunny Hop\"]},\"resumed\":{\"phase\":\"prep\",\"team\":\"Team 2\",\"turnIndex\":1,\"used\":[\"Actions\\nRaising Hand\",\"Actions\\nSitting Crisscross\",\"Actions\\nStomping\",\"Actions\\nSnapping Fingers\",\"Actions\\nRubbing Tummy\",\"Actions\\nPatting Head\",\"Actions\\nWashing Face\",\"Actions\\nGargling\",\"Actions\\nSlurping\",\"Actions\\nSipping Straw\",\"Actions\\nStirring Pot\",\"Actions\\nPouring Milk\",\"Actions\\nCracking Egg\",\"Actions\\nRolling Dough\",\"Actions\\nLicking Spoon\",\"Actions\\nWaving Goodbye\",\"Actions\\nShaking Gift\",\"Actions\\nTying Bow\",\"Actions\\nKnocking\",\"Actions\\nAnswering Door\",\"Actions\\nCopying Leader\",\"Actions\\nMelting Down\",\"Actions\\nGrowing Tall\",\"Actions\\nRobot Dance\",\"Actions\\nBunny Hop\"]}}"
+      "detail": "{\"before\":{\"team\":\"Team 2\",\"turnIndex\":1,\"used\":[\"Actions\\nRaising Hand\",\"Actions\\nSitting Crisscross\",\"Actions\\nStomping\",\"Actions\\nSnapping Fingers\",\"Actions\\nRubbing Tummy\",\"Actions\\nPatting Head\",\"Actions\\nWashing Face\",\"Actions\\nGargling\",\"Actions\\nSlurping\",\"Actions\\nSipping Straw\",\"Actions\\nStirring Pot\",\"Actions\\nPouring Milk\",\"Actions\\nCracking Egg\",\"Actions\\nRolling Dough\",\"Actions\\nLicking Spoon\",\"Actions\\nWaving Goodbye\",\"Actions\\nShaking Gift\",\"Actions\\nTying Bow\",\"Actions\\nKnocking\",\"Actions\\nAnswering Door\",\"Actions\\nCopying Leader\",\"Actions\\nMelting Down\",\"Actions\\nGrowing Tall\",\"Actions\\nRobot Dance\",\"Actions\\nWashing Hands\"]},\"resumed\":{\"phase\":\"prep\",\"team\":\"Team 2\",\"turnIndex\":1,\"used\":[\"Actions\\nRaising Hand\",\"Actions\\nSitting Crisscross\",\"Actions\\nStomping\",\"Actions\\nSnapping Fingers\",\"Actions\\nRubbing Tummy\",\"Actions\\nPatting Head\",\"Actions\\nWashing Face\",\"Actions\\nGargling\",\"Actions\\nSlurping\",\"Actions\\nSipping Straw\",\"Actions\\nStirring Pot\",\"Actions\\nPouring Milk\",\"Actions\\nCracking Egg\",\"Actions\\nRolling Dough\",\"Actions\\nLicking Spoon\",\"Actions\\nWaving Goodbye\",\"Actions\\nShaking Gift\",\"Actions\\nTying Bow\",\"Actions\\nKnocking\",\"Actions\\nAnswering Door\",\"Actions\\nCopying Leader\",\"Actions\\nMelting Down\",\"Actions\\nGrowing Tall\",\"Actions\\nRobot Dance\",\"Actions\\nWashing Hands\"]}}"
     },
     {
       "name": "resume keeps the remaining time",
@@ -503,22 +503,22 @@
     {
       "name": "Bible Stories play shot uses a real prompt",
       "ok": true,
-      "detail": "Baby Moses Basket"
+      "detail": "Spies with Grapes"
     },
     {
       "name": "Actions play shot uses a real prompt",
       "ok": true,
-      "detail": "Folding Paper"
+      "detail": "Putting On Hat"
     },
     {
       "name": "Animals play shot uses a real prompt",
       "ok": true,
-      "detail": "Red Panda"
+      "detail": "Cougar"
     },
     {
       "name": "play shots use three different prompts",
       "ok": true,
-      "detail": "{\"Bible Stories\":\"Baby Moses Basket\",\"Actions\":\"Folding Paper\",\"Animals\":\"Red Panda\"}"
+      "detail": "{\"Bible Stories\":\"Spies with Grapes\",\"Actions\":\"Putting On Hat\",\"Animals\":\"Cougar\"}"
     },
     {
       "name": "Bible Animals keeps one dove and one raven",
@@ -563,7 +563,7 @@
     {
       "name": "record toggle is visible on the round step",
       "ok": true,
-      "detail": "{\"top\":141.55416870117188,\"bottom\":154.55416870117188,\"width\":13}"
+      "detail": "{\"top\":141.74766540527344,\"bottom\":154.74766540527344,\"width\":13}"
     },
     {
       "name": "all 18 deck pictures load at 640 pixels",
@@ -588,7 +588,7 @@
     {
       "name": "the deck QR draws dark modules",
       "ok": true,
-      "detail": "11424"
+      "detail": "11680"
     },
     {
       "name": "styles show on prep and play",
@@ -598,22 +598,22 @@
     {
       "name": "Actions style shot uses a real prompt",
       "ok": true,
-      "detail": "Sitting Crisscross"
+      "detail": "Bowling"
     },
     {
       "name": "Animals style shot uses a real prompt",
       "ok": true,
-      "detail": "Ladybug"
+      "detail": "Toucan"
     },
     {
       "name": "Hum It style shot uses a real prompt",
       "ok": true,
-      "detail": "Trust and Obey"
+      "detail": "Ants Go Marching"
     },
     {
       "name": "style shots use three different prompts",
       "ok": true,
-      "detail": "{\"act\":\"Sitting Crisscross\",\"describe\":\"Ladybug\",\"hum\":\"Trust and Obey\"}"
+      "detail": "{\"act\":\"Bowling\",\"describe\":\"Toucan\",\"hum\":\"Ants Go Marching\"}"
     },
     {
       "name": "getUserMedia stays unused when record is off",
@@ -633,7 +633,7 @@
     {
       "name": "a fake camera records a capped clip and stops the tracks",
       "ok": true,
-      "detail": "{\"stop\":\"cap\",\"blob\":\"31660\",\"tracks\":\"ended,ended\",\"cap\":\"1000\"}"
+      "detail": "{\"stop\":\"cap\",\"blob\":\"33037\",\"tracks\":\"ended,ended\",\"cap\":\"1000\"}"
     },
     {
       "name": "the recap shows the reaction preview",
