@@ -2423,6 +2423,7 @@
     }
 
     function runCountdown() {
+      if (document.body.dataset.paused) return;
       document.body.dataset.phase = "countdown";
       document.documentElement.dataset.go = "0";
       beginCalibration();

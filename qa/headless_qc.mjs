@@ -433,8 +433,8 @@ try {
   const swSource = readFileSync(ROOT + "\\sw.js", "utf8");
   const deckFiles = ["bible-characters","bible-stories","miracles-parables","christmas-easter","church-life","bible-animals","bible-places-things","hum-it","actions","jobs","sports","animals","chores","movies","everyday-objects","foods","outdoor-fun","mix"];
   check(
-    "sw cache is charades-v8-5-3",
-    swSource.indexOf('const CACHE = "charades-v8-5-3"') !== -1 && swSource.indexOf('ASSET_VERSION = "8.5.3"') !== -1 && swSource.indexOf('"./prompts.js"') !== -1 && deckFiles.every((name) => swSource.indexOf("./assets/decks/" + name + ".webp") !== -1),
+    "sw cache is charades-v8-5-4",
+    swSource.indexOf('const CACHE = "charades-v8-5-4"') !== -1 && swSource.indexOf('ASSET_VERSION = "8.5.4"') !== -1 && swSource.indexOf('"./prompts.js"') !== -1 && deckFiles.every((name) => swSource.indexOf("./assets/decks/" + name + ".webp") !== -1),
     ""
   );
   const swStart = swSource.indexOf("function networkFirst");
@@ -1252,6 +1252,42 @@ try {
     clearRound();
     pendingResumeMs = 0;
     stopTimer();
+    document.body.dataset.phase = 'recap';
+    document.body.classList.remove('playing');
+    const modal = document.getElementById('pause-modal');
+    if (modal) modal.hidden = true;
+    return true;
+  })()`);
+  const heldBehind = await ev(`(() => {
+    startCountdown();
+    document.getElementById('btn-pause').click();
+    sensor.lastUsableAt = Date.now();
+    sensor.pitch = 0;
+    watchUpright();
+    return {
+      phase: document.body.dataset.phase,
+      paused: document.body.dataset.paused || '',
+      open: document.getElementById('pause-modal').hidden === false
+    };
+  })()`);
+  await delay(4000);
+  const stillHeld = await ev(`({
+    phase: document.body.dataset.phase,
+    paused: document.body.dataset.paused || '',
+    open: document.getElementById('pause-modal').hidden === false
+  })`);
+  check(
+    "leave sheet holds the countdown during prep",
+    heldBehind.phase === "prep" && heldBehind.paused === "user" && heldBehind.open && stillHeld.phase === "prep" && stillHeld.paused === "user" && stillHeld.open,
+    JSON.stringify({ before: heldBehind, after: stillHeld })
+  );
+  await ev(`(() => {
+    window.clearTimeout(countdownHandle);
+    countdownHandle = 0;
+    clearRound();
+    pendingResumeMs = 0;
+    stopTimer();
+    delete document.body.dataset.paused;
     document.body.dataset.phase = 'recap';
     document.body.classList.remove('playing');
     const modal = document.getElementById('pause-modal');
@@ -2079,7 +2115,7 @@ try {
       new Promise((resolve) => setTimeout(() => resolve(null), 8000))
     ]);
     if (!ready) return { ok: false, why: "not ready" };
-    const cache = await caches.open("charades-v8-5-3");
+    const cache = await caches.open("charades-v8-5-4");
     const url = new URL("prompts.js", location.href).href;
     const res = await cache.match(url) || await cache.match("./prompts.js");
     if (!res) return { ok: false, why: "missing", keys: await caches.keys() };
