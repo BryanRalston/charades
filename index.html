@@ -1282,6 +1282,7 @@
     const STORAGE_KEY = "charades.v1";
     const ROUND_KEY = "charades.round";
     const ROUND_MS_KEY = "charades.roundMs";
+    const ROUND_MENU_KEY = "charades.roundMenu";
     const REPEAT_GAP = 24;
     const STABLE_DEG = 3;
     const STABLE_MS = 400;
@@ -2183,7 +2184,7 @@
       const cont = document.getElementById("btn-continue");
       const fresh = document.getElementById("btn-home-new");
       let pendingRound = false;
-      try { pendingRound = sessionStorage.getItem(ROUND_KEY) === "1"; } catch (err) {}
+      try { pendingRound = sessionStorage.getItem(ROUND_KEY) === "1" || sessionStorage.getItem(ROUND_MENU_KEY) === "1"; } catch (err) {}
       const going = gameInProgress() || pendingRound;
       if (play) play.hidden = going;
       if (cont) cont.hidden = !going;
@@ -2500,6 +2501,7 @@
       try {
         sessionStorage.removeItem(ROUND_KEY);
         sessionStorage.removeItem(ROUND_MS_KEY);
+        sessionStorage.removeItem(ROUND_MENU_KEY);
       } catch (err) {}
     }
 
@@ -3569,8 +3571,9 @@
       let keptMs = 0;
       let keepTurn = false;
       try {
-        keepTurn = sessionStorage.getItem(ROUND_KEY) === "1";
+        keepTurn = sessionStorage.getItem(ROUND_KEY) === "1" || sessionStorage.getItem(ROUND_MENU_KEY) === "1";
         keptMs = Number(sessionStorage.getItem(ROUND_MS_KEY)) || 0;
+        sessionStorage.removeItem(ROUND_MENU_KEY);
       } catch (err) {}
       if (keepTurn && keptMs > 0) pendingResumeMs = keptMs;
       else {
@@ -3745,6 +3748,13 @@
         saveRoundMs(timerLeftMs);
         try { sessionStorage.setItem(ROUND_KEY, "1"); } catch (err) {}
       }
+      // Main Menu parks the turn: a reload lands on home (no auto-resume), and Resume still keeps the saved time.
+      try {
+        if (sessionStorage.getItem(ROUND_KEY) === "1") {
+          sessionStorage.removeItem(ROUND_KEY);
+          sessionStorage.setItem(ROUND_MENU_KEY, "1");
+        }
+      } catch (err) {}
       delete document.body.dataset.paused;
       document.body.classList.remove("playing");
       releaseWakeLock();
