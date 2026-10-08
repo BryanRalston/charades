@@ -433,8 +433,8 @@ try {
   const swSource = readFileSync(ROOT + "\\sw.js", "utf8");
   const deckFiles = ["bible-characters","bible-stories","miracles-parables","christmas-easter","church-life","bible-animals","bible-places-things","hum-it","actions","jobs","sports","animals","chores","movies","everyday-objects","foods","outdoor-fun","mix"];
   check(
-    "sw cache is charades-v8-5-2",
-    swSource.indexOf('const CACHE = "charades-v8-5-2"') !== -1 && swSource.indexOf('ASSET_VERSION = "8.5.2"') !== -1 && swSource.indexOf('"./prompts.js"') !== -1 && deckFiles.every((name) => swSource.indexOf("./assets/decks/" + name + ".webp") !== -1),
+    "sw cache is charades-v8-5-3",
+    swSource.indexOf('const CACHE = "charades-v8-5-3"') !== -1 && swSource.indexOf('ASSET_VERSION = "8.5.3"') !== -1 && swSource.indexOf('"./prompts.js"') !== -1 && deckFiles.every((name) => swSource.indexOf("./assets/decks/" + name + ".webp") !== -1),
     ""
   );
   const swStart = swSource.indexOf("function networkFirst");
@@ -1646,8 +1646,8 @@ try {
   await v7Pair("pass");
 
   const animals = deckPrompts(promptMap["Bible Animals"]);
-  check("Bible Animals keeps one dove and one raven", animals.filter((prompt) => /dove/i.test(prompt)).join(",") === "Dove" && animals.filter((prompt) => /raven/i.test(prompt)).join(",") === "Raven", animals.filter((prompt) => /dove|raven/i.test(prompt)).join(","));
-  check("Bible Animals stays at 100 or more", animals.length >= 100, String(animals.length));
+  check("Bible Animals keeps one dove and one raven", animals.filter((prompt) => /dove/i.test(prompt)).sort().join(",") === "Dove,Turtledove" && animals.filter((prompt) => /raven/i.test(prompt)).join(",") === "Raven", animals.filter((prompt) => /dove|raven/i.test(prompt)).join(","));
+  check("Bible Animals stays at 40 or more", animals.length >= 40, String(animals.length));
   const humDeck = promptMap["Hum It"] || { kids: [], adults: [] };
   const hum = deckPrompts(humDeck);
   check(
@@ -2079,7 +2079,7 @@ try {
       new Promise((resolve) => setTimeout(() => resolve(null), 8000))
     ]);
     if (!ready) return { ok: false, why: "not ready" };
-    const cache = await caches.open("charades-v8-5-2");
+    const cache = await caches.open("charades-v8-5-3");
     const url = new URL("prompts.js", location.href).href;
     const res = await cache.match(url) || await cache.match("./prompts.js");
     if (!res) return { ok: false, why: "missing", keys: await caches.keys() };

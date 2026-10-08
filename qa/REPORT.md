@@ -788,3 +788,9 @@ Files are in `qa/v8_3/`, light and dark, at 844×390:
 Kids prompts use natural names of up to five words. Karate Kid and the listed near-duplicates are gone. Pillar of Cloud and Pillar of Fire stay on Bible Stories only. Cache is `charades-v8-4`.
 Tilt 34, headless 189 local and live, shuffle 46. Live index 146337, prompts 28356. Screenshots are `qa/v8_4/deck-kids.png` and `qa/v8_4/play-kids.png`.
 
+## v8.5
+`cfd517e` `charades-v8-5`: recognizable Bible Stories and the v8.5 card fixes. Tilt 34, headless 189.
+`0e38b27` `charades-v8-5-1`: back button, leave-game sheet, and Resume. Tilt 34, headless 190.
+`66fef06` `charades-v8-5-2`: recognizable Bible decks. Tilt 34, headless 190.
+`charades-v8-5-3`: classic deck cleanup. Tilt 34, headless 190.
+
