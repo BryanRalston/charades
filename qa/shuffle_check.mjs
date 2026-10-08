@@ -188,6 +188,8 @@ try {
     document.querySelector('input[name="seconds"][value="90"]').click();
   `);
   await ev(`
+    state.settings.tutorialSeen = true;
+    saveState();
     const DOE = window.DeviceOrientationEvent;
     function grant() { return Promise.resolve("granted"); }
     try { DOE.requestPermission = grant; }

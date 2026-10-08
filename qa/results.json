@@ -1,19 +1,19 @@
 {
   "checks": [
     {
-      "name": "tilt math and sensor handlers are byte-identical to v5",
+      "name": "tilt math and sensor handlers are byte-identical to v6",
       "ok": true,
       "detail": "{\"math\":[\"015ff8a014515ed3d7d9ea3c858999989a101864c13b7335a754bdb687aab4b6\",2627],\"noteReading\":[\"a1a7a1edf2849608a145e6a1faffe8c27be619a80ae52cacefaa34e2f4850b1b\",612],\"orientationLeads\":[\"f1a607bc77870bd1c831b52dbe5ffd03e327f09cf075617ea98856dadd40c36c\",149],\"onOrientation\":[\"4f67f723eb4867fff0dc5e9d01331c4dc7ee2ac0bd385806ed994577c940ca7f\",251],\"onMotion\":[\"38a8a44d7a950d2e33244ad64212c3fdd6e1db11e04a112efb1b19dba3508d16\",660],\"attachSensors\":[\"e7f4c8dd03a561dca848cff9a3fea5a1cc767f18601027399e25d28e867a4e4a\",394]}"
     },
     {
-      "name": "sw cache is charades-v6",
+      "name": "sw cache is charades-v7",
       "ok": true,
       "detail": ""
     },
     {
       "name": "sw network timeout falls back after 2.5s",
       "ok": true,
-      "detail": "2506ms true"
+      "detail": "2505ms true"
     },
     {
       "name": "headings render as Christian, Classic, Mix",
@@ -63,32 +63,32 @@
     {
       "name": "Bible Characters has at least 40 prompts",
       "ok": true,
-      "detail": "117"
+      "detail": "115"
     },
     {
       "name": "Bible Stories has at least 40 prompts",
       "ok": true,
-      "detail": "112"
+      "detail": "115"
     },
     {
       "name": "Miracles & Parables has at least 40 prompts",
       "ok": true,
-      "detail": "92"
+      "detail": "58"
     },
     {
       "name": "Christmas & Easter has at least 40 prompts",
       "ok": true,
-      "detail": "118"
+      "detail": "114"
     },
     {
       "name": "Church Life has at least 40 prompts",
       "ok": true,
-      "detail": "120"
+      "detail": "116"
     },
     {
       "name": "Bible Animals has at least 40 prompts",
       "ok": true,
-      "detail": "109"
+      "detail": "100"
     },
     {
       "name": "Bible Places & Things has at least 40 prompts",
@@ -118,17 +118,17 @@
     {
       "name": "Chores has at least 40 prompts",
       "ok": true,
-      "detail": "108"
+      "detail": "106"
     },
     {
       "name": "Movies has at least 40 prompts",
       "ok": true,
-      "detail": "168"
+      "detail": "150"
     },
     {
       "name": "Everyday Objects has at least 40 prompts",
       "ok": true,
-      "detail": "136"
+      "detail": "135"
     },
     {
       "name": "Foods has at least 40 prompts",
@@ -146,9 +146,24 @@
       "detail": "unique"
     },
     {
+      "name": "removed and collapsed cards are absent",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "added bible scenes are present",
+      "ok": true,
+      "detail": "present"
+    },
+    {
       "name": "validation runs before permission",
       "ok": true,
       "detail": "{\"sync\":0,\"hint\":\"Pick a category first.\",\"screens\":0,\"locks\":0}"
+    },
+    {
+      "name": "tutorial explains motion before permission",
+      "ok": true,
+      "detail": "{\"sync\":0,\"phase\":\"tutorial\",\"open\":true,\"text\":\"Why motion?\\n\\nCharades asks to use the phone's motion so a nod can score the card while it is on your forehead. Nod down when they get it. Tip back to pass. You can still use the buttons if you say no.\\n\\nContinue\"}"
     },
     {
       "name": "Tap to start calls requestPermission synchronously once",
@@ -156,14 +171,29 @@
       "detail": "sync calls {\"once\":2,\"twice\":2} installed {\"orientation\":true,\"motion\":true}"
     },
     {
+      "name": "practice card asks for a live nod",
+      "ok": true,
+      "detail": "{\"phase\":\"practice\",\"prompt\":\"Nod down = Got it, Tip back = Pass\",\"tutorial\":true}"
+    },
+    {
+      "name": "a GO moment follows the countdown",
+      "ok": true,
+      "detail": "{\"go\":\"1\",\"skip\":\"1\",\"seen\":true}"
+    },
+    {
+      "name": "prep is skipped after the first run",
+      "ok": true,
+      "detail": "{\"go\":\"1\",\"skip\":\"1\",\"seen\":true}"
+    },
+    {
       "name": "fullscreen and orientation lock run on start",
       "ok": true,
-      "detail": "{\"screens\":1,\"orient\":1,\"wake\":1,\"wakeType\":\"screen\",\"wakeError\":\"\"}"
+      "detail": "{\"screens\":2,\"orient\":2,\"wake\":1,\"wakeType\":\"screen\",\"wakeError\":\"\"}"
     },
     {
       "name": "wake lock is requested when play begins",
       "ok": true,
-      "detail": "{\"screens\":1,\"orient\":1,\"wake\":1,\"wakeType\":\"screen\",\"wakeError\":\"\"}"
+      "detail": "{\"screens\":2,\"orient\":2,\"wake\":1,\"wakeType\":\"screen\",\"wakeError\":\"\"}"
     },
     {
       "name": "tilt stays off until a sensor event",
@@ -191,9 +221,14 @@
       "detail": "score 1 tilt 40 last correct"
     },
     {
+      "name": "a correct tilt flies the card down and bumps the score",
+      "ok": true,
+      "detail": "{\"ghost\":\"prompt-ghost fly-correct\",\"fly\":\"48vh\",\"bump\":\"bump\"}"
+    },
+    {
       "name": "holding the tilt does not score again",
       "ok": true,
-      "detail": "Pitching Tent"
+      "detail": "Puddle Splash"
     },
     {
       "name": "the opposite tilt does not count before neutral",
@@ -211,9 +246,14 @@
       "detail": "score 1 tilt -40"
     },
     {
+      "name": "a pass tilt flies the card up",
+      "ok": true,
+      "detail": "{\"ghost\":\"prompt-ghost fly-pass\",\"fly\":\"-48vh\"}"
+    },
+    {
       "name": "holding pass does not advance again",
       "ok": true,
-      "detail": "Bowing"
+      "detail": "Bowling"
     },
     {
       "name": "calibration re-arms after a screen angle change",
@@ -253,12 +293,12 @@
     {
       "name": "recap lists the guessed prompt",
       "ok": true,
-      "detail": "Duck Walk, Bowing, Bear Crawl"
+      "detail": "Knocking, Bowling, Washing Hands"
     },
     {
       "name": "recap lists the passed prompt",
       "ok": true,
-      "detail": "Pitching Tent, Gallopingtime's up"
+      "detail": "Puddle Splash, Jumping Jackstime's up"
     },
     {
       "name": "recap shows the round total",
@@ -273,7 +313,7 @@
     {
       "name": "time-up card shows its name and a tag",
       "ok": true,
-      "detail": "Galloping | [{\"prompt\":\"Pitching Tent\",\"tag\":\"\"},{\"prompt\":\"Galloping\",\"tag\":\"time's up\"}]"
+      "detail": "Jumping Jacks | [{\"prompt\":\"Puddle Splash\",\"tag\":\"\"},{\"prompt\":\"Jumping Jacks\",\"tag\":\"time's up\"}]"
     },
     {
       "name": "score survives a refresh",
@@ -318,12 +358,12 @@
     {
       "name": "reshuffle deals a prompt again",
       "ok": true,
-      "detail": "Juggling"
+      "detail": "Cutting Paper"
     },
     {
       "name": "refresh mid-round resumes at prep",
       "ok": true,
-      "detail": "{\"before\":{\"team\":\"Team 2\",\"turnIndex\":1,\"used\":[\"Actions\\nRaising Hand\",\"Actions\\nSitting Crisscross\",\"Actions\\nStomping\",\"Actions\\nSnapping Fingers\",\"Actions\\nRubbing Tummy\",\"Actions\\nPatting Head\",\"Actions\\nWashing Face\",\"Actions\\nGargling\",\"Actions\\nSlurping\",\"Actions\\nSipping Straw\",\"Actions\\nStirring Pot\",\"Actions\\nPouring Milk\",\"Actions\\nCracking Egg\",\"Actions\\nRolling Dough\",\"Actions\\nLicking Spoon\",\"Actions\\nWaving Goodbye\",\"Actions\\nShaking Gift\",\"Actions\\nTying Bow\",\"Actions\\nKnocking\",\"Actions\\nAnswering Door\",\"Actions\\nCopying Leader\",\"Actions\\nMelting Down\",\"Actions\\nGrowing Tall\",\"Actions\\nRobot Dance\",\"Actions\\nJuggling\"]},\"resumed\":{\"phase\":\"prep\",\"team\":\"Team 2\",\"turnIndex\":1,\"used\":[\"Actions\\nRaising Hand\",\"Actions\\nSitting Crisscross\",\"Actions\\nStomping\",\"Actions\\nSnapping Fingers\",\"Actions\\nRubbing Tummy\",\"Actions\\nPatting Head\",\"Actions\\nWashing Face\",\"Actions\\nGargling\",\"Actions\\nSlurping\",\"Actions\\nSipping Straw\",\"Actions\\nStirring Pot\",\"Actions\\nPouring Milk\",\"Actions\\nCracking Egg\",\"Actions\\nRolling Dough\",\"Actions\\nLicking Spoon\",\"Actions\\nWaving Goodbye\",\"Actions\\nShaking Gift\",\"Actions\\nTying Bow\",\"Actions\\nKnocking\",\"Actions\\nAnswering Door\",\"Actions\\nCopying Leader\",\"Actions\\nMelting Down\",\"Actions\\nGrowing Tall\",\"Actions\\nRobot Dance\",\"Actions\\nJuggling\"]}}"
+      "detail": "{\"before\":{\"team\":\"Team 2\",\"turnIndex\":1,\"used\":[\"Actions\\nRaising Hand\",\"Actions\\nSitting Crisscross\",\"Actions\\nStomping\",\"Actions\\nSnapping Fingers\",\"Actions\\nRubbing Tummy\",\"Actions\\nPatting Head\",\"Actions\\nWashing Face\",\"Actions\\nGargling\",\"Actions\\nSlurping\",\"Actions\\nSipping Straw\",\"Actions\\nStirring Pot\",\"Actions\\nPouring Milk\",\"Actions\\nCracking Egg\",\"Actions\\nRolling Dough\",\"Actions\\nLicking Spoon\",\"Actions\\nWaving Goodbye\",\"Actions\\nShaking Gift\",\"Actions\\nTying Bow\",\"Actions\\nKnocking\",\"Actions\\nAnswering Door\",\"Actions\\nCopying Leader\",\"Actions\\nMelting Down\",\"Actions\\nGrowing Tall\",\"Actions\\nRobot Dance\",\"Actions\\nCutting Paper\"]},\"resumed\":{\"phase\":\"prep\",\"team\":\"Team 2\",\"turnIndex\":1,\"used\":[\"Actions\\nRaising Hand\",\"Actions\\nSitting Crisscross\",\"Actions\\nStomping\",\"Actions\\nSnapping Fingers\",\"Actions\\nRubbing Tummy\",\"Actions\\nPatting Head\",\"Actions\\nWashing Face\",\"Actions\\nGargling\",\"Actions\\nSlurping\",\"Actions\\nSipping Straw\",\"Actions\\nStirring Pot\",\"Actions\\nPouring Milk\",\"Actions\\nCracking Egg\",\"Actions\\nRolling Dough\",\"Actions\\nLicking Spoon\",\"Actions\\nWaving Goodbye\",\"Actions\\nShaking Gift\",\"Actions\\nTying Bow\",\"Actions\\nKnocking\",\"Actions\\nAnswering Door\",\"Actions\\nCopying Leader\",\"Actions\\nMelting Down\",\"Actions\\nGrowing Tall\",\"Actions\\nRobot Dance\",\"Actions\\nCutting Paper\"]}}"
     },
     {
       "name": "resume keeps the remaining time",
@@ -416,6 +456,66 @@
       "detail": "{\"before\":2,\"after\":1,\"chip\":true,\"lastDisabled\":true,\"restored\":2,\"score\":\"1\"}"
     },
     {
+      "name": "the last seconds tick and the round ends on a buzzer",
+      "ok": true,
+      "detail": "{\"heard\":[\"tick\",\"buzzer\",\"tick\",\"buzzer\",\"buzzer\"],\"fromTimer\":\"2\",\"buzz\":\"1\",\"phase\":\"recap\"}"
+    },
+    {
+      "name": "endless stays on the recap",
+      "ok": true,
+      "detail": "{\"endless\":\"recap\",\"passed\":{\"phase\":\"pass\",\"team\":\"Team 2\",\"setup\":\"deck\"},\"winner\":{\"phase\":\"winner\",\"name\":\"Team 1 wins\",\"crown\":1,\"bits\":28,\"rematch\":\"Rematch\"},\"again\":{\"phase\":\"pass\",\"score\":0,\"rounds\":0,\"format\":\"score\",\"team\":\"Team 1\"},\"formatBefore\":\"score\",\"roundsPhase\":\"winner\",\"champ\":\"Team 2 wins\"}"
+    },
+    {
+      "name": "next up opens the pass-the-phone screen",
+      "ok": true,
+      "detail": "{\"phase\":\"pass\",\"team\":\"Team 2\",\"setup\":\"deck\"}"
+    },
+    {
+      "name": "first to 20 ends on a winner screen",
+      "ok": true,
+      "detail": "{\"phase\":\"winner\",\"name\":\"Team 1 wins\",\"crown\":1,\"bits\":28,\"rematch\":\"Rematch\"}"
+    },
+    {
+      "name": "rematch clears the score and keeps the format",
+      "ok": true,
+      "detail": "{\"phase\":\"pass\",\"score\":0,\"rounds\":0,\"format\":\"score\",\"team\":\"Team 1\"}"
+    },
+    {
+      "name": "three rounds each ends on a winner",
+      "ok": true,
+      "detail": "Team 2 wins winner"
+    },
+    {
+      "name": "the tutorial stays skipped after the first run",
+      "ok": true,
+      "detail": "{\"phase\":\"setup\",\"hidden\":true}"
+    },
+    {
+      "name": "mix is a normal-height tile with two rows visible",
+      "ok": true,
+      "detail": "{\"mixH\":112,\"otherH\":112,\"rows\":[228,350,85]}"
+    },
+    {
+      "name": "Bible Stories play shot uses a real prompt",
+      "ok": true,
+      "detail": "Ax Head Floats"
+    },
+    {
+      "name": "Actions play shot uses a real prompt",
+      "ok": true,
+      "detail": "Reading Book"
+    },
+    {
+      "name": "Animals play shot uses a real prompt",
+      "ok": true,
+      "detail": "Ladybug"
+    },
+    {
+      "name": "play shots use three different prompts",
+      "ok": true,
+      "detail": "{\"Bible Stories\":\"Ax Head Floats\",\"Actions\":\"Reading Book\",\"Animals\":\"Ladybug\"}"
+    },
+    {
       "name": "zero console errors",
       "ok": true,
       "detail": "none"
@@ -458,7 +558,27 @@
     "08-portrait.png",
     "v6/rotate-overlay.png",
     "09-empty.png",
-    "10-reshuffle.png"
+    "10-reshuffle.png",
+    "v7/setup-deck-light.png",
+    "v7/setup-deck-dark.png",
+    "v7/setup-round-light.png",
+    "v7/setup-round-dark.png",
+    "v7/tutorial-light.png",
+    "v7/tutorial-dark.png",
+    "v7/home-light.png",
+    "v7/home-dark.png",
+    "v7/play-bible-stories-light.png",
+    "v7/play-bible-stories-dark.png",
+    "v7/play-actions-light.png",
+    "v7/play-actions-dark.png",
+    "v7/play-animals-light.png",
+    "v7/play-animals-dark.png",
+    "v7/recap-light.png",
+    "v7/recap-dark.png",
+    "v7/winner-light.png",
+    "v7/winner-dark.png",
+    "v7/pass-light.png",
+    "v7/pass-dark.png"
   ],
   "rendered": {
     "headings": [
@@ -495,24 +615,39 @@
     "orientError": ""
   },
   "counts": {
-    "Bible Characters": 117,
-    "Bible Stories": 112,
-    "Miracles & Parables": 92,
-    "Christmas & Easter": 118,
-    "Church Life": 120,
-    "Bible Animals": 109,
+    "Bible Characters": 115,
+    "Bible Stories": 115,
+    "Miracles & Parables": 58,
+    "Christmas & Easter": 114,
+    "Church Life": 116,
+    "Bible Animals": 100,
     "Bible Places & Things": 118,
     "Actions": 130,
     "Jobs": 124,
     "Sports": 115,
     "Animals": 113,
-    "Chores": 108,
-    "Movies": 168,
-    "Everyday Objects": 136,
+    "Chores": 106,
+    "Movies": 150,
+    "Everyday Objects": 135,
     "Foods": 124,
     "Outdoor Fun": 120
   },
   "consoleEvents": [
+    {
+      "kind": "log",
+      "type": "warning",
+      "text": "Failed to execute 'requestFullscreen' on 'Element': API can only be initiated by a user gesture."
+    },
+    {
+      "kind": "log",
+      "type": "warning",
+      "text": "Failed to execute 'requestFullscreen' on 'Element': API can only be initiated by a user gesture."
+    },
+    {
+      "kind": "log",
+      "type": "warning",
+      "text": "Failed to execute 'requestFullscreen' on 'Element': API can only be initiated by a user gesture."
+    },
     {
       "kind": "log",
       "type": "warning",

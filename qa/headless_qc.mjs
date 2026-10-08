@@ -8,6 +8,7 @@ const QA = ROOT + "\\qa";
 const REDESIGN = QA + "\\redesign";
 const V5 = QA + "\\v5";
 const V6 = QA + "\\v6";
+const V7 = QA + "\\v7";
 const V6_LOCK = {
   math: ["015ff8a014515ed3d7d9ea3c858999989a101864c13b7335a754bdb687aab4b6", 2627],
   noteReading: ["a1a7a1edf2849608a145e6a1faffe8c27be619a80ae52cacefaa34e2f4850b1b", 612],
@@ -46,6 +47,7 @@ mkdirSync(QA, { recursive: true });
 mkdirSync(REDESIGN, { recursive: true });
 mkdirSync(V5, { recursive: true });
 mkdirSync(V6, { recursive: true });
+mkdirSync(V7, { recursive: true });
 
 function protectedSlices(html) {
   const mathStart = html.indexOf("/* tilt-math-start */");
@@ -279,6 +281,12 @@ try {
     shots.push("v6/" + name);
   }
 
+  async function v7Shot(name) {
+    const png = await cdp.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
+    writeFileSync(V7 + "\\" + name, Buffer.from(png.data, "base64"));
+    shots.push("v7/" + name);
+  }
+
   async function setViewport(width, height) {
     const landscape = width > height;
     await cdp.send("Emulation.setDeviceMetricsOverride", {
@@ -304,11 +312,11 @@ try {
 
   const tiltNow = protectedSlices(readFileSync(ROOT + "\\index.html", "utf8"));
   const tiltSame = Object.keys(V6_LOCK).every((key) => tiltNow[key][0] === V6_LOCK[key][0] && tiltNow[key][1] === V6_LOCK[key][1]);
-  check("tilt math and sensor handlers are byte-identical to v5", tiltSame, JSON.stringify(tiltNow));
+  check("tilt math and sensor handlers are byte-identical to v6", tiltSame, JSON.stringify(tiltNow));
   const swSource = readFileSync(ROOT + "\\sw.js", "utf8");
   check(
-    "sw cache is charades-v6",
-    swSource.indexOf('const CACHE = "charades-v6"') !== -1 && swSource.indexOf('ASSET_VERSION = "6"') !== -1,
+    "sw cache is charades-v7",
+    swSource.indexOf('const CACHE = "charades-v7"') !== -1 && swSource.indexOf('ASSET_VERSION = "7"') !== -1,
     ""
   );
   const swStart = swSource.indexOf("function networkFirst");
@@ -554,6 +562,17 @@ try {
     }
   }
   check("no prompt appears in two categories", duplicatePrompts.length === 0, duplicatePrompts.slice(0, 8).join("; ") || "unique");
+  const removedCards = ["Friendship Pad", "Pew Pencil", "Known Sheep", "Sorted Sheep", "Ready Feast", "Healed at Once", "Salt Steps", "Boot Tray", "Rock Badger", "Doxology", "Benediction", "Pink Egg", "Backpack Strap", "Dairy Cow", "Praying in Fish", "Sudden Fig Tree", "Methuselah", "Dorcas", "Thorny Soil", "Swept Floor", "Hidden Coin", "Narrow Door", "Rising Dough", "New Skins", "Dawn Workers", "Evening Workers", "Hand Made Whole", "Faraway Healing", "Official's Son", "Distant Son Healed", "Servant Healed", "Rainbow Promise", "Rainbow Sky", "Dove Returns", "Dove With Leaf", "Cloud Leads On", "Thin Cow", "Raven Pair", "Little Lamb", "Pet Lamb", "Shepherd Lamb", "Big Fish", "Great Fish", "Blue Egg", "Plastic Egg", "Hidden Egg", "Toy Story 2", "Toy Story 3", "Toy Story 4", "Despicable Me 2", "Despicable Me 3", "Despicable Me 4", "Happy Feet Two", "102 Dalmatians", "Incredibles 2", "Frozen 2"];
+  const addedScenes = ["David and Goliath", "Jonah Swallowed", "Feeding the 5,000", "Peter Denies Jesus", "Paul Blinded", "Daniel Prays", "Zacchaeus Climbs Tree", "Samson Pushes Pillars", "Paul's Shipwreck", "Baby Moses Basket"];
+  const hasPrompt = (prompt) => EXPECTED.some((name) => (promptMap[name] || []).indexOf(prompt) !== -1);
+  const stillThere = removedCards.filter(hasPrompt);
+  const missingScenes = addedScenes.filter((prompt) => !hasPrompt(prompt));
+  check("removed and collapsed cards are absent", stillThere.length === 0, stillThere.slice(0, 8).join(", ") || "absent");
+  check(
+    "added bible scenes are present",
+    missingScenes.length === 0 && hasPrompt("Toy Story") && hasPrompt("Big Hero 6") && hasPrompt("Lost Coin") && hasPrompt("Easter Egg") && !hasPrompt("102 Dalmatians"),
+    missingScenes.join(", ") || "present"
+  );
 
   await ev(`
     window.__permCalls = 0;
@@ -601,11 +620,26 @@ try {
     const button = [...document.querySelectorAll('.cat-btn')].find((node) => node.textContent === 'Actions');
     button.click();
   `);
-  const permSync = await ev(`
+  const tutorial = await ev(`
     window.__permSync = 0;
     document.getElementById('btn-tap-start').click();
+    ({
+      sync: window.__permSync,
+      phase: document.body.dataset.phase,
+      open: document.getElementById('tutorial').hidden === false,
+      text: document.getElementById('tutorial').innerText
+    })
+  `);
+  check(
+    "tutorial explains motion before permission",
+    tutorial.sync === 0 && tutorial.open === true && tutorial.phase === "tutorial" && tutorial.text.indexOf("motion") !== -1,
+    JSON.stringify(tutorial)
+  );
+  const permSync = await ev(`
+    window.__permSync = 0;
+    document.getElementById('btn-tutorial-go').click();
     const once = window.__permSync;
-    document.getElementById('btn-tap-start').click();
+    document.getElementById('btn-tutorial-go').click();
     ({ once: once, twice: window.__permSync })
   `);
   check(
@@ -613,7 +647,21 @@ try {
     permSync.once >= 1 && permSync.twice === permSync.once,
     "sync calls " + JSON.stringify(permSync) + " installed " + JSON.stringify(await ev("window.__permInstalled"))
   );
-  await waitFor("document.body.dataset.phase === 'play' && document.getElementById('prompt').textContent.length > 0", 12000, "round start");
+  const practice = await ev(`({
+    phase: document.body.dataset.phase,
+    prompt: document.getElementById('prompt').textContent,
+    tutorial: document.getElementById('tutorial').hidden
+  })`);
+  check(
+    "practice card asks for a live nod",
+    practice.phase === "practice" && practice.prompt === "Nod down = Got it, Tip back = Pass" && practice.tutorial === true,
+    JSON.stringify(practice)
+  );
+  await ev("document.getElementById('btn-correct').click()");
+  await waitFor("document.body.dataset.phase === 'play' && document.getElementById('prompt').textContent.length > 0 && document.getElementById('prompt').textContent.indexOf('Nod down') === -1", 12000, "round start");
+  const go = await ev("({ go: document.documentElement.dataset.go || '', skip: document.documentElement.dataset.skippedPrep || '', seen: state.settings.tutorialSeen })");
+  check("a GO moment follows the countdown", go.go === "1", JSON.stringify(go));
+  check("prep is skipped after the first run", go.skip === "1" && go.seen === true, JSON.stringify(go));
   const locks = await ev("({ screens: window.__fullScreens || 0, orient: window.__orientLocks || 0, wake: window.__wakeRequests || 0, wakeType: window.__wakeType || '', wakeError: window.__wakeError || '' })");
   check("fullscreen and orientation lock run on start", locks.screens >= 1 && locks.orient >= 1, JSON.stringify(locks));
   check("wake lock is requested when play begins", locks.wake >= 1 && locks.wakeType === "screen", JSON.stringify(locks));
@@ -646,7 +694,10 @@ try {
           score: document.getElementById('play-score').textContent,
           prompt: document.getElementById('prompt').textContent,
           last: document.documentElement.dataset.lastResult || '',
-          tilt: document.documentElement.dataset.tilt || ''
+          tilt: document.documentElement.dataset.tilt || '',
+          ghost: ((document.querySelectorAll('.prompt-ghost')[document.querySelectorAll('.prompt-ghost').length - 1]) || {}).className || '',
+          fly: document.querySelectorAll('.prompt-ghost').length ? getComputedStyle(document.querySelectorAll('.prompt-ghost')[document.querySelectorAll('.prompt-ghost').length - 1]).getPropertyValue('--fly').trim() : '',
+          bump: document.getElementById('play-score').className
         };
       })()
     `);
@@ -671,6 +722,7 @@ try {
   const correct = await fire(pose.down[0], pose.down[1]);
   await shot("03-correct.png");
   check("face-down counts as correct once", correct.score === "1" && correct.last === "correct" && correct.prompt !== firstPrompt, "score " + correct.score + " tilt " + correct.tilt + " last " + correct.last);
+  check("a correct tilt flies the card down and bumps the score", correct.ghost.indexOf("fly-correct") !== -1 && correct.fly === "48vh" && correct.bump.indexOf("bump") !== -1, JSON.stringify({ ghost: correct.ghost, fly: correct.fly, bump: correct.bump }));
   const again = await fire(pose.down[0], pose.down[1]);
   check("holding the tilt does not score again", again.score === "1" && again.prompt === correct.prompt, again.prompt);
   const earlyPass = await fire(pose.up[0], pose.up[1]);
@@ -682,6 +734,7 @@ try {
   const passed = await fire(pose.up[0], pose.up[1]);
   await shot("04-pass.png");
   check("face-up counts as pass once", passed.score === "1" && passed.last === "pass" && passed.prompt !== correct.prompt, "score " + passed.score + " tilt " + passed.tilt);
+  check("a pass tilt flies the card up", passed.ghost.indexOf("fly-pass") !== -1 && passed.fly === "-48vh", JSON.stringify({ ghost: passed.ghost, fly: passed.fly }));
   const passAgain = await fire(pose.up[0], pose.up[1]);
   check("holding pass does not advance again", passAgain.score === "1" && passAgain.prompt === passed.prompt, passAgain.prompt);
 
@@ -857,9 +910,9 @@ try {
     }
     install(window.DeviceOrientationEvent);
     install(window.DeviceMotionEvent);
-    document.getElementById('btn-tap-start').click();
+    document.getElementById('btn-pass-start').click();
   `);
-  await waitFor("document.body.classList.contains('playing') && document.body.classList.contains('portrait')", 8000, "portrait overlay");
+  await waitFor("document.body.classList.contains('playing') && document.body.classList.contains('portrait')", 12000, "portrait overlay");
   const overlay = await ev(`({
     display: getComputedStyle(document.getElementById('rotate-overlay')).display,
     text: document.getElementById('rotate-overlay').innerText
@@ -1000,7 +1053,7 @@ try {
   })()`);
   check("pause button resumes and can end the round", pauseUi.open && pauseUi.held && pauseUi.resumed && pauseUi.phase === "recap", JSON.stringify(pauseUi));
 
-  await ev(`
+  await ev(`(async () => {
     function grant() { return Promise.resolve('granted'); }
     function install(Ctor) {
       if (!Ctor) return;
@@ -1012,11 +1065,26 @@ try {
     }
     install(window.DeviceOrientationEvent);
     install(window.DeviceMotionEvent);
+    state.settings.tutorialSeen = true;
+    saveState();
     document.getElementById('btn-next').click();
-    document.getElementById('btn-tap-start').click();
-  `);
+    document.getElementById('btn-pass-start').click();
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    const beta = ${POSES[90].down[0]};
+    const gamma = ${POSES[90].down[1]};
+    let event;
+    try {
+      event = new DeviceOrientationEvent('deviceorientation', { alpha: 0, beta: beta, gamma: gamma, absolute: true });
+    } catch (err) {
+      event = new Event('deviceorientation');
+      Object.defineProperty(event, 'beta', { get: () => beta });
+      Object.defineProperty(event, 'gamma', { get: () => gamma });
+    }
+    window.dispatchEvent(event);
+  })()`);
   await waitFor("document.body.dataset.phase === 'prep'", 4000, "upright prep");
-  await fire(POSES[90].down[0], POSES[90].down[1]);
   await delay(3000);
   const heldPrep = await ev("document.body.dataset.phase");
   check("countdown waits until the phone is upright", heldPrep === "prep", heldPrep);
@@ -1165,6 +1233,204 @@ try {
     deleted.before === 2 && deleted.after === 1 && deleted.chip === true && deleted.lastDisabled === true && deleted.restored === 2 && deleted.score === "1",
     JSON.stringify(deleted)
   );
+
+  const audio = await ev(`(() => {
+    const heard = [];
+    const orig = playTone;
+    playTone = function (steps) {
+      heard.push(document.documentElement.dataset.audio || "tone");
+      return orig(steps);
+    };
+    document.documentElement.dataset.tickCount = "0";
+    document.documentElement.dataset.buzzer = "";
+    tick();
+    buzzer();
+    document.body.dataset.phase = "play";
+    delete document.body.dataset.paused;
+    currentCard = null;
+    const real = performance.now.bind(performance);
+    performance.now = function () { return real(); };
+    timerLeftMs = 4600;
+    timerMark = real();
+    lastTickLeft = -1;
+    onTimer();
+    const fromTimer = document.documentElement.dataset.tickCount;
+    timerLeftMs = 0;
+    timerMark = real();
+    lastTickLeft = -1;
+    onTimer();
+    performance.now = real;
+    playTone = orig;
+    return {
+      heard: heard.slice(0, 8),
+      fromTimer: fromTimer,
+      buzz: document.documentElement.dataset.buzzer || "",
+      phase: document.body.dataset.phase
+    };
+  })()`);
+  check(
+    "the last seconds tick and the round ends on a buzzer",
+    audio.heard.indexOf("tick") !== -1 && audio.heard.indexOf("buzzer") !== -1 && Number(audio.fromTimer) >= 1 && audio.buzz === "1" && audio.phase === "recap",
+    JSON.stringify(audio)
+  );
+  const formats = await ev(`(() => {
+    state.settings.format = "endless";
+    state.roundsPlayed = 0;
+    state.teams[0].score = 3;
+    state.teams[1].score = 1;
+    document.body.dataset.phase = "play";
+    currentCard = { key: "Actions\\nRunning", prompt: "Running", category: "Actions" };
+    endRound();
+    const endless = document.body.dataset.phase;
+    document.body.dataset.phase = "recap";
+    state.turnIndex = 1;
+    document.getElementById("btn-next").click();
+    const passed = {
+      phase: document.body.dataset.phase,
+      team: document.getElementById("pass-team").textContent,
+      setup: document.getElementById("setup").dataset.step
+    };
+    state.settings.format = "score";
+    state.teams[0].score = 20;
+    state.teams[1].score = 4;
+    document.body.dataset.phase = "play";
+    currentCard = { key: "Actions\\nJumping", prompt: "Jumping", category: "Actions" };
+    endRound();
+    const winner = {
+      phase: document.body.dataset.phase,
+      name: document.getElementById("winner-name").textContent,
+      crown: document.querySelectorAll("#winner-crown .crown").length,
+      bits: document.querySelectorAll("#winner-confetti .confetti-bit").length,
+      rematch: document.getElementById("btn-rematch").textContent
+    };
+    const formatBefore = state.settings.format;
+    document.getElementById("btn-rematch").click();
+    const again = {
+      phase: document.body.dataset.phase,
+      score: state.teams[0].score,
+      rounds: state.roundsPlayed,
+      format: state.settings.format,
+      team: document.getElementById("pass-team").textContent
+    };
+    state.settings.format = "rounds";
+    state.roundsPlayed = state.teams.length * 3 - 1;
+    state.teams[0].score = 4;
+    state.teams[1].score = 9;
+    document.body.dataset.phase = "play";
+    currentCard = { key: "Actions\\nDancing", prompt: "Dancing", category: "Actions" };
+    endRound();
+    return { endless: endless, passed: passed, winner: winner, again: again, formatBefore: formatBefore, roundsPhase: document.body.dataset.phase, champ: document.getElementById("winner-name").textContent };
+  })()`);
+  check("endless stays on the recap", formats.endless === "recap", JSON.stringify(formats));
+  check(
+    "next up opens the pass-the-phone screen",
+    formats.passed.phase === "pass" && formats.passed.team.indexOf("Team 2") !== -1,
+    JSON.stringify(formats.passed)
+  );
+  check(
+    "first to 20 ends on a winner screen",
+    formats.winner.phase === "winner" && formats.winner.name.indexOf("wins") !== -1 && formats.winner.crown >= 1 && formats.winner.bits >= 3 && formats.winner.rematch === "Rematch",
+    JSON.stringify(formats.winner)
+  );
+  check(
+    "rematch clears the score and keeps the format",
+    formats.again.phase === "pass" && formats.again.score === 0 && formats.again.rounds === 0 && formats.again.format === "score" && formats.formatBefore === "score",
+    JSON.stringify(formats.again)
+  );
+  check(
+    "three rounds each ends on a winner",
+    formats.roundsPhase === "winner" && formats.champ.indexOf("Team 2") !== -1,
+    formats.champ + " " + formats.roundsPhase
+  );
+  const againTutorial = await ev(`(() => {
+    state.settings.tutorialSeen = true;
+    saveState();
+    document.body.dataset.phase = "setup";
+    showStep("round");
+    document.getElementById("btn-tap-start").click();
+    return { phase: document.body.dataset.phase, hidden: document.getElementById("tutorial").hidden };
+  })()`);
+  check(
+    "the tutorial stays skipped after the first run",
+    againTutorial.phase !== "tutorial" && againTutorial.hidden === true,
+    JSON.stringify(againTutorial)
+  );
+
+  await setViewport(844, 390);
+  await setScheme("light");
+  const mixRows = await ev(`(() => {
+    clearGame();
+    stopTimer();
+    window.clearTimeout(countdownHandle);
+    openSetup("deck");
+    const mixBtn = document.querySelector(".group-mix .cat-btn");
+    const other = document.querySelector('.cat-btn[data-category="Bible Characters"]');
+    const mixBox = mixBtn.getBoundingClientRect();
+    const otherBox = other.getBoundingClientRect();
+    const tops = [...document.querySelectorAll(".cat-btn")].map((el) => Math.round(el.getBoundingClientRect().top)).filter((top) => top >= 0 && top < 390);
+    const rows = tops.filter((top, index) => tops.indexOf(top) === index);
+    return { mixH: Math.round(mixBox.height), otherH: Math.round(otherBox.height), rows: rows };
+  })()`);
+  check(
+    "mix is a normal-height tile with two rows visible",
+    Math.abs(mixRows.mixH - mixRows.otherH) <= 4 && mixRows.rows.length >= 2,
+    JSON.stringify(mixRows)
+  );
+  async function v7Pair(name) {
+    await setScheme("light");
+    await delay(40);
+    await v7Shot(name + "-light.png");
+    await setScheme("dark");
+    await delay(40);
+    await v7Shot(name + "-dark.png");
+    await setScheme("light");
+  }
+  await v7Pair("setup-deck");
+  await ev(`showStep("round"); document.body.dataset.phase = "setup";`);
+  await v7Pair("setup-round");
+  await ev(`showTutorial();`);
+  await v7Pair("tutorial");
+  await ev(`document.body.dataset.phase = "home"; document.getElementById("tutorial").hidden = true; renderHome();`);
+  await v7Pair("home");
+  const shotPrompts = {};
+  for (const entry of [["Bible Stories", "play-bible-stories"], ["Actions", "play-actions"], ["Animals", "play-animals"]]) {
+    const prompt = await ev(`(() => {
+      state.settings.category = ${JSON.stringify(entry[0])};
+      state.used = [];
+      queue = buildDeck();
+      document.body.dataset.phase = "play";
+      document.body.classList.add("playing");
+      paintCategory();
+      deal();
+      return document.getElementById("prompt").textContent;
+    })()`);
+    shotPrompts[entry[0]] = prompt;
+    check(entry[0] + " play shot uses a real prompt", (promptMap[entry[0]] || []).indexOf(prompt) !== -1, prompt);
+    await v7Pair(entry[1]);
+  }
+  check(
+    "play shots use three different prompts",
+    shotPrompts["Bible Stories"] !== shotPrompts.Actions && shotPrompts.Actions !== shotPrompts.Animals && shotPrompts["Bible Stories"] !== shotPrompts.Animals,
+    JSON.stringify(shotPrompts)
+  );
+  await ev(`(() => {
+    document.body.classList.remove("playing");
+    renderRecap({ name: "Team 1", roundPoints: 3, total: 3, guessed: ["Running"], passed: ["Jumping"], timeUp: "", nextName: "Team 2" });
+    document.body.dataset.phase = "recap";
+  })()`);
+  await v7Pair("recap");
+  await ev(`(() => {
+    state.teams[0].score = 20;
+    state.teams[1].score = 6;
+    renderWinner({ name: "Team 1", roundPoints: 2, total: 20, guessed: [], passed: [], timeUp: "", nextName: "Team 2" });
+    document.body.dataset.phase = "winner";
+  })()`);
+  await v7Pair("winner");
+  await ev(`(() => {
+    state.turnIndex = 1;
+    showPassPhone();
+  })()`);
+  await v7Pair("pass");
 
   await delay(600);
   const errors = consoleEvents.filter((event) => event.type === "error");
