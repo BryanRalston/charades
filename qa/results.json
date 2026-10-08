@@ -153,7 +153,7 @@
     {
       "name": "holding the tilt does not score again",
       "ok": true,
-      "detail": "Puddle Splash"
+      "detail": "Jumping"
     },
     {
       "name": "the opposite tilt does not count before neutral",
@@ -173,7 +173,7 @@
     {
       "name": "holding pass does not advance again",
       "ok": true,
-      "detail": "Stomping"
+      "detail": "Swimming"
     },
     {
       "name": "landscape-right face-down counts as correct",
@@ -203,12 +203,12 @@
     {
       "name": "recap lists the guessed prompt",
       "ok": true,
-      "detail": "Throwing Ball, Stomping, Climbing"
+      "detail": "Duck Walk, Swimming, Washing Hands"
     },
     {
       "name": "recap lists the passed prompt",
       "ok": true,
-      "detail": "Puddle Splash"
+      "detail": "Jumping"
     },
     {
       "name": "recap shows the round total",
@@ -253,7 +253,7 @@
     {
       "name": "reshuffle deals a prompt again",
       "ok": true,
-      "detail": "Yawning"
+      "detail": "Thumbs Up"
     },
     {
       "name": "zero console errors",

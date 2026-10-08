@@ -185,3 +185,47 @@ Open https://bryanralston.github.io/charades/?debug=1 on the phone. A small read
 - The motion-fallback sign on a device that does not emit deviceorientation.
 - Whether 35° from the forehead feels right.
 - Rotation lock. If the browser keeps reporting angle 0 while the phone is sideways, this mapping will not read upright as 0. Turn rotation lock off, or use the buttons.
+
+## Redesign
+
+Live page after `15ee869`. https://bryanralston.github.io/charades/ serves the new player. `sw.js` is cache `charades-v4`, still network-first for navigations and `index.html`. No 402 or 429.
+
+### What changed
+
+The page is a light and dark app: system font, frosted sheets, an 8pt grid, and one accent per category. Home opens a setup sheet. Play starts with a Hold to forehead prep, a 3-2-1 countdown, a ring timer, and edge Correct and Pass buttons. Correct is a green wash and a rising chime. Pass is an orange wash and a low blip. The round ends with a short flourish. `prefers-reduced-motion` turns the motion off.
+
+Gameplay, `localStorage` key `charades.v1`, the single inline file, the tilt mapping, calibration, permission order, motion fallback, and `?debug=1` readout are unchanged. A refresh during a round returns to home.
+
+Miracles & Parables dropped eight reworded duplicates and kept Wedding at Cana, Loaves and Fish, Great Catch, Ten Lepers, and Two Blind Men. Movies no longer includes Fantasia 2000.
+
+### Screenshots
+
+Landscape frames are 844×390. The rotate overlay is portrait. Files are in `qa/redesign/`:
+
+- `home-light.png`, `home-dark.png`
+- `setup-light.png`, `setup-dark.png`
+- `prep-light.png`, `prep-dark.png`
+- `play-light.png`, `play-dark.png`
+- `recap-light.png`, `recap-dark.png`
+- `rotate-overlay.png`
+
+### Size and counts
+
+`index.html` on the live site is 88834 bytes. Miracles & Parables has 92 prompts. Movies has 168. Mix draws 1924 cards. Every category is still at least 40, and no prompt is in two categories.
+
+### Tests
+
+| Check | Result |
+| --- | --- |
+| `node qa/tilt_math_check.mjs` | 34 passed |
+| `node qa/headless_qc.mjs` on http://127.0.0.1:8765/ | 52 passed, 0 console errors. Real-phone poses at angle 90 and 270. |
+| `node qa/shuffle_check.mjs` | 28 passed, 0 console errors |
+| Live `CHARADES_URL=https://bryanralston.github.io/charades/ node qa/headless_qc.mjs` | 52 passed, 0 console errors |
+| Live `sw.js` | HTTP 200, cache `charades-v4` |
+
+### Open limits
+
+- Rotation lock can keep the screen angle at 0 while the phone is sideways. The corrected mapping then does not see an upright forehead pose. Turn rotation lock off, or use the buttons. The page still does not call `screen.orientation.lock`.
+- On a 390px-tall landscape screen the category list scrolls, so Mix starts below the first view. The Setup title card is hidden at that height so the timer, both teams, Add Team, and Tap to start stay on screen.
+- The iPhone permission prompt and a real denied-sensor round were not exercised on a phone. This run used the headless sensor stubs.
+- Audio and vibration still depend on the device. A pass does not subtract a point. The card still showing when time runs out is not marked used.
