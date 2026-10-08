@@ -1,4 +1,6 @@
-const CACHE = "charades-v5";
+const CACHE = "charades-v6";
+const ASSET_VERSION = "6";
+const NETWORK_TIMEOUT_MS = 2500;
 const ASSETS = [
   "./",
   "./index.html",
@@ -28,6 +30,30 @@ function isNavigation(request, url) {
   return path.endsWith("/") || path.endsWith("/index.html");
 }
 
+/* network-timeout-start */
+function networkFirst(request) {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      reject(new Error("timeout"));
+    }, NETWORK_TIMEOUT_MS);
+    fetch(request).then((response) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve(response);
+    }, (err) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      reject(err);
+    });
+  });
+}
+/* network-timeout-end */
+
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   if (request.method !== "GET") return;
@@ -36,7 +62,7 @@ self.addEventListener("fetch", (event) => {
 
   if (isNavigation(request, url)) {
     event.respondWith(
-      fetch(request)
+      networkFirst(request)
         .then((response) => {
           if (response && response.ok && !response.redirected) {
             const copy = response.clone();

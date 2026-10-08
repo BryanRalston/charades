@@ -7,10 +7,14 @@ const ROOT = "C:\\Users\\bryma\\dev\\charades";
 const QA = ROOT + "\\qa";
 const REDESIGN = QA + "\\redesign";
 const V5 = QA + "\\v5";
-const V4_TILT = {
+const V6 = QA + "\\v6";
+const V6_LOCK = {
   math: ["015ff8a014515ed3d7d9ea3c858999989a101864c13b7335a754bdb687aab4b6", 2627],
-  sensors: ["54724f300d2fcf0039071dbc8611e26d694f984ee6ee98b08b8b1f186ca95ecf", 4019],
-  perm: ["eb8fc694b1268d25a61c29e7e7682851edea578d366235a468fa6b2d047b2b8b", 665]
+  noteReading: ["a1a7a1edf2849608a145e6a1faffe8c27be619a80ae52cacefaa34e2f4850b1b", 612],
+  orientationLeads: ["f1a607bc77870bd1c831b52dbe5ffd03e327f09cf075617ea98856dadd40c36c", 149],
+  onOrientation: ["4f67f723eb4867fff0dc5e9d01331c4dc7ee2ac0bd385806ed994577c940ca7f", 251],
+  onMotion: ["38a8a44d7a950d2e33244ad64212c3fdd6e1db11e04a112efb1b19dba3508d16", 660],
+  attachSensors: ["e7f4c8dd03a561dca848cff9a3fea5a1cc767f18601027399e25d28e867a4e4a", 394]
 };
 const CHROME = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
 const PORT = 9333;
@@ -41,23 +45,31 @@ const POSES = {
 mkdirSync(QA, { recursive: true });
 mkdirSync(REDESIGN, { recursive: true });
 mkdirSync(V5, { recursive: true });
+mkdirSync(V6, { recursive: true });
 
-function tiltSlices(html) {
+function protectedSlices(html) {
   const mathStart = html.indexOf("/* tilt-math-start */");
   const mathEnd = html.indexOf("/* tilt-math-end */");
   const math = html.slice(mathStart, mathEnd + "/* tilt-math-end */".length);
-  const sensorStart = html.indexOf("    function beginCalibration() {");
-  const sensorEnd = html.indexOf("    function permissionApi(ctor) {");
-  const sensors = html.slice(sensorStart, sensorEnd);
-  const permStart = html.indexOf("    function onTapStart() {");
-  const permEnd = html.indexOf("      const startPhase = document.body.dataset.phase;");
-  const perm = html.slice(permStart, permEnd);
-  const sha = (text) => createHash("sha256").update(text).digest("hex");
-  return {
-    math: [sha(math), math.length],
-    sensors: [sha(sensors), sensors.length],
-    perm: [sha(perm), perm.length]
+  const sliceFn = (name, next) => {
+    const start = html.indexOf("    function " + name);
+    const end = html.indexOf("    function " + next);
+    return html.slice(start, end);
   };
+  const parts = {
+    math: math,
+    noteReading: sliceFn("noteReading(source, beta, gamma, up)", "orientationLeads(now)"),
+    orientationLeads: sliceFn("orientationLeads(now)", "onOrientation(event)"),
+    onOrientation: sliceFn("onOrientation(event)", "onMotion(event)"),
+    onMotion: sliceFn("onMotion(event)", "attachSensors(orientOk, motionOk)"),
+    attachSensors: sliceFn("attachSensors(orientOk, motionOk)", "permissionApi(ctor)")
+  };
+  const sha = (text) => createHash("sha256").update(text).digest("hex");
+  const out = {};
+  Object.keys(parts).forEach((key) => {
+    out[key] = [sha(parts[key]), parts[key].length];
+  });
+  return out;
 }
 const consoleEvents = [];
 const checks = [];
@@ -171,12 +183,50 @@ try {
     source: `
       window.__screenAngle = 90;
       window.__permCalls = 0;
+      window.__fullScreens = 0;
+      window.__orientLocks = 0;
+      window.__wakeRequests = 0;
       window.__orientOverrideError = "";
       (function () {
+        const origFull = Element.prototype.requestFullscreen;
+        Element.prototype.requestFullscreen = function () {
+          window.__fullScreens += 1;
+          try {
+            const result = origFull ? origFull.call(this) : Promise.resolve();
+            if (result && typeof result.then === "function") return result.catch(function () { return undefined; });
+            return Promise.resolve();
+          } catch (err) {
+            return Promise.resolve();
+          }
+        };
+        try {
+          Object.defineProperty(navigator, "wakeLock", {
+            configurable: true,
+            get() {
+              return {
+                request(type) {
+                  window.__wakeRequests += 1;
+                  window.__wakeType = type;
+                  return Promise.resolve({
+                    release() {
+                      window.__wakeReleases = (window.__wakeReleases || 0) + 1;
+                      return Promise.resolve();
+                    }
+                  });
+                }
+              };
+            }
+          });
+        } catch (err) {
+          window.__wakeError = String(err);
+        }
         const fake = {
           get angle() { return window.__screenAngle; },
           get type() { return window.__screenAngle === 270 ? "landscape-secondary" : "landscape-primary"; },
-          lock() { return Promise.resolve(); },
+          lock() {
+            window.__orientLocks += 1;
+            return Promise.resolve();
+          },
           unlock() {},
           addEventListener() {},
           removeEventListener() {},
@@ -223,10 +273,10 @@ try {
     });
   }
 
-  async function v5Shot(name) {
+  async function v6Shot(name) {
     const png = await cdp.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
-    writeFileSync(V5 + "\\" + name, Buffer.from(png.data, "base64"));
-    shots.push("v5/" + name);
+    writeFileSync(V6 + "\\" + name, Buffer.from(png.data, "base64"));
+    shots.push("v6/" + name);
   }
 
   async function setViewport(width, height) {
@@ -252,9 +302,33 @@ try {
     throw new Error("timed out waiting for " + label + " (" + snap + ")");
   }
 
-  const tiltNow = tiltSlices(readFileSync(ROOT + "\\index.html", "utf8"));
-  const tiltSame = ["math", "sensors", "perm"].every((key) => tiltNow[key][0] === V4_TILT[key][0] && tiltNow[key][1] === V4_TILT[key][1]);
-  check("tilt block is byte-identical to v4", tiltSame, JSON.stringify(tiltNow));
+  const tiltNow = protectedSlices(readFileSync(ROOT + "\\index.html", "utf8"));
+  const tiltSame = Object.keys(V6_LOCK).every((key) => tiltNow[key][0] === V6_LOCK[key][0] && tiltNow[key][1] === V6_LOCK[key][1]);
+  check("tilt math and sensor handlers are byte-identical to v5", tiltSame, JSON.stringify(tiltNow));
+  const swSource = readFileSync(ROOT + "\\sw.js", "utf8");
+  check(
+    "sw cache is charades-v6",
+    swSource.indexOf('const CACHE = "charades-v6"') !== -1 && swSource.indexOf('ASSET_VERSION = "6"') !== -1,
+    ""
+  );
+  const swStart = swSource.indexOf("function networkFirst");
+  const swEnd = swSource.indexOf("/* network-timeout-end */");
+  const swFactory = new Function(
+    "fetch",
+    "setTimeout",
+    "clearTimeout",
+    "const NETWORK_TIMEOUT_MS = 2500;\n" + swSource.slice(swStart, swEnd) + "\nreturn networkFirst;"
+  );
+  const swTimed = swFactory(() => new Promise(() => {}), setTimeout, clearTimeout);
+  const swBegan = Date.now();
+  let swRejected = false;
+  try { await swTimed({}); } catch (err) { swRejected = String(err && err.message || err) === "timeout"; }
+  const swElapsed = Date.now() - swBegan;
+  check(
+    "sw network timeout falls back after 2.5s",
+    swRejected && swElapsed >= 2000 && swElapsed < 4000 && swSource.indexOf("cache.match") !== -1,
+    swElapsed + "ms " + swRejected
+  );
 
   await cdp.send("Page.navigate", { url: BASE });
   await waitFor("document.readyState === 'complete' && !!document.getElementById('btn-tap-start') && document.querySelectorAll('.cat-btn').length >= 16", 10000, "page load");
@@ -277,42 +351,66 @@ try {
   check("Tap to start is present", rendered.start.text === "Tap to start" && rendered.start.width > 40 && rendered.start.height > 40, JSON.stringify(rendered.start));
   check("screen angle is landscape-left 90", rendered.angle === 90, "angle " + rendered.angle + " " + rendered.orientError);
   check("player UI does not link the feature map", rendered.links.every((href) => !href || href.indexOf("FEATURE_MAP") === -1), rendered.links.join(", "));
+  const colorSheet = await ev(`(() => {
+    const colors = categoryColors();
+    const names = ${JSON.stringify(EXPECTED)};
+    const root = document.createElement("div");
+    root.id = "color-sheet";
+    root.style.cssText = "position:fixed;inset:0;z-index:90;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,1fr);background:#111;";
+    names.forEach((name) => {
+      const pair = colors[name];
+      const cell = document.createElement("div");
+      cell.style.cssText = "display:flex;align-items:flex-end;padding:8px;color:#fff;font:700 13px/1.2 sans-serif;background:radial-gradient(120% 90% at 50% 40%," + pair[0] + "," + pair[1] + ")";
+      cell.textContent = name;
+      root.appendChild(cell);
+    });
+    document.body.appendChild(root);
+    const banned = ["#5a3208", "#3d2a16", "#4a3808", "#4a3a08", "#5a4308", "#2b246e"];
+    const muddy = Object.keys(colors).some((name) => colors[name].some((hex) => banned.indexOf(String(hex).toLowerCase()) !== -1));
+    return { actions: colors.Actions.join(","), muddy: muddy, count: names.length };
+  })()`);
+  await v6Shot("play-colors-contact.png");
+  await ev("const sheet = document.getElementById('color-sheet'); if (sheet) sheet.remove();");
+  check("play colors are saturated for every category", colorSheet.actions === "#EA580C,#C2410C" && colorSheet.muddy === false && colorSheet.count === 16, JSON.stringify(colorSheet));
   const landscapeHint = await ev("getComputedStyle(document.querySelector('.rotate-hint')).display");
   check("landscape hides the sideways note", landscapeHint === "none", landscapeHint);
   await setScheme("light");
-  await v5Shot("home-light.png");
+  await v6Shot("home-light.png");
   await setScheme("dark");
-  await v5Shot("home-dark.png");
+  await v6Shot("home-dark.png");
   await setScheme("light");
   await setViewport(932, 430);
   await delay(200);
-  await v5Shot("home-932.png");
+  await v6Shot("home-932.png");
   await setViewport(844, 390);
   await ev("document.getElementById('btn-play').click()");
   await delay(250);
-  await v5Shot("setup-deck-light.png");
+  await v6Shot("setup-deck-light.png");
   await setScheme("dark");
-  await v5Shot("setup-deck-dark.png");
+  await v6Shot("setup-deck-dark.png");
   await setScheme("light");
   await ev(`
     document.getElementById("setup").dataset.step = "round";
     document.getElementById("setup-title").textContent = "Round";
   `);
   await delay(200);
-  await v5Shot("setup-round-light.png");
+  await v6Shot("setup-round-light.png");
   await setScheme("dark");
-  await v5Shot("setup-round-dark.png");
+  await v6Shot("setup-round-dark.png");
   await setScheme("light");
   await ev(`
     document.body.dataset.phase = "prep";
     document.body.classList.add("playing");
-    document.getElementById("play").style.setProperty("--cat-deep", "#5a3208");
+    const actions = categoryColors().Actions;
+    const play = document.getElementById("play");
+    play.style.setProperty("--cat-mid", actions[0]);
+    play.style.setProperty("--cat-deep", actions[1]);
     document.getElementById("tilt-status").textContent = "Tilt off, use buttons";
   `);
   await delay(200);
-  await v5Shot("prep-light.png");
+  await v6Shot("prep-light.png");
   await setScheme("dark");
-  await v5Shot("prep-dark.png");
+  await v6Shot("prep-dark.png");
   await setScheme("light");
   await ev(`
     document.body.dataset.phase = "play";
@@ -326,13 +424,30 @@ try {
     ring.style.strokeDashoffset = "40";
   `);
   await delay(200);
-  await v5Shot("play-light.png");
+  await v6Shot("play-light.png");
   await setScheme("dark");
-  await v5Shot("play-dark.png");
+  await v6Shot("play-dark.png");
   await setScheme("light");
+  for (const entry of [["Actions", "play-actions"], ["Bible Stories", "play-bible-stories"], ["Animals", "play-animals"]]) {
+    await ev(`(() => {
+      const pair = categoryColors()[${JSON.stringify(entry[0])}];
+      const play = document.getElementById("play");
+      play.style.setProperty("--cat-mid", pair[0]);
+      play.style.setProperty("--cat-deep", pair[1]);
+      document.body.dataset.phase = "play";
+      document.body.classList.add("playing");
+      document.getElementById("prompt-cat").textContent = ${JSON.stringify(entry[0])};
+      document.getElementById("prompt").textContent = "Blanket Fort";
+    })()`);
+    await setScheme("light");
+    await v6Shot(entry[1] + "-light.png");
+    await setScheme("dark");
+    await v6Shot(entry[1] + "-dark.png");
+    await setScheme("light");
+  }
   await setViewport(932, 430);
   await delay(150);
-  await v5Shot("play-932.png");
+  await v6Shot("play-932.png");
   await setViewport(844, 390);
   await ev(`
     document.body.classList.remove("playing");
@@ -376,9 +491,9 @@ try {
     renderConfetti(3);
   `);
   await delay(250);
-  await v5Shot("recap-light.png");
+  await v6Shot("recap-light.png");
   await setScheme("dark");
-  await v5Shot("recap-dark.png");
+  await v6Shot("recap-dark.png");
   await setScheme("light");
   await setViewport(390, 844);
   await ev(`
@@ -387,7 +502,7 @@ try {
     document.body.classList.add("portrait");
   `);
   await delay(250);
-  await v5Shot("rotate-overlay.png");
+  await v6Shot("rotate-overlay.png");
   await cdp.send("Emulation.setDeviceMetricsOverride", {
     width: 844,
     height: 390,
@@ -463,6 +578,23 @@ try {
       motion: install(window.DeviceMotionEvent)
     };
   `);
+  const blockedStart = await ev(`
+    window.__permSync = 0;
+    window.__fullScreens = 0;
+    window.__orientLocks = 0;
+    document.getElementById('btn-tap-start').click();
+    ({
+      sync: window.__permSync,
+      hint: document.getElementById('hint').textContent,
+      screens: window.__fullScreens,
+      locks: window.__orientLocks
+    })
+  `);
+  check(
+    "validation runs before permission",
+    blockedStart.sync === 0 && blockedStart.hint === "Pick a category first." && blockedStart.screens === 0 && blockedStart.locks === 0,
+    JSON.stringify(blockedStart)
+  );
   await ev(`
     const input = document.querySelector('input[name="seconds"][value="30"]');
     input.click();
@@ -472,14 +604,23 @@ try {
   const permSync = await ev(`
     window.__permSync = 0;
     document.getElementById('btn-tap-start').click();
-    window.__permSync
+    const once = window.__permSync;
+    document.getElementById('btn-tap-start').click();
+    ({ once: once, twice: window.__permSync })
   `);
-  check("Tap to start calls requestPermission synchronously", permSync >= 1, "sync calls " + permSync + " installed " + JSON.stringify(await ev("window.__permInstalled")));
+  check(
+    "Tap to start calls requestPermission synchronously once",
+    permSync.once >= 1 && permSync.twice === permSync.once,
+    "sync calls " + JSON.stringify(permSync) + " installed " + JSON.stringify(await ev("window.__permInstalled"))
+  );
   await waitFor("document.body.dataset.phase === 'play' && document.getElementById('prompt').textContent.length > 0", 12000, "round start");
+  const locks = await ev("({ screens: window.__fullScreens || 0, orient: window.__orientLocks || 0, wake: window.__wakeRequests || 0, wakeType: window.__wakeType || '', wakeError: window.__wakeError || '' })");
+  check("fullscreen and orientation lock run on start", locks.screens >= 1 && locks.orient >= 1, JSON.stringify(locks));
+  check("wake lock is requested when play begins", locks.wake >= 1 && locks.wakeType === "screen", JSON.stringify(locks));
   await setScheme("light");
-  await v5Shot("play-light.png");
+  await v6Shot("play-light.png");
   await setScheme("dark");
-  await v5Shot("play-dark.png");
+  await v6Shot("play-dark.png");
   await setScheme("light");
   await shot("02-play.png");
 
@@ -521,7 +662,9 @@ try {
   const firstPrompt = opened.prompt;
   const pillOn = await ev("document.getElementById('tilt-status').textContent");
   check("tilt status shows on while events arrive", pillOn === "Tilt on", pillOn);
-  await delay(450);
+  await delay(700);
+  const armed90 = await ev("document.documentElement.dataset.calibrated || ''");
+  check("calibration waits for a stable neutral", armed90 === "1", armed90);
   await fire(pose.neutral[0], pose.neutral[1]);
   const small = await fire(pose.small[0], pose.small[1]);
   check("a 10 degree tilt does not score", small.score === "0" && small.prompt === firstPrompt, "tilt " + small.tilt + " score " + small.score);
@@ -543,8 +686,10 @@ try {
   check("holding pass does not advance again", passAgain.score === "1" && passAgain.prompt === passed.prompt, passAgain.prompt);
 
   await ev("window.__screenAngle = 270");
-  await fire(POSES[270].neutral[0], POSES[270].neutral[1]);
-  await delay(750);
+  await burst(POSES[270].neutral[0], POSES[270].neutral[1], 6);
+  await delay(700);
+  const armed270 = await ev("document.documentElement.dataset.calibrated || ''");
+  check("calibration re-arms after a screen angle change", armed270 === "1", armed270);
   const otherSide = await fire(POSES[270].down[0], POSES[270].down[1]);
   check("landscape-right face-down counts as correct", otherSide.score === "2" && otherSide.last === "correct" && otherSide.prompt !== passed.prompt, "score " + otherSide.score + " tilt " + otherSide.tilt + " angle now " + await ev("screen.orientation.angle"));
   const keyed = await ev(`
@@ -552,6 +697,12 @@ try {
     ({ score: document.getElementById('play-score').textContent, prompt: document.getElementById('prompt').textContent, last: document.documentElement.dataset.lastResult || '' })
   `);
   check("arrow down counts as correct", keyed.score === "3" && keyed.last === "correct", "score " + keyed.score);
+  await ev("document.body.classList.add('portrait')");
+  const overlayBlocked = await fire(pose.down[0], pose.down[1]);
+  await ev("document.getElementById('btn-correct').click()");
+  const overlayScore = await ev("document.getElementById('play-score').textContent");
+  check("portrait overlay does not resolve a card", overlayBlocked.score === "3" && overlayScore === "3", overlayBlocked.score + " then " + overlayScore);
+  await ev("document.body.classList.remove('portrait')");
 
   let sawUrgent = false;
   let sawDrop = false;
@@ -569,7 +720,11 @@ try {
       prompt: (document.getElementById('prompt') || {}).textContent || '',
       used: (() => { try { return JSON.parse(localStorage.getItem('charades.v1')).used; } catch (err) { return []; } })(),
       guessed: [...document.querySelectorAll('#recap-guessed li')].map((node) => node.textContent),
-      passed: [...document.querySelectorAll('#recap-passed li')].map((node) => node.textContent)
+      passed: [...document.querySelectorAll('#recap-passed li')].map((node) => node.textContent),
+      timeUp: [...document.querySelectorAll('#recap-passed li')].map((node) => ({
+        prompt: [...node.childNodes].filter((child) => child.nodeType === 3).map((child) => child.textContent).join(''),
+        tag: (node.querySelector('.time-up-tag') || {}).textContent || ''
+      }))
     })`);
     if (previous !== null && Number(info.timer) < Number(previous)) sawDrop = true;
     previous = info.timer;
@@ -589,19 +744,20 @@ try {
   check("the timer ends the round", Boolean(recap), recap ? recap.line : "still " + previous);
   if (recap) {
     await setScheme("light");
-    await v5Shot("recap-light.png");
+    await v6Shot("recap-light.png");
     await setScheme("dark");
-    await v5Shot("recap-dark.png");
+    await v6Shot("recap-dark.png");
     await setScheme("light");
     await shot("06-recap.png");
     check("recap lists the guessed prompt", recap.guessed.indexOf(firstPrompt) !== -1, recap.guessed.join(", "));
     check("recap lists the passed prompt", recap.passed.indexOf(correct.prompt) !== -1, recap.passed.join(", "));
     check("recap shows the round total", recap.line.indexOf("scored 3") !== -1 && recap.line.indexOf("Total: 3") !== -1, recap.line);
     check("the turn rotates", recap.next.indexOf("Team 2") !== -1, recap.next);
+    const timeUpRow = (recap.timeUp || []).find((row) => row.prompt === lastPlayPrompt && row.tag === "time's up");
     check(
-      "time-up card is passed and used",
-      recap.passed.indexOf("Time's up") !== -1 && recap.used.indexOf("Actions\n" + lastPlayPrompt) !== -1,
-      lastPlayPrompt + " | " + recap.passed.join(", ")
+      "time-up card shows its name and a tag",
+      Boolean(timeUpRow) && recap.used.indexOf("Actions\n" + lastPlayPrompt) !== -1,
+      lastPlayPrompt + " | " + JSON.stringify(recap.timeUp)
     );
   }
 
@@ -668,7 +824,7 @@ try {
     `);
   }
   for (let i = 0; i < 6; i += 1) await fireMotion(POSES[90].neutral[0], POSES[90].neutral[1]);
-  await delay(450);
+  await delay(700);
   const motionHit = await fireMotion(POSES[90].down[0], POSES[90].down[1]);
   check(
     "motion fallback counts face-down as correct",
@@ -709,9 +865,15 @@ try {
     text: document.getElementById('rotate-overlay').innerText
   })`);
   check("portrait shows the rotate overlay", overlay.display === "flex" && overlay.text.indexOf("Rotate your phone") !== -1, overlay.display + " " + overlay.text.replace(/\\s+/g, " "));
+  const overlayAria = await ev("document.getElementById('rotate-overlay').getAttribute('aria-hidden')");
+  check("rotate overlay is exposed while it is open", overlayAria !== "true", overlayAria);
   await shot("08-portrait.png");
   await setScheme("light");
-  await v5Shot("rotate-overlay.png");
+  await v6Shot("rotate-overlay.png");
+  await setViewport(844, 390);
+  await ev("updatePortrait()");
+  const closedAria = await ev("document.getElementById('rotate-overlay').getAttribute('aria-hidden')");
+  check("rotate overlay is hidden from assistive tech when closed", closedAria === "true", closedAria);
 
   const used = promptMap.Actions.map((prompt) => "Actions\n" + prompt);
   const saved = {
@@ -772,6 +934,236 @@ try {
     "refresh mid-round resumes at prep",
     resumed.phase === "prep" && resumed.team === beforeResume.team && resumed.turnIndex === beforeResume.turnIndex && usedSame,
     JSON.stringify({ before: beforeResume, resumed: resumed })
+  );
+
+  const resumeSaved = {
+    teams: [
+      { id: "a", name: "Team 1", score: 4 },
+      { id: "b", name: "Team 2", score: 0 }
+    ],
+    turnIndex: 0,
+    used: ["Actions\nRunning"],
+    settings: { seconds: 60, category: "Actions", buttonsOnly: false }
+  };
+  await ev("localStorage.setItem('charades.v1', " + JSON.stringify(JSON.stringify(resumeSaved)) + "); sessionStorage.setItem('charades.round', '1'); sessionStorage.setItem('charades.roundMs', '15000');");
+  await cdp.send("Page.reload");
+  await waitFor("document.body.dataset.phase === 'play' && document.getElementById('prompt').textContent.length > 0", 12000, "remaining-time resume");
+  const remain = await ev("Number(document.getElementById('timer').textContent)");
+  check("resume keeps the remaining time", remain >= 12 && remain <= 15, String(remain));
+  const timed = await ev(`(() => {
+    const before = Number(document.getElementById('timer').textContent);
+    const real = performance.now.bind(performance);
+    performance.now = function () { return real() + 5000; };
+    onTimer();
+    const after = Number(document.getElementById('timer').textContent);
+    performance.now = real;
+    onTimer();
+    return { before: before, after: after };
+  })()`);
+  check("timer follows performance.now", timed.after <= timed.before - 4 && timed.after >= timed.before - 6, JSON.stringify(timed));
+  const hiddenPause = await ev(`(() => {
+    const before = document.getElementById('timer').textContent;
+    try {
+      Object.defineProperty(document, 'hidden', { configurable: true, get: function () { return window.__docHidden === true; } });
+    } catch (err) {
+      return { error: String(err), before: before, paused: '' };
+    }
+    window.__docHidden = true;
+    document.dispatchEvent(new Event('visibilitychange'));
+    return { before: before, paused: document.body.dataset.paused || '', error: '' };
+  })()`);
+  await delay(700);
+  const hiddenAfter = await ev("({ timer: document.getElementById('timer').textContent, paused: document.body.dataset.paused || '' })");
+  check(
+    "hidden tab pauses the round and the timer",
+    hiddenPause.paused === "hidden" && hiddenAfter.timer === hiddenPause.before && hiddenAfter.paused === "hidden",
+    JSON.stringify({ hiddenPause: hiddenPause, hiddenAfter: hiddenAfter })
+  );
+  const shown = await ev(`(() => {
+    const before = window.__wakeRequests || 0;
+    window.__docHidden = false;
+    document.dispatchEvent(new Event('visibilitychange'));
+    return { paused: document.body.dataset.paused || '', wakes: window.__wakeRequests || 0, before: before };
+  })()`);
+  check("wake lock is re-acquired when the tab returns", shown.paused === "" && shown.wakes > shown.before, JSON.stringify(shown));
+  const pauseUi = await ev(`(() => {
+    document.getElementById('btn-pause').click();
+    const open = document.getElementById('pause-modal').hidden === false && document.body.dataset.paused === 'user';
+    const score = document.getElementById('play-score').textContent;
+    document.getElementById('btn-correct').click();
+    const held = document.getElementById('play-score').textContent === score;
+    document.getElementById('btn-resume').click();
+    const resumed = document.getElementById('pause-modal').hidden === true && !document.body.dataset.paused;
+    document.getElementById('btn-pause').click();
+    document.getElementById('btn-pause-end').click();
+    return { open: open, held: held, resumed: resumed, phase: document.body.dataset.phase };
+  })()`);
+  check("pause button resumes and can end the round", pauseUi.open && pauseUi.held && pauseUi.resumed && pauseUi.phase === "recap", JSON.stringify(pauseUi));
+
+  await ev(`
+    function grant() { return Promise.resolve('granted'); }
+    function install(Ctor) {
+      if (!Ctor) return;
+      try { Ctor.requestPermission = grant; }
+      catch (err) {
+        try { Object.defineProperty(Ctor, 'requestPermission', { configurable: true, writable: true, value: grant }); }
+        catch (err2) {}
+      }
+    }
+    install(window.DeviceOrientationEvent);
+    install(window.DeviceMotionEvent);
+    document.getElementById('btn-next').click();
+    document.getElementById('btn-tap-start').click();
+  `);
+  await waitFor("document.body.dataset.phase === 'prep'", 4000, "upright prep");
+  await fire(POSES[90].down[0], POSES[90].down[1]);
+  await delay(3000);
+  const heldPrep = await ev("document.body.dataset.phase");
+  check("countdown waits until the phone is upright", heldPrep === "prep", heldPrep);
+  await burst(POSES[90].neutral[0], POSES[90].neutral[1], 6);
+  await waitFor("document.body.dataset.phase === 'play' && document.getElementById('prompt').textContent.length > 0", 12000, "upright release");
+  await ev("beginCalibration()");
+  await fire(POSES[90].neutral[0], POSES[90].neutral[1]);
+  await delay(700);
+  const oneSample = await ev("document.documentElement.dataset.calibrated || ''");
+  await burst(POSES[90].neutral[0], POSES[90].neutral[1], 6);
+  await delay(700);
+  const stable = await ev("document.documentElement.dataset.calibrated || ''");
+  check("one reading does not finish calibration", oneSample === "0" && stable === "1", oneSample + " then " + stable);
+  const locked = await ev(`(() => {
+    const before = Number(document.getElementById('play-score').textContent);
+    document.getElementById('btn-correct').click();
+    document.getElementById('btn-correct').click();
+    return { before: before, once: Number(document.getElementById('play-score').textContent) };
+  })()`);
+  await delay(700);
+  const lockedAgain = await ev(`(() => {
+    document.getElementById('btn-correct').click();
+    return Number(document.getElementById('play-score').textContent);
+  })()`);
+  check("correct and pass ignore a second tap inside 600ms", locked.once === locked.before + 1 && lockedAgain === locked.before + 2, JSON.stringify(locked) + " then " + lockedAgain);
+  const faded = await ev("document.querySelector('.play-help').classList.contains('faded')");
+  check("play hint fades after the first card", faded === true, String(faded));
+  const undo = await ev(`(() => {
+    const before = Number(document.getElementById('play-score').textContent);
+    return { before: before };
+  })()`);
+  const undoHit = await fire(POSES[90].down[0], POSES[90].down[1]);
+  const undoChip = await ev("document.getElementById('undo-chip').hidden === false && document.getElementById('undo-chip').textContent");
+  await ev("document.getElementById('undo-chip').click()");
+  const undoAfter = await ev("Number(document.getElementById('play-score').textContent)");
+  check(
+    "undo chip restores the last tilt",
+    undoChip === "Undo last card" && Number(undoHit.score) === undo.before + 1 && undoAfter === undo.before,
+    JSON.stringify({ chip: undoChip, hit: undoHit.score, after: undoAfter, before: undo.before })
+  );
+  await delay(700);
+  const buttonsOnly = await ev(`(() => {
+    const box = document.getElementById('buttons-only');
+    box.checked = true;
+    box.dispatchEvent(new Event('change', { bubbles: true }));
+    return document.getElementById('tilt-status').textContent;
+  })()`);
+  const ignored = await fire(POSES[90].down[0], POSES[90].down[1]);
+  const buttonScore = await ev(`(() => {
+    const before = Number(document.getElementById('play-score').textContent);
+    document.getElementById('btn-correct').click();
+    return { before: before, after: Number(document.getElementById('play-score').textContent), pill: document.getElementById('tilt-status').textContent };
+  })()`);
+  check(
+    "always use buttons ignores tilt and keeps the button",
+    buttonsOnly === "Tilt off, use buttons" && Number(ignored.score) === buttonScore.before && buttonScore.after === buttonScore.before + 1 && buttonScore.pill === "Tilt off, use buttons",
+    JSON.stringify({ buttonsOnly: buttonsOnly, ignored: ignored.score, buttonScore: buttonScore })
+  );
+  const fit = await ev(`(() => {
+    document.getElementById('prompt').textContent = 'Supercalifornian Supercalifornian Supercalifornian Supercalifornian';
+    const src = fitPrompt.toString();
+    fitPrompt();
+    return {
+      loop: src.indexOf('while') !== -1,
+      steps: document.getElementById('prompt').dataset.fitSteps || '',
+      size: parseFloat(getComputedStyle(document.getElementById('prompt')).fontSize)
+    };
+  })()`);
+  check("fitPrompt scales in one step", fit.loop === false && fit.steps === "1" && fit.size >= 28 && fit.size < 100, JSON.stringify(fit));
+  await delay(700);
+  await cdp.send("Emulation.setEmulatedMedia", {
+    features: [
+      { name: "prefers-reduced-motion", value: "reduce" },
+      { name: "prefers-color-scheme", value: "light" }
+    ]
+  });
+  await delay(50);
+  const reduced = await ev(`(() => {
+    document.getElementById('btn-pass').click();
+    const skip = document.querySelector('#flash .skip');
+    const skipStyle = getComputedStyle(skip);
+    return { opacity: skipStyle.opacity, dash: skipStyle.strokeDashoffset, flash: document.getElementById('flash').className };
+  })()`);
+  await setScheme("light");
+  check(
+    "reduced motion keeps the result icons visible",
+    reduced.opacity === "1" && reduced.dash.indexOf("0") === 0 && reduced.flash.indexOf("pass") !== -1,
+    JSON.stringify(reduced)
+  );
+  await cdp.send("Page.reload");
+  await waitFor("document.getElementById('buttons-only')", 10000, "buttons setting reload");
+  const keptButtons = await ev("document.getElementById('buttons-only').checked === true");
+  check("always use buttons is saved", keptButtons === true, String(keptButtons));
+  const urgent = await ev(`(() => {
+    selectCategory('Sports');
+    paintCategory();
+    const timer = document.getElementById('timer');
+    timer.classList.add('urgent');
+    const sports = getComputedStyle(timer).color;
+    selectCategory('Actions');
+    paintCategory();
+    timer.classList.add('urgent');
+    const actions = getComputedStyle(timer).color;
+    selectCategory('Christmas & Easter');
+    paintCategory();
+    const christmas = getComputedStyle(timer).color;
+    return { sports: sports, actions: actions, christmas: christmas };
+  })()`);
+  check(
+    "urgent timer is white on red decks",
+    urgent.sports === "rgb(255, 255, 255)" && urgent.christmas === "rgb(255, 255, 255)" && urgent.actions !== "rgb(255, 255, 255)",
+    JSON.stringify(urgent)
+  );
+  const gating = await ev(`(() => {
+    clearGame();
+    selectCategory('Actions');
+    renderHome();
+    const fresh = { play: document.getElementById('btn-play').hidden, cont: document.getElementById('btn-continue').hidden };
+    state.teams[0].score = 1;
+    renderHome();
+    const going = { play: document.getElementById('btn-play').hidden, cont: document.getElementById('btn-continue').hidden };
+    const row = document.querySelector('#home-standings li.zero');
+    const name = row ? getComputedStyle(row.querySelector('.stand-name')) : null;
+    const bar = row ? getComputedStyle(row.querySelector('.stand-bar')) : null;
+    return { fresh: fresh, going: going, name: name ? name.opacity : '', bar: bar ? bar.opacity : '' };
+  })()`);
+  check(
+    "continue appears only after a card is played",
+    gating.fresh.play === false && gating.fresh.cont === true && gating.going.play === true && gating.going.cont === false,
+    JSON.stringify(gating)
+  );
+  check("a zero score keeps the name and dims the bar", gating.name === "1" && Number(gating.bar) < 1, JSON.stringify(gating));
+  const deleted = await ev(`(() => {
+    const before = document.querySelectorAll('#team-list li').length;
+    document.querySelector('.remove-team').click();
+    const after = document.querySelectorAll('#team-list li').length;
+    const chip = document.getElementById('team-undo').hidden === false;
+    const lastDisabled = document.querySelector('.remove-team').disabled === true;
+    document.getElementById('team-undo').click();
+    const restored = document.querySelectorAll('#team-list li').length;
+    const score = document.querySelector('[data-team-index="0"]').textContent;
+    return { before: before, after: after, chip: chip, lastDisabled: lastDisabled, restored: restored, score: score };
+  })()`);
+  check(
+    "team delete can be undone",
+    deleted.before === 2 && deleted.after === 1 && deleted.chip === true && deleted.lastDisabled === true && deleted.restored === 2 && deleted.score === "1",
+    JSON.stringify(deleted)
   );
 
   await delay(600);

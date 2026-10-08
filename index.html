@@ -289,7 +289,7 @@
   }
   #team-list li:last-child { border-bottom: 0; }
   .team-dot { width: 12px; height: 12px; border-radius: 50%; }
-  #team-list li.turn input { box-shadow: inset 0 0 0 1px var(--accent); }
+  #team-list input:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--accent); }
   #team-list input {
     min-width: 0;
     min-height: 44px;
@@ -300,7 +300,7 @@
     user-select: text;
   }
   .team-score { min-width: 2rem; text-align: center; font-weight: 700; font-size: 20px; font-variant-numeric: tabular-nums; }
-  .remove-team, #btn-add-team, #btn-new-game, #btn-reshuffle, #btn-end-round, #confirm-no, #confirm-yes {
+  .remove-team, #btn-add-team, #btn-new-game, #btn-reshuffle, #btn-end-round, #confirm-no, #confirm-yes, #btn-resume, #btn-pause-end {
     min-height: 44px;
     padding: 8px 14px;
     border-radius: 999px;
@@ -333,7 +333,7 @@
     .setup-step { top: 48px; }
     .sheet-card { padding: 8px 10px; }
     #setup legend { margin-bottom: 4px; }
-    .cat-btn { height: 92px; min-height: 92px; }
+    .cat-btn { height: 100px; min-height: 100px; grid-template-rows: 24px 2.4em; padding-bottom: 22px; }
     #step-round #btn-new-game { display: none; }
     #team-list li, #team-list input { min-height: 40px; }
     #btn-tap-start, #btn-deck-next, #btn-new-game { min-height: 44px; }
@@ -358,26 +358,27 @@
   .cat-card { position: relative; }
   .cat-btn {
     position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: flex-end;
+    display: grid;
+    grid-template-rows: 28px 2.6em;
+    align-content: start;
+    justify-items: start;
     gap: 6px;
     width: 100%;
-    height: 100px;
-    min-height: 100px;
-    padding: 12px 14px 26px;
+    height: 112px;
+    min-height: 112px;
+    padding: 12px 14px 28px;
     border-radius: 22px;
     border: 1px solid var(--line);
     background: linear-gradient(160deg, var(--a, #fff), var(--b, #e5e5ea));
     color: #1c1c1e;
     font-weight: 700;
     letter-spacing: -0.02em;
+    line-height: 1.15;
     text-align: left;
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
     overflow: hidden;
   }
-  .cat-btn .glyph { width: 28px; height: 28px; flex: none; }
+  .cat-btn .glyph { width: 28px; height: 28px; }
   .cat-btn .cat-check {
     position: absolute;
     top: 8px;
@@ -400,10 +401,10 @@
     pointer-events: none;
   }
   .group-mix .cat-btn {
-    height: 108px;
-    min-height: 108px;
-    align-items: center;
-    justify-content: center;
+    height: 112px;
+    min-height: 112px;
+    align-content: center;
+    justify-items: center;
     color: #fff;
     text-align: center;
     background: linear-gradient(120deg, #5e5ce6, #bf5af2 45%, #ff375f 80%, #ff9f0a);
@@ -425,8 +426,8 @@
     inset: 0;
     z-index: 1;
     flex-direction: column;
-    background: #24143f;
-    background: var(--cat-deep, #24143f);
+    background-color: #24143f;
+    background-image: radial-gradient(120% 90% at 50% 40%, var(--cat-mid, #3a2468), var(--cat-deep, #24143f));
     color: #fff;
     padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
   }
@@ -469,8 +470,10 @@
     color: #fff;
   }
   #timer.urgent { color: var(--danger); }
+  #play.red-deck #timer.urgent { color: #fff; }
   .timer-wrap:has(#timer.urgent) { animation: pulse 0.8s ease-in-out infinite; }
   .timer-wrap:has(#timer.urgent) #ring-progress { stroke: var(--danger); }
+  #play.red-deck .timer-wrap:has(#timer.urgent) #ring-progress { stroke: #fff; }
   @keyframes pulse {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.08); }
@@ -661,7 +664,10 @@
     animation: barGrow 0.6s var(--ease);
   }
   @keyframes barGrow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  .stand-name, .stand-score { color: var(--ink); }
   .stand-score { text-align: right; font-variant-numeric: tabular-nums; }
+  #home-standings li.zero .stand-bar,
+  #standings li.zero .stand-bar { opacity: 0.4; }
   .recap-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 12px; }
   .lists { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .lists section, .standings {
@@ -692,6 +698,13 @@
   }
   #recap-guessed .mark { background: var(--green); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.4); }
   #recap-passed .mark { background: var(--fill-2); }
+  .time-up-tag {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 650;
+    letter-spacing: 0.02em;
+    color: var(--secondary);
+  }
   #rotate-overlay {
     display: none;
     position: fixed;
@@ -719,7 +732,42 @@
     50% { transform: rotate(-90deg); }
   }
   #rotate-overlay strong { font-size: clamp(28px, 6vh, 40px); letter-spacing: -0.04em; }
-  #deck-empty, #confirm-modal {
+  #btn-pause {
+    width: 36px;
+    height: 36px;
+    flex: none;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .undo-chip {
+    position: fixed;
+    left: 50%;
+    bottom: max(16px, env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    z-index: 45;
+    min-height: 44px;
+    padding: 8px 16px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--ink);
+    color: var(--bg);
+    font-weight: 700;
+    box-shadow: var(--shadow);
+  }
+  .buttons-only {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    font-weight: 650;
+    color: var(--ink);
+  }
+  #deck-empty, #confirm-modal, #pause-modal {
     position: fixed;
     inset: 0;
     z-index: 50;
@@ -729,7 +777,8 @@
     justify-content: center;
     padding: 16px;
   }
-  #deck-empty[hidden], #confirm-modal[hidden], #tilt-debug[hidden] { display: none !important; }
+  #deck-empty[hidden], #confirm-modal[hidden], #pause-modal[hidden], #tilt-debug[hidden],
+  #undo-chip[hidden], #team-undo[hidden] { display: none !important; }
   .dialog {
     width: min(100%, 400px);
     display: flex;
@@ -745,7 +794,7 @@
   .dialog p { font-size: 20px; font-weight: 700; letter-spacing: -0.03em; }
   .dialog-actions { display: flex; gap: 8px; }
   .dialog-actions button { flex: 1; }
-  #btn-reshuffle, #confirm-yes { background: var(--accent); color: #fff; border: 0; }
+  #btn-reshuffle, #confirm-yes, #btn-resume { background: var(--accent); color: #fff; border: 0; }
   #tilt-debug {
     position: fixed;
     left: 8px;
@@ -767,6 +816,11 @@
     *, *::before, *::after {
       animation: none !important;
       transition: none !important;
+    }
+    #flash.show.correct .check,
+    #flash.show.pass .skip {
+      opacity: 1 !important;
+      stroke-dashoffset: 0 !important;
     }
   }
 </style>
@@ -821,6 +875,7 @@
           <p id="up-now">Up now: Team 1</p>
           <ul id="team-list"></ul>
           <button type="button" id="btn-add-team">+ Add Team</button>
+          <label class="buttons-only"><input type="checkbox" id="buttons-only"> Always use buttons</label>
         </div>
       </div>
       <div class="setup-actions">
@@ -832,6 +887,7 @@
 
   <section id="play" aria-label="Round">
     <div class="play-top">
+      <button type="button" id="btn-pause" aria-label="Pause">✕</button>
       <div id="score-chip">
         <span id="play-team">Team 1</span>
         <span>Score <strong id="play-score">0</strong></span>
@@ -912,12 +968,29 @@
     </div>
   </div>
 
+  <div id="pause-modal" hidden>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="pause-text">
+      <p id="pause-text">Paused</p>
+      <div class="dialog-actions">
+        <button type="button" id="btn-resume">Resume</button>
+        <button type="button" id="btn-pause-end">End round</button>
+      </div>
+    </div>
+  </div>
+
+  <button type="button" id="undo-chip" class="undo-chip" hidden>Undo last card</button>
+  <button type="button" id="team-undo" class="undo-chip" hidden>Undo delete</button>
+
   <pre id="tilt-debug" hidden></pre>
   <noscript><p>Charades needs JavaScript.</p></noscript>
   <script>
     const STORAGE_KEY = "charades.v1";
     const ROUND_KEY = "charades.round";
+    const ROUND_MS_KEY = "charades.roundMs";
     const REPEAT_GAP = 24;
+    const STABLE_DEG = 3;
+    const STABLE_MS = 400;
+    const UPRIGHT_DEG = 18;
     const CALIBRATE_MS = 300;
     const MIN_SAMPLES = 5;
     const SENSOR_FRESH_MS = 1000;
@@ -955,10 +1028,21 @@
     let roundPassed = [];
     let roundPoints = 0;
     let endAt = 0;
+    let timerLeftMs = 0;
+    let timerMark = 0;
+    let pendingResumeMs = 0;
+    let lastButtonAt = 0;
+    let prepHold = false;
     let timerHandle = 0;
     let countdownHandle = 0;
     let flashHandle = 0;
     let startLock = false;
+    let wakeLockSentinel = null;
+    let undoTimer = 0;
+    let undoSnap = null;
+    let teamUndo = null;
+    let teamUndoTimer = 0;
+    let sensorUiBusy = false;
     let audioCtx = null;
     let lastSummary = null;
     const sensor = {
@@ -981,7 +1065,9 @@
       armed: false,
       lastFire: 0,
       playStartedAt: 0,
-      calibTimer: 0
+      calibTimer: 0,
+      calibAngle: 0,
+      lastSampleAt: 0
     };
 
     function defaultState() {
@@ -992,7 +1078,7 @@
         ],
         turnIndex: 0,
         used: [],
-        settings: { seconds: 60, category: "" }
+        settings: { seconds: 60, category: "", buttonsOnly: false }
       };
     }
 
@@ -1017,7 +1103,8 @@
         let turnIndex = Number.isInteger(data.turnIndex) ? data.turnIndex : 0;
         if (turnIndex < 0 || turnIndex >= teams.length) turnIndex = 0;
         const used = Array.isArray(data.used) ? data.used.filter((item) => typeof item === "string") : [];
-        return { teams, turnIndex, used, settings: { seconds, category } };
+        const buttonsOnly = Boolean(data.settings && data.settings.buttonsOnly);
+        return { teams, turnIndex, used, settings: { seconds, category, buttonsOnly } };
       } catch (err) {
         return defaultState();
       }
@@ -1127,29 +1214,39 @@
     }
 
     function refreshSensorUi() {
-      const now = Date.now();
-      sensor.eventTimes = sensor.eventTimes.filter((stamp) => now - stamp <= SENSOR_FRESH_MS);
-      const pill = document.getElementById("tilt-status");
-      if (pill) pill.textContent = sensorFresh(now) ? "Tilt on" : "Tilt off, use buttons";
-      const box = document.getElementById("tilt-debug");
-      if (!box || !TILT_DEBUG) return;
-      box.textContent = [
-        "beta " + fmtSensor(sensor.lastBeta),
-        "gamma " + fmtSensor(sensor.lastGamma),
-        "angle " + screenAngle(),
-        "up.z " + fmtSensor(sensor.lastUpZ),
-        "pitch " + fmtSensor(sensor.pitch),
-        "neutral " + fmtSensor(sensor.neutral),
-        "delta " + fmtSensor(sensor.delta),
-        "source " + (sensorFresh(now) ? sensor.source : "none"),
-        "permission " + sensor.permission,
-        "eps " + sensor.eventTimes.length,
-        "last trigger " + (sensor.lastTrigger || "none")
-      ].join("\n");
+      if (sensorUiBusy) return;
+      sensorUiBusy = true;
+      try {
+        const now = Date.now();
+        sensor.eventTimes = sensor.eventTimes.filter((stamp) => now - stamp <= SENSOR_FRESH_MS);
+        const pill = document.getElementById("tilt-status");
+        if (pill) {
+          pill.textContent = state.settings.buttonsOnly || !sensorFresh(now) ? "Tilt off, use buttons" : "Tilt on";
+        }
+        watchCalibration();
+        const box = document.getElementById("tilt-debug");
+        if (!box || !TILT_DEBUG) return;
+        box.textContent = [
+          "beta " + fmtSensor(sensor.lastBeta),
+          "gamma " + fmtSensor(sensor.lastGamma),
+          "angle " + screenAngle(),
+          "up.z " + fmtSensor(sensor.lastUpZ),
+          "pitch " + fmtSensor(sensor.pitch),
+          "neutral " + fmtSensor(sensor.neutral),
+          "delta " + fmtSensor(sensor.delta),
+          "source " + (sensorFresh(now) ? sensor.source : "none"),
+          "permission " + sensor.permission,
+          "eps " + sensor.eventTimes.length,
+          "last trigger " + (sensor.lastTrigger || "none")
+        ].join("\n");
+      } finally {
+        sensorUiBusy = false;
+      }
     }
 
     function beginCalibration() {
       if (sensor.calibTimer) window.clearTimeout(sensor.calibTimer);
+      sensor.calibTimer = 0;
       sensor.samples = [];
       sensor.calibrated = false;
       sensor.armed = false;
@@ -1157,31 +1254,57 @@
       sensor.delta = 0;
       sensor.lastFire = 0;
       sensor.lastTrigger = "";
-      sensor.playStartedAt = Date.now();
-      sensor.calibTimer = window.setTimeout(tryFinishCalibration, CALIBRATE_MS + 20);
+      sensor.lastSampleAt = 0;
+      sensor.calibAngle = screenAngle();
+      document.documentElement.dataset.calibrated = "0";
     }
 
     function tryFinishCalibration() {
       if (sensor.calibrated) return;
-      if (document.body.dataset.phase !== "play") return;
-      if (sensor.samples.length < MIN_SAMPLES) return;
-      if (Date.now() - sensor.playStartedAt < CALIBRATE_MS) return;
+      const phase = document.body.dataset.phase;
+      if (phase !== "countdown" && phase !== "play") return;
+      const samples = sensor.samples;
+      if (samples.length < 2) return;
+      const now = Date.now();
+      let start = samples.length - 1;
+      let min = samples[start].pitch;
+      let max = samples[start].pitch;
+      while (start > 0) {
+        const pitch = samples[start - 1].pitch;
+        const nextMin = Math.min(min, pitch);
+        const nextMax = Math.max(max, pitch);
+        if (nextMax - nextMin > STABLE_DEG * 2) break;
+        start -= 1;
+        min = nextMin;
+        max = nextMax;
+      }
+      const cluster = samples.slice(start);
+      if (cluster.length < 2) return;
+      if (now - cluster[0].now < STABLE_MS) return;
       let sum = 0;
-      for (let i = 0; i < sensor.samples.length; i += 1) sum += sensor.samples[i];
-      sensor.neutral = clampNeutral(sum / sensor.samples.length);
-      const last = sensor.samples[sensor.samples.length - 1];
+      for (let i = 0; i < cluster.length; i += 1) sum += cluster[i].pitch;
+      sensor.neutral = clampNeutral(sum / cluster.length);
+      const last = cluster[cluster.length - 1].pitch;
       sensor.delta = last - sensor.neutral;
       sensor.armed = Math.abs(sensor.delta) <= RETURN_DEG;
       sensor.calibrated = true;
       sensor.samples = [];
+      sensor.calibAngle = screenAngle();
+      document.documentElement.dataset.calibrated = "1";
       document.documentElement.dataset.tilt = String(Math.round(sensor.delta));
       refreshSensorUi();
     }
 
     function considerTilt(pitch, now) {
       document.documentElement.dataset.tiltSource = sensor.source;
+      if (document.body.classList.contains("portrait")) {
+        refreshSensorUi();
+        return;
+      }
+      if (sensor.calibrated && screenAngle() !== sensor.calibAngle) beginCalibration();
       if (!sensor.calibrated) {
-        sensor.samples.push(pitch);
+        sensor.samples.push({ pitch: pitch, now: now });
+        sensor.lastSampleAt = now;
         document.documentElement.dataset.tilt = String(Math.round(pitch));
         tryFinishCalibration();
         refreshSensorUi();
@@ -1196,6 +1319,37 @@
       if (!result.fire) return;
       sensor.lastTrigger = result.fire;
       resolveRound(result.fire);
+    }
+
+    function watchCalibration() {
+      const phase = document.body.dataset.phase;
+      if (sensor.calibrated) {
+        if ((phase === "prep" || phase === "countdown" || phase === "play") && screenAngle() !== sensor.calibAngle) {
+          beginCalibration();
+        }
+        return;
+      }
+      if (phase === "countdown" && sensor.lastUsableAt && sensor.lastUsableAt !== sensor.lastSampleAt && Number.isFinite(sensor.pitch)) {
+        sensor.samples.push({ pitch: sensor.pitch, now: sensor.lastUsableAt });
+        sensor.lastSampleAt = sensor.lastUsableAt;
+      }
+      if (phase === "countdown" || phase === "play") tryFinishCalibration();
+      watchUpright();
+    }
+
+    function watchUpright() {
+      if (document.body.dataset.phase !== "prep") return;
+      if (!sensor.lastUsableAt || !Number.isFinite(sensor.pitch)) return;
+      if (Math.abs(sensor.pitch) > UPRIGHT_DEG) {
+        prepHold = true;
+        window.clearTimeout(countdownHandle);
+        countdownHandle = 0;
+        return;
+      }
+      prepHold = false;
+      window.clearTimeout(countdownHandle);
+      countdownHandle = 0;
+      runCountdown();
     }
 
     function noteReading(source, beta, gamma, up) {
@@ -1284,25 +1438,28 @@
       "Mix": "M12 3l1.2 4.2L17.5 8.5 13.2 9.8 12 14l-1.2-4.2L6.5 8.5l4.3-1.3zM18 13.2l.7 2.2 2.3.7-2.3.7-.7 2.2-.7-2.2-2.3-.7 2.3-.7z"
     };
     const TEAM_COLORS = ["#0a84ff", "#ff375f", "#30d158", "#ff9f0a", "#bf5af2", "#64d2ff", "#ffd60a", "#ff6482"];
-    const DEEP = {
-      "Bible Characters": "#2b246e",
-      "Bible Stories": "#0c3a52",
-      "Miracles & Parables": "#5a4308",
-      "Christmas & Easter": "#6e1830",
-      "Church Life": "#3d1860",
-      "Bible Animals": "#0e3d28",
-      "Bible Places & Things": "#0d3d3a",
-      "Actions": "#5a3208",
-      "Jobs": "#0c2f5c",
-      "Sports": "#5c1218",
-      "Animals": "#3d2a16",
-      "Chores": "#2a2460",
-      "Movies": "#351456",
-      "Everyday Objects": "#4a3a08",
-      "Foods": "#5c1824",
-      "Outdoor Fun": "#4a3808",
-      "Mix": "#3a1464"
+    const COLORS = {
+      "Bible Characters": ["#4F46E5", "#312E81"],
+      "Bible Stories": ["#0284C7", "#075985"],
+      "Miracles & Parables": ["#D97706", "#B45309"],
+      "Christmas & Easter": ["#E11D48", "#9F1239"],
+      "Church Life": ["#7C3AED", "#5B21B6"],
+      "Bible Animals": ["#059669", "#047857"],
+      "Bible Places & Things": ["#0D9488", "#0F766E"],
+      "Actions": ["#EA580C", "#C2410C"],
+      "Jobs": ["#2563EB", "#1D4ED8"],
+      "Sports": ["#DC2626", "#B91C1C"],
+      "Animals": ["#16A34A", "#15803D"],
+      "Chores": ["#0EA5E9", "#0369A1"],
+      "Movies": ["#DB2777", "#BE185D"],
+      "Everyday Objects": ["#EAB308", "#CA8A04"],
+      "Foods": ["#F43F5E", "#E11D48"],
+      "Outdoor Fun": ["#65A30D", "#4D7C0F"],
+      "Mix": ["#A855F7", "#7E22CE"]
     };
+    function categoryColors() {
+      return COLORS;
+    }
     const ACCENTS = {
       "Bible Characters": ["#e7e9ff", "#8a86f0"],
       "Bible Stories": ["#e5f6ff", "#7fd4ff"],
@@ -1479,7 +1636,7 @@
     }
 
     function gameInProgress() {
-      return state.used.length > 0 || state.teams.some((team) => team.score > 0) || Boolean(state.settings.category);
+      return state.used.length > 0 || state.teams.some((team) => team.score > 0);
     }
 
     function renderHome() {
@@ -1523,9 +1680,32 @@
       if (state.teams.length <= 1) return;
       const index = state.teams.findIndex((team) => team.id === id);
       if (index < 0) return;
+      const removed = state.teams[index];
+      const prevTurn = state.turnIndex;
       state.teams.splice(index, 1);
       if (state.turnIndex >= state.teams.length) state.turnIndex = 0;
       else if (index < state.turnIndex) state.turnIndex -= 1;
+      saveState();
+      renderTeams();
+      teamUndo = { team: removed, index: index, turnIndex: prevTurn };
+      const chip = document.getElementById("team-undo");
+      if (chip) chip.hidden = false;
+      window.clearTimeout(teamUndoTimer);
+      teamUndoTimer = window.setTimeout(() => {
+        teamUndo = null;
+        if (chip) chip.hidden = true;
+      }, 5000);
+    }
+
+    function undoRemoveTeam() {
+      if (!teamUndo) return;
+      const snap = teamUndo;
+      teamUndo = null;
+      window.clearTimeout(teamUndoTimer);
+      const chip = document.getElementById("team-undo");
+      if (chip) chip.hidden = true;
+      state.teams.splice(Math.min(snap.index, state.teams.length), 0, snap.team);
+      state.turnIndex = Math.min(snap.turnIndex, state.teams.length - 1);
       saveState();
       renderTeams();
     }
@@ -1534,6 +1714,8 @@
       document.querySelectorAll('input[name="seconds"]').forEach((input) => {
         input.checked = Number(input.value) === state.settings.seconds;
       });
+      const buttons = document.getElementById("buttons-only");
+      if (buttons) buttons.checked = Boolean(state.settings.buttonsOnly);
     }
 
     function randomBelow(limit) {
@@ -1633,22 +1815,27 @@
       const help = document.querySelector(".play-help");
       if (help) help.classList.remove("faded");
       updatePlayHud();
+      const showSeconds = pendingResumeMs > 0 ? Math.max(1, Math.ceil(pendingResumeMs / 1000)) : state.settings.seconds;
       const countdownTimer = document.getElementById("timer");
-      countdownTimer.textContent = String(state.settings.seconds);
+      countdownTimer.textContent = String(showSeconds);
       countdownTimer.classList.remove("urgent");
-      paintRing(state.settings.seconds);
+      paintRing(showSeconds);
       document.body.dataset.phase = "prep";
       document.body.classList.add("playing");
       updatePortrait();
+      tryLockLandscape();
+      prepHold = false;
       window.clearTimeout(countdownHandle);
       countdownHandle = window.setTimeout(() => {
         if (document.body.dataset.phase !== "prep") return;
+        if (prepHold) return;
         runCountdown();
       }, 2800);
     }
 
     function runCountdown() {
       document.body.dataset.phase = "countdown";
+      beginCalibration();
       let n = 3;
       const step = () => {
         if (document.body.dataset.phase !== "countdown") return;
@@ -1669,27 +1856,53 @@
     function paintCategory() {
       const play = document.getElementById("play");
       if (!play) return;
-      play.style.setProperty("--cat-deep", DEEP[state.settings.category] || "#24143f");
+      const pair = COLORS[state.settings.category] || ["#3a2468", "#24143f"];
+      play.style.setProperty("--cat-mid", pair[0]);
+      play.style.setProperty("--cat-deep", pair[1]);
+      const red = state.settings.category === "Sports" || state.settings.category === "Christmas & Easter";
+      play.classList.toggle("red-deck", red);
     }
 
     function markRound() {
-      try { sessionStorage.setItem(ROUND_KEY, "1"); } catch (err) {}
+      const ms = pendingResumeMs > 0 ? pendingResumeMs : state.settings.seconds * 1000;
+      try {
+        sessionStorage.setItem(ROUND_KEY, "1");
+        sessionStorage.setItem(ROUND_MS_KEY, String(Math.round(ms)));
+      } catch (err) {}
     }
 
     function clearRound() {
-      try { sessionStorage.removeItem(ROUND_KEY); } catch (err) {}
+      pendingResumeMs = 0;
+      try {
+        sessionStorage.removeItem(ROUND_KEY);
+        sessionStorage.removeItem(ROUND_MS_KEY);
+      } catch (err) {}
+    }
+
+    function saveRoundMs(ms) {
+      try { sessionStorage.setItem(ROUND_MS_KEY, String(Math.max(0, Math.round(ms)))); } catch (err) {}
+    }
+
+    function timerRemaining() {
+      if (!timerMark) return Math.max(0, timerLeftMs);
+      return Math.max(0, timerLeftMs - (performance.now() - timerMark));
     }
 
     function beginPlay() {
       paintCategory();
       document.body.dataset.phase = "play";
       document.body.classList.add("playing");
-      endAt = Date.now() + state.settings.seconds * 1000;
+      const ms = pendingResumeMs > 0 ? pendingResumeMs : state.settings.seconds * 1000;
+      pendingResumeMs = 0;
+      timerLeftMs = ms;
+      timerMark = performance.now();
+      endAt = 0;
+      sensor.playStartedAt = Date.now();
       stopTimer();
       timerHandle = window.setInterval(onTimer, 100);
       onTimer();
       updatePlayHud();
-      beginCalibration();
+      acquireWakeLock();
       deal();
       fitSoon();
     }
@@ -1697,12 +1910,14 @@
     function onTimer() {
       const phase = document.body.dataset.phase;
       if (phase !== "play" && phase !== "empty") return;
-      const leftMs = endAt - Date.now();
+      if (document.body.dataset.paused) return;
+      const leftMs = timerRemaining();
       const left = Math.max(0, Math.ceil(leftMs / 1000));
       const timer = document.getElementById("timer");
       timer.textContent = String(left);
       timer.classList.toggle("urgent", left <= 10 && left > 0);
       paintRing(left);
+      saveRoundMs(leftMs);
       if (leftMs <= 0) endRound();
     }
 
@@ -1748,9 +1963,12 @@
       fitSoon();
     }
 
-    function resolveRound(kind) {
+    function resolveRound(kind, source) {
       if (document.body.dataset.phase !== "play" || !currentCard) return;
-      if (endAt && Date.now() >= endAt) {
+      if (document.body.classList.contains("portrait") && document.body.classList.contains("playing")) return;
+      if (document.body.dataset.paused) return;
+      if (state.settings.buttonsOnly && source !== "button" && source !== "key") return;
+      if (timerMark && timerRemaining() <= 0) {
         endRound();
         return;
       }
@@ -1774,6 +1992,7 @@
       document.documentElement.dataset.lastResult = kind;
       const help = document.querySelector(".play-help");
       if (help) help.classList.add("faded");
+      if (source !== "button" && source !== "key") rememberUndo(card, kind);
       saveState();
       updatePlayHud();
       renderTeams();
@@ -1853,15 +2072,23 @@
     function endRound() {
       const phase = document.body.dataset.phase;
       if (phase !== "play" && phase !== "empty") return;
+      let timeUp = "";
       if (phase === "play" && currentCard) {
         state.used.push(currentCard.key);
-        roundPassed.push("Time's up");
+        timeUp = currentCard.prompt;
+        roundPassed.push(currentCard.prompt);
         currentCard = null;
       }
       clearRound();
+      delete document.body.dataset.paused;
+      const pauseModal = document.getElementById("pause-modal");
+      if (pauseModal) pauseModal.hidden = true;
+      hideUndo();
+      releaseWakeLock();
       document.body.dataset.phase = "recap";
       document.body.classList.remove("playing");
       stopTimer();
+      timerMark = 0;
       window.clearTimeout(countdownHandle);
       document.getElementById("deck-empty").hidden = true;
       const team = currentTeam();
@@ -1871,7 +2098,8 @@
         roundPoints: roundPoints,
         total: team ? team.score : 0,
         guessed: roundGuessed.slice(),
-        passed: roundPassed.slice()
+        passed: roundPassed.slice(),
+        timeUp: timeUp
       };
       if (state.teams.length) state.turnIndex = (state.turnIndex + 1) % state.teams.length;
       summary.nextName = teamLabel(currentTeam(), state.turnIndex);
@@ -1887,7 +2115,7 @@
         summary.name + " scored " + summary.roundPoints + "! Total: " + summary.total + ".";
       document.getElementById("btn-next").textContent = "Next up: " + summary.nextName;
       fillList(document.getElementById("recap-guessed"), summary.guessed);
-      fillList(document.getElementById("recap-passed"), summary.passed);
+      fillList(document.getElementById("recap-passed"), summary.passed, summary.timeUp);
       renderConfetti(summary.roundPoints);
       renderStandings();
       renderTeams();
@@ -1931,6 +2159,7 @@
       list.replaceChildren();
       rows.forEach((row, place) => {
         const item = document.createElement("li");
+        if (row.team.score <= 0) item.classList.add("zero");
         const crown = document.createElement("span");
         crown.className = "crown-slot";
         if (place === 0 && row.team.score > 0 && row.team.score > second) crown.appendChild(crownSvg());
@@ -1959,15 +2188,30 @@
       fillStandings(document.getElementById("standings"));
     }
 
-    function fillList(list, items) {
+    function fillList(list, items, timeUp) {
       list.replaceChildren();
       const rows = items.length ? items : ["None"];
-      rows.forEach((text) => {
+      let tagAt = -1;
+      if (timeUp) {
+        for (let i = rows.length - 1; i >= 0; i -= 1) {
+          if (rows[i] === timeUp) {
+            tagAt = i;
+            break;
+          }
+        }
+      }
+      rows.forEach((text, index) => {
         const item = document.createElement("li");
         const mark = document.createElement("span");
         mark.className = "mark";
         mark.setAttribute("aria-hidden", "true");
         item.append(mark, document.createTextNode(text));
+        if (index === tagAt) {
+          const tag = document.createElement("span");
+          tag.className = "time-up-tag";
+          tag.textContent = "time's up";
+          item.appendChild(tag);
+        }
         list.appendChild(item);
       });
     }
@@ -1979,16 +2223,13 @@
       const maxW = box.clientWidth * 0.96;
       const maxH = box.clientHeight * 0.78;
       if (maxW < 20 || maxH < 20) return;
-      let size = Math.floor(Math.min(box.clientWidth * 0.2, box.clientHeight * 0.45));
-      if (size > 160) size = 160;
+      let size = Math.floor(Math.min(box.clientWidth * 0.2, box.clientHeight * 0.45, 160));
       if (size < 32) size = 32;
       el.style.fontSize = size + "px";
-      let guard = 0;
-      while (guard < 24 && size > 28 && (el.scrollWidth > maxW || el.scrollHeight > maxH)) {
-        size = Math.floor(size * 0.9);
-        el.style.fontSize = size + "px";
-        guard += 1;
-      }
+      const scale = Math.min(1, maxW / Math.max(el.scrollWidth, 1), maxH / Math.max(el.scrollHeight, 1));
+      const next = Math.max(28, Math.floor(size * scale));
+      if (next !== size) el.style.fontSize = next + "px";
+      el.dataset.fitSteps = "1";
     }
 
     function fitSoon() {
@@ -1999,7 +2240,12 @@
     }
 
     function updatePortrait() {
-      document.body.classList.toggle("portrait", window.innerHeight > window.innerWidth);
+      const portrait = window.innerHeight > window.innerWidth;
+      document.body.classList.toggle("portrait", portrait);
+      const overlay = document.getElementById("rotate-overlay");
+      if (!overlay) return;
+      const shown = portrait && document.body.classList.contains("playing");
+      overlay.setAttribute("aria-hidden", shown ? "false" : "true");
     }
 
     function clearGame() {
@@ -2012,10 +2258,20 @@
       currentCard = null;
       queue = [];
       stopTimer();
+      timerMark = 0;
+      prepHold = false;
       window.clearTimeout(countdownHandle);
       if (sensor.calibTimer) window.clearTimeout(sensor.calibTimer);
+      delete document.body.dataset.paused;
+      hideUndo();
+      teamUndo = null;
+      const teamChip = document.getElementById("team-undo");
+      if (teamChip) teamChip.hidden = true;
+      releaseWakeLock();
       document.getElementById("deck-empty").hidden = true;
       document.getElementById("confirm-modal").hidden = true;
+      const pauseModal = document.getElementById("pause-modal");
+      if (pauseModal) pauseModal.hidden = true;
       document.getElementById("flash").className = "";
       document.documentElement.dataset.lastResult = "";
       setHint("");
@@ -2028,6 +2284,19 @@
     }
 
     function onTapStart() {
+      const startPhase = document.body.dataset.phase;
+      if ((startPhase !== "setup" && startPhase !== "home") || startLock) return;
+      if (!state.settings.category) {
+        setHint("Pick a category first.");
+        return;
+      }
+      if (!state.teams.length) {
+        setHint("Add a team first.");
+        return;
+      }
+      startLock = true;
+      pendingResumeMs = 0;
+      try { sessionStorage.removeItem(ROUND_MS_KEY); } catch (err) {}
       let orientPromise = null;
       let motionPromise = null;
       try {
@@ -2044,17 +2313,6 @@
       } catch (err) {
         motionPromise = Promise.reject(err);
       }
-      const startPhase = document.body.dataset.phase;
-      if ((startPhase !== "setup" && startPhase !== "home") || startLock) return;
-      if (!state.settings.category) {
-        setHint("Pick a category first.");
-        return;
-      }
-      if (!state.teams.length) {
-        setHint("Add a team first.");
-        return;
-      }
-      startLock = true;
       primeAudio();
       const asked = orientPromise !== null || motionPromise !== null;
       Promise.all([
@@ -2083,11 +2341,136 @@
       if (document.body.dataset.phase !== "play") return;
       if (event.key === "ArrowDown" || event.key === "ArrowRight") {
         event.preventDefault();
-        resolveRound("correct");
+        resolveRound("correct", "key");
       } else if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
         event.preventDefault();
-        resolveRound("pass");
+        resolveRound("pass", "key");
       }
+    }
+
+    function onResultButton(kind) {
+      const now = performance.now();
+      if (now - lastButtonAt < 600) return;
+      lastButtonAt = now;
+      resolveRound(kind, "button");
+    }
+
+    function roundLive() {
+      const phase = document.body.dataset.phase;
+      return phase === "play" || phase === "empty";
+    }
+
+    function acquireWakeLock() {
+      try {
+        if (!navigator.wakeLock || typeof navigator.wakeLock.request !== "function") return;
+        const pending = navigator.wakeLock.request("screen");
+        Promise.resolve(pending).then((sentinel) => {
+          wakeLockSentinel = sentinel;
+        }).catch(() => {});
+      } catch (err) {}
+    }
+
+    function releaseWakeLock() {
+      const sentinel = wakeLockSentinel;
+      wakeLockSentinel = null;
+      if (!sentinel || typeof sentinel.release !== "function") return;
+      try {
+        Promise.resolve(sentinel.release()).catch(() => {});
+      } catch (err) {}
+    }
+
+    function pauseRound(reason) {
+      if (!roundLive() || document.body.dataset.paused) return;
+      timerLeftMs = timerRemaining();
+      timerMark = 0;
+      stopTimer();
+      saveRoundMs(timerLeftMs);
+      document.body.dataset.paused = reason === "hidden" ? "hidden" : "user";
+      if (reason !== "hidden") {
+        const modal = document.getElementById("pause-modal");
+        if (modal) modal.hidden = false;
+      }
+      releaseWakeLock();
+    }
+
+    function resumeRound() {
+      if (!document.body.dataset.paused) return;
+      delete document.body.dataset.paused;
+      const modal = document.getElementById("pause-modal");
+      if (modal) modal.hidden = true;
+      if (!roundLive()) return;
+      timerMark = performance.now();
+      stopTimer();
+      timerHandle = window.setInterval(onTimer, 100);
+      onTimer();
+      acquireWakeLock();
+    }
+
+    function onVisibility() {
+      if (document.hidden) {
+        if (roundLive()) pauseRound("hidden");
+        return;
+      }
+      if (document.body.dataset.paused === "hidden") resumeRound();
+      if (roundLive() || document.body.dataset.paused) acquireWakeLock();
+    }
+
+    function rememberUndo(card, kind) {
+      undoSnap = { card: card, kind: kind, key: card.key };
+      const chip = document.getElementById("undo-chip");
+      if (chip) chip.hidden = false;
+      window.clearTimeout(undoTimer);
+      undoTimer = window.setTimeout(hideUndo, 5000);
+    }
+
+    function hideUndo() {
+      undoSnap = null;
+      window.clearTimeout(undoTimer);
+      const chip = document.getElementById("undo-chip");
+      if (chip) chip.hidden = true;
+    }
+
+    function undoLast() {
+      if (!undoSnap || document.body.dataset.phase !== "play") return;
+      const snap = undoSnap;
+      hideUndo();
+      const usedAt = state.used.lastIndexOf(snap.key);
+      if (usedAt >= 0) state.used.splice(usedAt, 1);
+      if (snap.kind === "correct") {
+        const team = currentTeam();
+        if (team && team.score > 0) team.score -= 1;
+        roundPoints = Math.max(0, roundPoints - 1);
+        const at = roundGuessed.lastIndexOf(snap.card.prompt);
+        if (at >= 0) roundGuessed.splice(at, 1);
+      } else {
+        const at = roundPassed.lastIndexOf(snap.card.prompt);
+        if (at >= 0) roundPassed.splice(at, 1);
+      }
+      if (currentCard) queue.push(currentCard);
+      currentCard = snap.card;
+      document.getElementById("prompt").textContent = currentCard.prompt;
+      document.getElementById("prompt-cat").textContent = currentCard.category;
+      document.documentElement.dataset.lastResult = "";
+      saveState();
+      updatePlayHud();
+      renderTeams();
+      fitSoon();
+    }
+
+    function tryLockLandscape() {
+      try {
+        const root = document.documentElement;
+        if (typeof root.requestFullscreen === "function") {
+          const pending = root.requestFullscreen();
+          if (pending && typeof pending.catch === "function") pending.catch(() => {});
+        }
+      } catch (err) {}
+      try {
+        if (screen.orientation && typeof screen.orientation.lock === "function") {
+          const pending = screen.orientation.lock("landscape");
+          if (pending && typeof pending.catch === "function") pending.catch(() => {});
+        }
+      } catch (err) {}
     }
 
     function registerSW() {
@@ -2120,8 +2503,17 @@
       setHint("");
       showStep("round");
     });
-    document.getElementById("btn-correct").addEventListener("click", () => resolveRound("correct"));
-    document.getElementById("btn-pass").addEventListener("click", () => resolveRound("pass"));
+    document.getElementById("btn-correct").addEventListener("click", () => onResultButton("correct"));
+    document.getElementById("btn-pass").addEventListener("click", () => onResultButton("pass"));
+    document.getElementById("btn-pause").addEventListener("click", () => pauseRound("user"));
+    document.getElementById("btn-resume").addEventListener("click", resumeRound);
+    document.getElementById("btn-pause-end").addEventListener("click", () => {
+      const modal = document.getElementById("pause-modal");
+      if (modal) modal.hidden = true;
+      endRound();
+    });
+    document.getElementById("undo-chip").addEventListener("click", undoLast);
+    document.getElementById("team-undo").addEventListener("click", undoRemoveTeam);
     document.getElementById("btn-new-game").addEventListener("click", () => {
       document.getElementById("confirm-modal").hidden = false;
     });
@@ -2151,6 +2543,12 @@
         saveState();
       });
     });
+    document.getElementById("buttons-only").addEventListener("change", (event) => {
+      state.settings.buttonsOnly = Boolean(event.target.checked);
+      saveState();
+      refreshSensorUi();
+    });
+    document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("keydown", onKey);
     window.addEventListener("resize", () => {
       updatePortrait();
@@ -2177,13 +2575,16 @@
 
     function maybeResume() {
       let flag = "";
+      let ms = 0;
       try { flag = sessionStorage.getItem(ROUND_KEY) || ""; } catch (err) {}
+      try { ms = Number(sessionStorage.getItem(ROUND_MS_KEY)) || 0; } catch (err) {}
       if (flag !== "1") return;
       if (!state.settings.category) return;
       if (!buildDeck().length) {
         showOutOfPrompts();
         return;
       }
+      pendingResumeMs = ms > 0 ? ms : state.settings.seconds * 1000;
       startCountdown();
     }
   </script>
