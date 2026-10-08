@@ -784,3 +784,7 @@ Files are in `qa/v8_3/`, light and dark, at 844×390:
 - Jingle Bells is only in Christmas & Easter.
 - Projector mode and kids picture mode were left out.
 
+## v8.4
+Kids prompts use natural names of up to five words. Karate Kid and the listed near-duplicates are gone. Pillar of Cloud and Pillar of Fire stay on Bible Stories only. Cache is `charades-v8-4`.
+Tilt 34, headless 189 local and live, shuffle 46. Live index 146337, prompts 28356. Screenshots are `qa/v8_4/deck-kids.png` and `qa/v8_4/play-kids.png`.
+
