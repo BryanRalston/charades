@@ -342,3 +342,80 @@ The v5 frames in `qa/v5/` are unchanged.
 - On a 390px-tall screen the round step hides the secondary New game button so Add Team and Tap to start both stay on screen. Home still offers New Game once a card has been played.
 - Mid-round resume, including the time left, is stored for that tab. A new tab opens the saved game on Home.
 - The iPhone permission prompt was not exercised on a phone. This run used the headless sensor stubs.
+
+## v7
+
+Live page after `c083e33`. https://bryanralston.github.io/charades/ serves the v7 player. `sw.js` is cache `charades-v7`, asset version `7`. Navigations stay network-first, and a slow network still gives up after 2.5 seconds (live fallback measured 2515 ms) and uses the cache. No 402 or 429.
+
+### What changed
+
+Near-copy cards were collapsed to one idea, the named removals are gone, and numbered movie sequels are gone. Base titles stay, including Big Hero 6 and 101 Dalmatians. 102 Dalmatians is gone. Mary Poppins Returns stays. Ten vivid scenes were added: David and Goliath, Jonah Swallowed, Feeding the 5,000, Peter Denies Jesus, Paul Blinded, Daniel Prays, Zacchaeus Climbs Tree, Samson Pushes Pillars, Paul's Shipwreck, and Baby Moses Basket. No prompt is in two categories. Every deck is still at least 40.
+
+A correct tilt flies the card down and bumps the score. A pass flies the card up and still scores 0. The last five seconds tick once each, then a distinct buzzer ends the round. Tones are layered WebAudio. There are no audio files. The countdown ends on GO!.
+
+The first start explains why motion permission is needed, then deals a practice card whose text is "Nod down = Got it, Tip back = Pass". That card does not score and does not start the round timer. Later starts skip the tutorial and the forehead pause. A refresh mid-round still resumes on prep for the full pause, with the time left in `sessionStorage` key `charades.roundMs`.
+
+Match formats are Endless, First to 20, and 3 Rounds Each. Endless still ends on the recap. The other two end on a winner screen with a crown, confetti, and Rematch. Rematch clears scores, used cards, and rounds played, keeps the teams, category, and format, and opens pass-the-phone. Next up opens pass-the-phone instead of setup. Tap to start on that screen starts the next turn. Mix is a normal-height deck tile, the same 112px as the other cards, and two rows are on screen at 844×390.
+
+`localStorage` key `charades.v1` gains `roundsPlayed`, `settings.tutorialSeen`, and `settings.format`. Older saves still load. New Game keeps `tutorialSeen`. The tilt math and the sensor handlers (`noteReading`, `orientationLeads`, `onOrientation`, `onMotion`, `attachSensors`) are byte-identical to v6. The permission calls from `startLock = true` through `primeAudio()` are unchanged. Calibration is unchanged.
+
+### Screenshots
+
+Landscape frames are 844×390. Files are in `qa/v7/`:
+
+- `home-light.png`, `home-dark.png`
+- `setup-deck-light.png`, `setup-deck-dark.png`
+- `setup-round-light.png`, `setup-round-dark.png`
+- `tutorial-light.png`, `tutorial-dark.png`
+- `play-bible-stories-light.png`, `play-bible-stories-dark.png` (Bible Stories prompt Raven Sent Out)
+- `play-actions-light.png`, `play-actions-dark.png` (Actions prompt Folding Paper)
+- `play-animals-light.png`, `play-animals-dark.png` (Animals prompt Zebra)
+- `recap-light.png`, `recap-dark.png`
+- `winner-light.png`, `winner-dark.png`
+- `pass-light.png`, `pass-dark.png`
+
+The three play prompts are different cards from those decks. The v6 frames in `qa/v6/` and the earlier folders are still there.
+
+### Size and counts
+
+`index.html` on the live site is 128521 bytes.
+
+| Category | Prompts |
+| --- | --- |
+| Bible Characters | 115 |
+| Bible Stories | 115 |
+| Miracles & Parables | 58 |
+| Christmas & Easter | 114 |
+| Church Life | 116 |
+| Bible Animals | 100 |
+| Bible Places & Things | 118 |
+| Actions | 130 |
+| Jobs | 124 |
+| Sports | 115 |
+| Animals | 113 |
+| Chores | 106 |
+| Movies | 150 |
+| Everyday Objects | 135 |
+| Foods | 124 |
+| Outdoor Fun | 120 |
+| Mix | 1853 |
+
+### Tests
+
+| Check | Result |
+| --- | --- |
+| `node qa/tilt_math_check.mjs` | 34 passed |
+| `node qa/headless_qc.mjs` on http://127.0.0.1:8765/ | 104 passed, 0 console errors. Includes the v6 tilt poses, byte-identical tilt and sensor handlers, fly-off direction, tick and buzzer, GO, the tutorial and the later skip, each match format, the winner screen and Rematch, pass-the-phone, the Mix tile, the removed cards, and the added scenes. |
+| `node qa/shuffle_check.mjs` | 28 passed, 0 console errors. The mid-round reload lands on prep. The exhausted deck still opens on Home. |
+| Live `CHARADES_URL=https://bryanralston.github.io/charades/ node qa/headless_qc.mjs` | 104 passed, 0 console errors |
+| Live `index.html` | HTTP 200, 128521 bytes |
+| Live `sw.js` | HTTP 200, cache `charades-v7`, `NETWORK_TIMEOUT_MS` 2500 |
+
+### Open limits
+
+- Cards do not carry an easy, medium, or hard tag. The prompt lists stay strings, which is what the checks read.
+- If rotation lock keeps the screen angle at 0, the mapping still does not see a landscape forehead pose. Start calls `screen.orientation.lock('landscape')` where the browser allows it. A refusal is ignored.
+- If no sensor reading arrives, a first start still waits out the forehead pause. A later start skips that pause. A face-down reading during the pause holds the countdown until the phone is upright.
+- Mid-round resume, including the time left, is stored for that tab. A new tab opens the saved game on Home.
+- The iPhone permission prompt was not exercised on a phone. This run used the headless sensor stubs.
+

@@ -13,7 +13,7 @@
     {
       "name": "sw network timeout falls back after 2.5s",
       "ok": true,
-      "detail": "2505ms true"
+      "detail": "2515ms true"
     },
     {
       "name": "headings render as Christian, Classic, Mix",
@@ -228,7 +228,7 @@
     {
       "name": "holding the tilt does not score again",
       "ok": true,
-      "detail": "Puddle Splash"
+      "detail": "Thumbs Up"
     },
     {
       "name": "the opposite tilt does not count before neutral",
@@ -253,7 +253,7 @@
     {
       "name": "holding pass does not advance again",
       "ok": true,
-      "detail": "Bowling"
+      "detail": "Waving"
     },
     {
       "name": "calibration re-arms after a screen angle change",
@@ -293,12 +293,12 @@
     {
       "name": "recap lists the guessed prompt",
       "ok": true,
-      "detail": "Knocking, Bowling, Washing Hands"
+      "detail": "Melting Down, Waving, Tying Shoes"
     },
     {
       "name": "recap lists the passed prompt",
       "ok": true,
-      "detail": "Puddle Splash, Jumping Jackstime's up"
+      "detail": "Thumbs Up, Washing Handstime's up"
     },
     {
       "name": "recap shows the round total",
@@ -313,7 +313,7 @@
     {
       "name": "time-up card shows its name and a tag",
       "ok": true,
-      "detail": "Jumping Jacks | [{\"prompt\":\"Puddle Splash\",\"tag\":\"\"},{\"prompt\":\"Jumping Jacks\",\"tag\":\"time's up\"}]"
+      "detail": "Washing Hands | [{\"prompt\":\"Thumbs Up\",\"tag\":\"\"},{\"prompt\":\"Washing Hands\",\"tag\":\"time's up\"}]"
     },
     {
       "name": "score survives a refresh",
@@ -358,12 +358,12 @@
     {
       "name": "reshuffle deals a prompt again",
       "ok": true,
-      "detail": "Cutting Paper"
+      "detail": "Running"
     },
     {
       "name": "refresh mid-round resumes at prep",
       "ok": true,
-      "detail": "{\"before\":{\"team\":\"Team 2\",\"turnIndex\":1,\"used\":[\"Actions\\nRaising Hand\",\"Actions\\nSitting Crisscross\",\"Actions\\nStomping\",\"Actions\\nSnapping Fingers\",\"Actions\\nRubbing Tummy\",\"Actions\\nPatting Head\",\"Actions\\nWashing Face\",\"Actions\\nGargling\",\"Actions\\nSlurping\",\"Actions\\nSipping Straw\",\"Actions\\nStirring Pot\",\"Actions\\nPouring Milk\",\"Actions\\nCracking Egg\",\"Actions\\nRolling Dough\",\"Actions\\nLicking Spoon\",\"Actions\\nWaving Goodbye\",\"Actions\\nShaking Gift\",\"Actions\\nTying Bow\",\"Actions\\nKnocking\",\"Actions\\nAnswering Door\",\"Actions\\nCopying Leader\",\"Actions\\nMelting Down\",\"Actions\\nGrowing Tall\",\"Actions\\nRobot Dance\",\"Actions\\nCutting Paper\"]},\"resumed\":{\"phase\":\"prep\",\"team\":\"Team 2\",\"turnIndex\":1,\"used\":[\"Actions\\nRaising Hand\",\"Actions\\nSitting Crisscross\",\"Actions\\nStomping\",\"Actions\\nSnapping Fingers\",\"Actions\\nRubbing Tummy\",\"Actions\\nPatting Head\",\"Actions\\nWashing Face\",\"Actions\\nGargling\",\"Actions\\nSlurping\",\"Actions\\nSipping Straw\",\"Actions\\nStirring Pot\",\"Actions\\nPouring Milk\",\"Actions\\nCracking Egg\",\"Actions\\nRolling Dough\",\"Actions\\nLicking Spoon\",\"Actions\\nWaving Goodbye\",\"Actions\\nShaking Gift\",\"Actions\\nTying Bow\",\"Actions\\nKnocking\",\"Actions\\nAnswering Door\",\"Actions\\nCopying Leader\",\"Actions\\nMelting Down\",\"Actions\\nGrowing Tall\",\"Actions\\nRobot Dance\",\"Actions\\nCutting Paper\"]}}"
+      "detail": "{\"before\":{\"team\":\"Team 2\",\"turnIndex\":1,\"used\":[\"Actions\\nRaising Hand\",\"Actions\\nSitting Crisscross\",\"Actions\\nStomping\",\"Actions\\nSnapping Fingers\",\"Actions\\nRubbing Tummy\",\"Actions\\nPatting Head\",\"Actions\\nWashing Face\",\"Actions\\nGargling\",\"Actions\\nSlurping\",\"Actions\\nSipping Straw\",\"Actions\\nStirring Pot\",\"Actions\\nPouring Milk\",\"Actions\\nCracking Egg\",\"Actions\\nRolling Dough\",\"Actions\\nLicking Spoon\",\"Actions\\nWaving Goodbye\",\"Actions\\nShaking Gift\",\"Actions\\nTying Bow\",\"Actions\\nKnocking\",\"Actions\\nAnswering Door\",\"Actions\\nCopying Leader\",\"Actions\\nMelting Down\",\"Actions\\nGrowing Tall\",\"Actions\\nRobot Dance\",\"Actions\\nRunning\"]},\"resumed\":{\"phase\":\"prep\",\"team\":\"Team 2\",\"turnIndex\":1,\"used\":[\"Actions\\nRaising Hand\",\"Actions\\nSitting Crisscross\",\"Actions\\nStomping\",\"Actions\\nSnapping Fingers\",\"Actions\\nRubbing Tummy\",\"Actions\\nPatting Head\",\"Actions\\nWashing Face\",\"Actions\\nGargling\",\"Actions\\nSlurping\",\"Actions\\nSipping Straw\",\"Actions\\nStirring Pot\",\"Actions\\nPouring Milk\",\"Actions\\nCracking Egg\",\"Actions\\nRolling Dough\",\"Actions\\nLicking Spoon\",\"Actions\\nWaving Goodbye\",\"Actions\\nShaking Gift\",\"Actions\\nTying Bow\",\"Actions\\nKnocking\",\"Actions\\nAnswering Door\",\"Actions\\nCopying Leader\",\"Actions\\nMelting Down\",\"Actions\\nGrowing Tall\",\"Actions\\nRobot Dance\",\"Actions\\nRunning\"]}}"
     },
     {
       "name": "resume keeps the remaining time",
@@ -498,22 +498,22 @@
     {
       "name": "Bible Stories play shot uses a real prompt",
       "ok": true,
-      "detail": "Ax Head Floats"
+      "detail": "Raven Sent Out"
     },
     {
       "name": "Actions play shot uses a real prompt",
       "ok": true,
-      "detail": "Reading Book"
+      "detail": "Folding Paper"
     },
     {
       "name": "Animals play shot uses a real prompt",
       "ok": true,
-      "detail": "Ladybug"
+      "detail": "Zebra"
     },
     {
       "name": "play shots use three different prompts",
       "ok": true,
-      "detail": "{\"Bible Stories\":\"Ax Head Floats\",\"Actions\":\"Reading Book\",\"Animals\":\"Ladybug\"}"
+      "detail": "{\"Bible Stories\":\"Raven Sent Out\",\"Actions\":\"Folding Paper\",\"Animals\":\"Zebra\"}"
     },
     {
       "name": "zero console errors",
