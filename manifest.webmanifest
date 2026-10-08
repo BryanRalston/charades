@@ -5,8 +5,8 @@
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#fff6ea",
-  "theme_color": "#ff6b4a",
+  "background_color": "#f2f2f7",
+  "theme_color": "#f2f2f7",
   "orientation": "landscape",
   "icons": [
     {
@@ -20,6 +20,15 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "splash.png",
+      "sizes": "844x390",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Charades"
     }
   ]
 }

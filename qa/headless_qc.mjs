@@ -4,6 +4,7 @@ import { setTimeout as delay } from "node:timers/promises";
 
 const ROOT = "C:\\Users\\bryma\\dev\\charades";
 const QA = ROOT + "\\qa";
+const REDESIGN = QA + "\\redesign";
 const CHROME = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
 const PORT = 9333;
 const BASE = process.env.CHARADES_URL || "http://127.0.0.1:8765/";
@@ -31,6 +32,7 @@ const POSES = {
 };
 
 mkdirSync(QA, { recursive: true });
+mkdirSync(REDESIGN, { recursive: true });
 const consoleEvents = [];
 const checks = [];
 const shots = [];
@@ -163,8 +165,8 @@ try {
     `
   });
   await cdp.send("Emulation.setDeviceMetricsOverride", {
-    width: 1100,
-    height: 640,
+    width: 844,
+    height: 390,
     deviceScaleFactor: 1,
     mobile: true,
     screenOrientation: { type: "landscapePrimary", angle: 90 }
@@ -187,6 +189,18 @@ try {
     const png = await cdp.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: true });
     writeFileSync(QA + "\\" + name, Buffer.from(png.data, "base64"));
     shots.push(name);
+  }
+
+  async function setScheme(scheme) {
+    await cdp.send("Emulation.setEmulatedMedia", {
+      features: [{ name: "prefers-color-scheme", value: scheme }]
+    });
+  }
+
+  async function redesignShot(name) {
+    const png = await cdp.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
+    writeFileSync(REDESIGN + "\\" + name, Buffer.from(png.data, "base64"));
+    shots.push("redesign/" + name);
   }
 
   async function waitFor(expression, timeoutMs, label) {
@@ -222,6 +236,107 @@ try {
   check("player UI does not link the feature map", rendered.links.every((href) => !href || href.indexOf("FEATURE_MAP") === -1), rendered.links.join(", "));
   const landscapeHint = await ev("getComputedStyle(document.querySelector('.rotate-hint')).display");
   check("landscape hides the sideways note", landscapeHint === "none", landscapeHint);
+  await setScheme("light");
+  await redesignShot("home-light.png");
+  await setScheme("dark");
+  await redesignShot("home-dark.png");
+  await setScheme("light");
+  await ev("document.getElementById('btn-play').click()");
+  await delay(250);
+  await redesignShot("setup-light.png");
+  await setScheme("dark");
+  await redesignShot("setup-dark.png");
+  await setScheme("light");
+  await ev(`
+    document.body.dataset.phase = "prep";
+    document.body.classList.add("playing");
+    document.getElementById("tilt-status").textContent = "Tilt off, use buttons";
+  `);
+  await delay(200);
+  await redesignShot("prep-light.png");
+  await setScheme("dark");
+  await redesignShot("prep-dark.png");
+  await setScheme("light");
+  await ev(`
+    document.body.dataset.phase = "play";
+    document.getElementById("prompt-cat").textContent = "Actions";
+    document.getElementById("prompt").textContent = "Walking the Dog";
+    document.getElementById("timer").textContent = "60";
+    document.getElementById("play-team").textContent = "Team 1";
+    document.getElementById("play-score").textContent = "0";
+    const ring = document.getElementById("ring-progress");
+    ring.style.strokeDasharray = "175.929";
+    ring.style.strokeDashoffset = "40";
+  `);
+  await delay(200);
+  await redesignShot("play-light.png");
+  await setScheme("dark");
+  await redesignShot("play-dark.png");
+  await setScheme("light");
+  await ev(`
+    document.body.classList.remove("playing");
+    document.body.dataset.phase = "recap";
+    document.getElementById("recap-line").textContent = "Team 1 scored 3. Total: 3.";
+    document.getElementById("recap-next").textContent = "Next up: Team 2";
+    document.getElementById("btn-next").textContent = "Next up: Team 2";
+    document.getElementById("recap-guessed").replaceChildren();
+    document.getElementById("recap-passed").replaceChildren();
+    ["Jumping", "Waving"].forEach((text) => {
+      const item = document.createElement("li");
+      const mark = document.createElement("span");
+      mark.className = "mark";
+      item.append(mark, document.createTextNode(text));
+      document.getElementById("recap-guessed").appendChild(item);
+    });
+    ["Sleeping"].forEach((text) => {
+      const item = document.createElement("li");
+      const mark = document.createElement("span");
+      mark.className = "mark";
+      item.append(mark, document.createTextNode(text));
+      document.getElementById("recap-passed").appendChild(item);
+    });
+    const standings = document.getElementById("standings");
+    standings.replaceChildren();
+    ["Team 1  3", "Team 2  0"].forEach((text) => {
+      const item = document.createElement("li");
+      item.textContent = text;
+      standings.appendChild(item);
+    });
+  `);
+  await delay(250);
+  await redesignShot("recap-light.png");
+  await setScheme("dark");
+  await redesignShot("recap-dark.png");
+  await setScheme("light");
+  await cdp.send("Emulation.setDeviceMetricsOverride", {
+    width: 390,
+    height: 844,
+    deviceScaleFactor: 1,
+    mobile: true,
+    screenOrientation: { type: "portraitPrimary", angle: 0 }
+  });
+  await ev(`
+    document.body.dataset.phase = "play";
+    document.body.classList.add("playing");
+    document.body.classList.add("portrait");
+  `);
+  await delay(250);
+  await redesignShot("rotate-overlay.png");
+  await cdp.send("Emulation.setDeviceMetricsOverride", {
+    width: 844,
+    height: 390,
+    deviceScaleFactor: 1,
+    mobile: true,
+    screenOrientation: { type: "landscapePrimary", angle: 90 }
+  });
+  await ev(`
+    document.body.dataset.phase = "home";
+    document.body.classList.remove("playing");
+    document.body.classList.remove("portrait");
+    if (typeof updatePortrait === "function") updatePortrait();
+  `);
+  await setScheme("light");
+  await delay(200);
   const debugOff = await ev(`({
     hidden: document.getElementById('tilt-debug').hidden,
     display: getComputedStyle(document.getElementById('tilt-debug')).display
@@ -294,7 +409,12 @@ try {
     window.__permSync
   `);
   check("Tap to start calls requestPermission synchronously", permSync >= 1, "sync calls " + permSync + " installed " + JSON.stringify(await ev("window.__permInstalled")));
-  await waitFor("document.body.dataset.phase === 'play' && document.getElementById('prompt').textContent.length > 0", 8000, "round start");
+  await waitFor("document.body.dataset.phase === 'play' && document.getElementById('prompt').textContent.length > 0", 12000, "round start");
+  await setScheme("light");
+  await redesignShot("play-light.png");
+  await setScheme("dark");
+  await redesignShot("play-dark.png");
+  await setScheme("light");
   await shot("02-play.png");
 
   const pose = POSES[90];
@@ -398,6 +518,11 @@ try {
   check("the last 10 seconds pulse", sawUrgent, "");
   check("the timer ends the round", Boolean(recap), recap ? recap.line : "still " + previous);
   if (recap) {
+    await setScheme("light");
+    await redesignShot("recap-light.png");
+    await setScheme("dark");
+    await redesignShot("recap-dark.png");
+    await setScheme("light");
     await shot("06-recap.png");
     check("recap lists the guessed prompt", recap.guessed.indexOf(firstPrompt) !== -1, recap.guessed.join(", "));
     check("recap lists the passed prompt", recap.passed.indexOf(correct.prompt) !== -1, recap.passed.join(", "));
@@ -406,7 +531,7 @@ try {
   }
 
   await cdp.send("Page.reload", { ignoreCache: false });
-  await waitFor("document.readyState === 'complete' && document.body.dataset.phase === 'setup'", 10000, "reload");
+  await waitFor("document.readyState === 'complete' && document.body.dataset.phase === 'home'", 10000, "reload");
   await delay(200);
   const kept = await ev(`({
     score: document.querySelector('[data-team-index="0"]').textContent,
@@ -436,7 +561,7 @@ try {
     install(window.DeviceMotionEvent);
     document.getElementById('btn-tap-start').click();
   `);
-  await waitFor("document.body.dataset.phase === 'play' && document.getElementById('prompt').textContent.length > 0", 8000, "motion round");
+  await waitFor("document.body.dataset.phase === 'play' && document.getElementById('prompt').textContent.length > 0", 12000, "motion round");
   await ev("window.removeEventListener('deviceorientation', onOrientation)");
   await delay(1100);
   const beforeMotion = await ev("document.getElementById('play-score').textContent");
@@ -479,8 +604,8 @@ try {
   await ev("document.getElementById('btn-next').click()");
 
   await cdp.send("Emulation.setDeviceMetricsOverride", {
-    width: 420,
-    height: 800,
+    width: 390,
+    height: 844,
     deviceScaleFactor: 1,
     mobile: true,
     screenOrientation: { type: "portraitPrimary", angle: 0 }
@@ -510,6 +635,8 @@ try {
   })`);
   check("portrait shows the rotate overlay", overlay.display === "flex" && overlay.text.indexOf("Rotate your phone") !== -1, overlay.display + " " + overlay.text.replace(/\\s+/g, " "));
   await shot("08-portrait.png");
+  await setScheme("light");
+  await redesignShot("rotate-overlay.png");
 
   const used = promptMap.Actions.map((prompt) => "Actions\n" + prompt);
   const saved = {
@@ -523,14 +650,14 @@ try {
   };
   await ev("localStorage.setItem('charades.v1', " + JSON.stringify(JSON.stringify(saved)) + ")");
   await cdp.send("Emulation.setDeviceMetricsOverride", {
-    width: 1100,
-    height: 640,
+    width: 844,
+    height: 390,
     deviceScaleFactor: 1,
     mobile: true,
     screenOrientation: { type: "landscapePrimary", angle: 90 }
   });
   await cdp.send("Page.reload");
-  await waitFor("document.readyState === 'complete' && document.body.dataset.phase === 'setup'", 10000, "exhausted reload");
+  await waitFor("document.readyState === 'complete' && document.body.dataset.phase === 'home'", 10000, "exhausted reload");
   await ev(`
     const DOE = window.DeviceOrientationEvent;
     function grant() { window.__permCalls = (window.__permCalls || 0) + 1; return Promise.resolve('granted'); }
@@ -543,7 +670,7 @@ try {
   check("an empty category says so", emptyText === "No prompts left in this category.", emptyText);
   await shot("09-empty.png");
   await ev("document.getElementById('btn-reshuffle').click()");
-  await waitFor("document.body.dataset.phase === 'play' && document.getElementById('prompt').textContent.length > 0", 8000, "reshuffle deal");
+  await waitFor("document.body.dataset.phase === 'play' && document.getElementById('prompt').textContent.length > 0", 12000, "reshuffle deal");
   const reshuffled = await ev("document.getElementById('prompt').textContent");
   check("reshuffle deals a prompt again", promptMap.Actions.indexOf(reshuffled) !== -1, reshuffled);
   await shot("10-reshuffle.png");

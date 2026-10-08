@@ -13,7 +13,7 @@
     {
       "name": "Tap to start is present",
       "ok": true,
-      "detail": "{\"text\":\"Tap to start\",\"width\":380,\"height\":74}"
+      "detail": "{\"text\":\"Tap to start\",\"width\":320,\"height\":44}"
     },
     {
       "name": "screen angle is landscape-left 90",
@@ -53,7 +53,7 @@
     {
       "name": "Miracles & Parables has at least 40 prompts",
       "ok": true,
-      "detail": "100"
+      "detail": "92"
     },
     {
       "name": "Christmas & Easter has at least 40 prompts",
@@ -103,7 +103,7 @@
     {
       "name": "Movies has at least 40 prompts",
       "ok": true,
-      "detail": "169"
+      "detail": "168"
     },
     {
       "name": "Everyday Objects has at least 40 prompts",
@@ -153,7 +153,7 @@
     {
       "name": "holding the tilt does not score again",
       "ok": true,
-      "detail": "Crying"
+      "detail": "Puddle Splash"
     },
     {
       "name": "the opposite tilt does not count before neutral",
@@ -173,7 +173,7 @@
     {
       "name": "holding pass does not advance again",
       "ok": true,
-      "detail": "Zipping Jacket"
+      "detail": "Stomping"
     },
     {
       "name": "landscape-right face-down counts as correct",
@@ -203,12 +203,12 @@
     {
       "name": "recap lists the guessed prompt",
       "ok": true,
-      "detail": "Hopping, Zipping Jacket, Thumbs Up"
+      "detail": "Throwing Ball, Stomping, Climbing"
     },
     {
       "name": "recap lists the passed prompt",
       "ok": true,
-      "detail": "Crying"
+      "detail": "Puddle Splash"
     },
     {
       "name": "recap shows the round total",
@@ -253,7 +253,7 @@
     {
       "name": "reshuffle deals a prompt again",
       "ok": true,
-      "detail": "Hop One Foot"
+      "detail": "Yawning"
     },
     {
       "name": "zero console errors",
@@ -262,14 +262,30 @@
     }
   ],
   "shots": [
+    "redesign/home-light.png",
+    "redesign/home-dark.png",
+    "redesign/setup-light.png",
+    "redesign/setup-dark.png",
+    "redesign/prep-light.png",
+    "redesign/prep-dark.png",
+    "redesign/play-light.png",
+    "redesign/play-dark.png",
+    "redesign/recap-light.png",
+    "redesign/recap-dark.png",
+    "redesign/rotate-overlay.png",
     "01-setup.png",
+    "redesign/play-light.png",
+    "redesign/play-dark.png",
     "02-play.png",
     "03-correct.png",
     "04-pass.png",
     "05-urgent.png",
+    "redesign/recap-light.png",
+    "redesign/recap-dark.png",
     "06-recap.png",
     "07-refresh.png",
     "08-portrait.png",
+    "redesign/rotate-overlay.png",
     "09-empty.png",
     "10-reshuffle.png"
   ],
@@ -300,8 +316,8 @@
     ],
     "start": {
       "text": "Tap to start",
-      "width": 380,
-      "height": 74
+      "width": 320,
+      "height": 44
     },
     "links": [],
     "angle": 90,
@@ -310,7 +326,7 @@
   "counts": {
     "Bible Characters": 117,
     "Bible Stories": 112,
-    "Miracles & Parables": 100,
+    "Miracles & Parables": 92,
     "Christmas & Easter": 118,
     "Church Life": 120,
     "Bible Animals": 109,
@@ -320,7 +336,7 @@
     "Sports": 115,
     "Animals": 113,
     "Chores": 108,
-    "Movies": 169,
+    "Movies": 168,
     "Everyday Objects": 136,
     "Foods": 124,
     "Outdoor Fun": 120

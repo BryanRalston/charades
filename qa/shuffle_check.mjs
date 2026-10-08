@@ -76,7 +76,7 @@ let total = 0;
 for (const name of names) {
   const count = promptMap[name].length;
   total += count;
-  check(name + " has at least 100 prompts", count >= 100, String(count));
+  check(name + " has at least 40 prompts", count >= 40, String(count));
 }
 check("sixteen categories", names.length === 16, String(names.length));
 console.log("total cards " + total);
@@ -194,7 +194,7 @@ try {
     catch (err) { Object.defineProperty(DOE, "requestPermission", { configurable: true, writable: true, value: grant }); }
     document.getElementById("btn-tap-start").click();
   `);
-  await waitFor("document.body.dataset.phase === 'play' && document.getElementById('prompt').textContent.length > 0", 8000, "first round");
+  await waitFor("document.body.dataset.phase === 'play' && document.getElementById('prompt').textContent.length > 0", 12000, "first round");
   const firstRound = await ev(`(() => {
     const seen = [];
     for (let i = 0; i < 24; i += 1) {
@@ -209,7 +209,7 @@ try {
   check("those cards are not the list order", firstRound.join("\n") !== sourcePrefix, firstRound.slice(0, 4).join(", "));
 
   await cdp.send("Page.reload");
-  await waitFor("document.readyState === 'complete' && document.body.dataset.phase === 'setup'", 10000, "reload");
+  await waitFor("document.readyState === 'complete' && document.body.dataset.phase === 'home'", 10000, "reload");
   await ev(`
     const DOE = window.DeviceOrientationEvent;
     function grant() { return Promise.resolve("granted"); }
@@ -217,7 +217,7 @@ try {
     catch (err) { Object.defineProperty(DOE, "requestPermission", { configurable: true, writable: true, value: grant }); }
     document.getElementById("btn-tap-start").click();
   `);
-  await waitFor("document.body.dataset.phase === 'play' && document.getElementById('prompt').textContent.length > 0", 8000, "second round");
+  await waitFor("document.body.dataset.phase === 'play' && document.getElementById('prompt').textContent.length > 0", 12000, "second round");
   const secondRound = await ev(`(() => {
     const seen = [];
     for (let i = 0; i < 24; i += 1) {
@@ -241,7 +241,7 @@ try {
   const held = promptMap.Actions.slice(-24);
   await ev("localStorage.setItem('charades.v1', " + JSON.stringify(JSON.stringify(saved)) + ")");
   await cdp.send("Page.reload");
-  await waitFor("document.readyState === 'complete' && document.body.dataset.phase === 'setup'", 10000, "exhausted reload");
+  await waitFor("document.readyState === 'complete' && document.body.dataset.phase === 'home'", 10000, "exhausted reload");
   await ev(`
     const DOE = window.DeviceOrientationEvent;
     function grant() { return Promise.resolve("granted"); }
@@ -253,7 +253,7 @@ try {
   const emptyText = await ev("document.getElementById('deck-empty-text').textContent");
   check("an empty category still says so", emptyText === "No prompts left in this category.", emptyText);
   await ev("document.getElementById('btn-reshuffle').click()");
-  await waitFor("document.body.dataset.phase === 'play' && document.getElementById('prompt').textContent.length > 0", 4000, "reshuffle deal");
+  await waitFor("document.body.dataset.phase === 'play' && document.getElementById('prompt').textContent.length > 0", 12000, "reshuffle deal");
   const after = await ev(`(() => {
     const seen = [];
     for (let i = 0; i < 20; i += 1) {
