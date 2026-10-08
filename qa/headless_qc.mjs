@@ -12,6 +12,7 @@ const V6 = QA + "\\v6";
 const V7 = QA + "\\v7";
 const V8 = QA + "\\v8";
 const V81 = QA + "\\v8_1";
+const V82 = QA + "\\v8_2";
 const V6_LOCK = {
   math: ["015ff8a014515ed3d7d9ea3c858999989a101864c13b7335a754bdb687aab4b6", 2627],
   noteReading: ["a1a7a1edf2849608a145e6a1faffe8c27be619a80ae52cacefaa34e2f4850b1b", 612],
@@ -54,6 +55,7 @@ mkdirSync(V6, { recursive: true });
 mkdirSync(V7, { recursive: true });
 mkdirSync(V8, { recursive: true });
 mkdirSync(V81, { recursive: true });
+mkdirSync(V82, { recursive: true });
 
 function protectedSlices(html) {
   const mathStart = html.indexOf("/* tilt-math-start */");
@@ -94,6 +96,12 @@ function promptsFromHtml() {
   const start = js.indexOf(marker);
   const block = js.slice(start + marker.length).trim().replace(/;$/, "");
   return Function("return " + block)();
+}
+
+function deckPrompts(deck) {
+  if (!deck) return [];
+  if (Array.isArray(deck)) return deck;
+  return (deck.kids || []).concat(deck.adults || []);
 }
 
 function connect(wsUrl) {
@@ -271,11 +279,7 @@ try {
     return result.result ? result.result.value : undefined;
   }
 
-  async function shot(name) {
-    const png = await cdp.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: true });
-    writeFileSync(QA + "\\" + name, Buffer.from(png.data, "base64"));
-    shots.push(name);
-  }
+  async function shot() {}
 
   async function setScheme(scheme) {
     await cdp.send("Emulation.setEmulatedMedia", {
@@ -283,31 +287,31 @@ try {
     });
   }
 
-  async function v6Shot(name) {
+  async function v6Shot() {}
+
+  async function v7Shot() {}
+
+  async function v8Shot() {}
+
+  async function v81Shot() {}
+
+  async function v82Shot(name) {
     const png = await cdp.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
-    writeFileSync(V6 + "\\" + name, Buffer.from(png.data, "base64"));
-    shots.push("v6/" + name);
+    writeFileSync(V82 + "\\" + name, Buffer.from(png.data, "base64"));
+    shots.push("v8_2/" + name);
   }
 
-  async function v7Shot(name) {
-    const png = await cdp.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
-    writeFileSync(V7 + "\\" + name, Buffer.from(png.data, "base64"));
-    shots.push("v7/" + name);
+  async function v82Pair(name) {
+    await setScheme("light");
+    await delay(40);
+    await v82Shot(name + "-light.png");
+    await setScheme("dark");
+    await delay(40);
+    await v82Shot(name + "-dark.png");
+    await setScheme("light");
   }
 
-  async function v8Shot(name) {
-    const png = await cdp.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
-    writeFileSync(V8 + "\\" + name, Buffer.from(png.data, "base64"));
-    shots.push("v8/" + name);
-  }
-
-  async function v81Shot(name) {
-    const png = await cdp.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
-    writeFileSync(V81 + "\\" + name, Buffer.from(png.data, "base64"));
-    shots.push("v8_1/" + name);
-  }
-
-  const DIALOG_IDS = ["share-modal", "deck-offer", "pause-modal", "confirm-modal", "deck-empty"];
+  const DIALOG_IDS = ["share-modal", "deck-offer", "pause-modal", "confirm-modal", "deck-empty", "deck-editor"];
   async function assertDialogsClosed(where) {
     const open = await ev(`(${JSON.stringify(DIALOG_IDS)}).filter((id) => { const el = document.getElementById(id); return el && el.hidden === false; })`);
     check("no dialog is open before " + where, Array.isArray(open) && open.length === 0, (open || []).join(","));
@@ -341,12 +345,12 @@ try {
 
   const tiltNow = protectedSlices(readFileSync(ROOT + "\\index.html", "utf8"));
   const tiltSame = Object.keys(V6_LOCK).every((key) => tiltNow[key][0] === V6_LOCK[key][0] && tiltNow[key][1] === V6_LOCK[key][1]);
-  check("tilt math and sensor handlers are byte-identical to v8", tiltSame, JSON.stringify(tiltNow));
+  check("tilt math and sensor handlers are byte-identical to v8.1", tiltSame, JSON.stringify(tiltNow));
   const swSource = readFileSync(ROOT + "\\sw.js", "utf8");
   const deckFiles = ["bible-characters","bible-stories","miracles-parables","christmas-easter","church-life","bible-animals","bible-places-things","hum-it","actions","jobs","sports","animals","chores","movies","everyday-objects","foods","outdoor-fun","mix"];
   check(
-    "sw cache is charades-v8-1",
-    swSource.indexOf('const CACHE = "charades-v8-1"') !== -1 && swSource.indexOf('ASSET_VERSION = "8.1"') !== -1 && swSource.indexOf('"./prompts.js"') !== -1 && deckFiles.every((name) => swSource.indexOf("./assets/decks/" + name + ".webp") !== -1),
+    "sw cache is charades-v8-2",
+    swSource.indexOf('const CACHE = "charades-v8-2"') !== -1 && swSource.indexOf('ASSET_VERSION = "8.2"') !== -1 && swSource.indexOf('"./prompts.js"') !== -1 && deckFiles.every((name) => swSource.indexOf("./assets/decks/" + name + ".webp") !== -1),
     ""
   );
   const swStart = swSource.indexOf("function networkFirst");
@@ -583,13 +587,17 @@ try {
 
   const promptMap = promptsFromHtml();
   for (const name of EXPECTED) {
-    const count = (promptMap[name] || []).length;
+    const deck = promptMap[name] || {};
+    const kids = (deck.kids || []).length;
+    const adults = (deck.adults || []).length;
+    const count = kids + adults;
     check(name + " has at least 40 prompts", count >= 40, String(count));
+    check(name + " has at least 40 kids and 40 adults", kids >= 40 && adults >= 40, kids + "/" + adults);
   }
   const seenPrompts = new Map();
   const duplicatePrompts = [];
   for (const name of EXPECTED) {
-    for (const prompt of promptMap[name] || []) {
+    for (const prompt of deckPrompts(promptMap[name])) {
       const key = String(prompt).trim().toLowerCase();
       if (seenPrompts.has(key)) duplicatePrompts.push(prompt + " in " + seenPrompts.get(key) + " and " + name);
       else seenPrompts.set(key, name);
@@ -598,7 +606,7 @@ try {
   check("no prompt appears in two categories", duplicatePrompts.length === 0, duplicatePrompts.slice(0, 8).join("; ") || "unique");
   const removedCards = ["Friendship Pad", "Pew Pencil", "Known Sheep", "Sorted Sheep", "Ready Feast", "Healed at Once", "Salt Steps", "Boot Tray", "Rock Badger", "Doxology", "Benediction", "Pink Egg", "Backpack Strap", "Dairy Cow", "Praying in Fish", "Sudden Fig Tree", "Methuselah", "Dorcas", "Thorny Soil", "Swept Floor", "Hidden Coin", "Narrow Door", "Rising Dough", "New Skins", "Dawn Workers", "Evening Workers", "Hand Made Whole", "Faraway Healing", "Official's Son", "Distant Son Healed", "Servant Healed", "Rainbow Promise", "Rainbow Sky", "Dove Returns", "Dove With Leaf", "Cloud Leads On", "Thin Cow", "Raven Pair", "Little Lamb", "Pet Lamb", "Shepherd Lamb", "Big Fish", "Great Fish", "Blue Egg", "Plastic Egg", "Hidden Egg", "Toy Story 2", "Toy Story 3", "Toy Story 4", "Despicable Me 2", "Despicable Me 3", "Despicable Me 4", "Happy Feet Two", "102 Dalmatians", "Incredibles 2", "Frozen 2"];
   const addedScenes = ["David and Goliath", "Jonah Swallowed", "Feeding the 5,000", "Peter Denies Jesus", "Paul Blinded", "Daniel Prays", "Zacchaeus Climbs Tree", "Samson Pushes Pillars", "Paul's Shipwreck", "Baby Moses Basket"];
-  const hasPrompt = (prompt) => EXPECTED.some((name) => (promptMap[name] || []).indexOf(prompt) !== -1);
+  const hasPrompt = (prompt) => EXPECTED.some((name) => deckPrompts(promptMap[name]).indexOf(prompt) !== -1);
   const stillThere = removedCards.filter(hasPrompt);
   const missingScenes = addedScenes.filter((prompt) => !hasPrompt(prompt));
   check("removed and collapsed cards are absent", stillThere.length === 0, stillThere.slice(0, 8).join(", ") || "absent");
@@ -964,7 +972,7 @@ try {
   const closedAria = await ev("document.getElementById('rotate-overlay').getAttribute('aria-hidden')");
   check("rotate overlay is hidden from assistive tech when closed", closedAria === "true", closedAria);
 
-  const used = promptMap.Actions.map((prompt) => "Actions\n" + prompt);
+  const used = deckPrompts(promptMap.Actions).map((prompt) => "Actions\n" + prompt);
   const saved = {
     teams: [
       { id: "a", name: "Team 1", score: 3 },
@@ -998,7 +1006,7 @@ try {
   await ev("document.getElementById('btn-reshuffle').click()");
   await waitFor("document.body.dataset.phase === 'play' && document.getElementById('prompt').textContent.length > 0", 12000, "reshuffle deal");
   const reshuffled = await ev("document.getElementById('prompt').textContent");
-  check("reshuffle deals a prompt again", promptMap.Actions.indexOf(reshuffled) !== -1, reshuffled);
+  check("reshuffle deals a prompt again", deckPrompts(promptMap.Actions).indexOf(reshuffled) !== -1, reshuffled);
   await shot("10-reshuffle.png");
 
   const beforeResume = await ev(`(() => {
@@ -1441,7 +1449,7 @@ try {
       return document.getElementById("prompt").textContent;
     })()`);
     shotPrompts[entry[0]] = prompt;
-    check(entry[0] + " play shot uses a real prompt", (promptMap[entry[0]] || []).indexOf(prompt) !== -1, prompt);
+    check(entry[0] + " play shot uses a real prompt", deckPrompts(promptMap[entry[0]]).indexOf(prompt) !== -1, prompt);
     await assertDialogsClosed("v7 " + entry[1]);
     await v7Pair(entry[1]);
   }
@@ -1475,11 +1483,16 @@ try {
   })()`);
   await v7Pair("pass");
 
-  const animals = promptMap["Bible Animals"] || [];
+  const animals = deckPrompts(promptMap["Bible Animals"]);
   check("Bible Animals keeps one dove and one raven", animals.filter((prompt) => /dove/i.test(prompt)).join(",") === "Dove" && animals.filter((prompt) => /raven/i.test(prompt)).join(",") === "Raven", animals.filter((prompt) => /dove|raven/i.test(prompt)).join(","));
   check("Bible Animals stays at 100 or more", animals.length >= 100, String(animals.length));
-  const hum = promptMap["Hum It"] || [];
-  check("Hum It has about 60 songs", hum.length === 60 && hum[0] === "Jesus Loves Me" && hum.indexOf("This Little Light of Mine") === 1 && hum.indexOf("Jingle Bells") === -1, String(hum.length));
+  const humDeck = promptMap["Hum It"] || { kids: [], adults: [] };
+  const hum = deckPrompts(humDeck);
+  check(
+    "Hum It keeps the first kids songs and leaves Jingle Bells out",
+    humDeck.kids[0] === "Jesus Loves Me" && humDeck.kids[1] === "This Little Light of Mine" && hum.indexOf("Jingle Bells") === -1 && humDeck.kids.length >= 40 && humDeck.adults.length >= 40,
+    humDeck.kids.length + "/" + humDeck.adults.length
+  );
   const trackedBriefs = execFileSync("git", ["ls-files", "briefs"], { cwd: ROOT, encoding: "utf8" }).trim();
   const ignore = readFileSync(ROOT + "\\.gitignore", "utf8");
   check("briefs are untracked", trackedBriefs === "" && ignore.indexOf("briefs/") !== -1, trackedBriefs || "clean");
@@ -1703,7 +1716,7 @@ try {
       return document.getElementById("prompt").textContent;
     })()`);
     stylePrompts[entry[0]] = prompt;
-    check(entry[1] + " style shot uses a real prompt", (promptMap[entry[1]] || []).indexOf(prompt) !== -1, prompt);
+    check(entry[1] + " style shot uses a real prompt", deckPrompts(promptMap[entry[1]]).indexOf(prompt) !== -1, prompt);
     await assertDialogsClosed("v8 " + entry[2]);
     await v8Pair(entry[2]);
   }
@@ -1904,7 +1917,7 @@ try {
       new Promise((resolve) => setTimeout(() => resolve(null), 8000))
     ]);
     if (!ready) return { ok: false, why: "not ready" };
-    const cache = await caches.open("charades-v8-1");
+    const cache = await caches.open("charades-v8-2");
     const url = new URL("prompts.js", location.href).href;
     const res = await cache.match(url) || await cache.match("./prompts.js");
     if (!res) return { ok: false, why: "missing", keys: await caches.keys() };
@@ -1913,6 +1926,238 @@ try {
   })()`);
   check("prompts.js loads from the service worker cache", cachedPrompts.ok === true, JSON.stringify(cachedPrompts));
 
+  const levelCounts = await ev(`(() => {
+    state.customDecks = [];
+    const read = (level) => {
+      state.settings.level = level;
+      renderPicker();
+      const counts = {};
+      document.querySelectorAll("#category-picker > section .cat-btn").forEach((btn) => {
+        const count = btn.parentElement.querySelector(".cat-count");
+        if (btn.dataset.category && count) counts[btn.dataset.category] = Number(count.textContent);
+      });
+      return counts;
+    };
+    const all = read("all");
+    const kids = read("kids");
+    const adults = read("adults");
+    const names = Object.keys(PROMPTS);
+    const sumKids = names.reduce((sum, name) => sum + PROMPTS[name].kids.length, 0);
+    const sumAdults = names.reduce((sum, name) => sum + PROMPTS[name].adults.length, 0);
+    return {
+      actionsAll: all.Actions,
+      actionsKids: kids.Actions,
+      actionsAdults: adults.Actions,
+      expectKids: PROMPTS.Actions.kids.length,
+      expectAdults: PROMPTS.Actions.adults.length,
+      expectAll: PROMPTS.Actions.kids.length + PROMPTS.Actions.adults.length,
+      mixKids: kids.Mix,
+      mixAdults: adults.Mix,
+      mixAll: all.Mix,
+      sumKids: sumKids,
+      sumAdults: sumAdults
+    };
+  })()`);
+  check(
+    "deck counts follow the level",
+    levelCounts.actionsKids === levelCounts.expectKids && levelCounts.actionsAdults === levelCounts.expectAdults && levelCounts.actionsAll === levelCounts.expectAll && levelCounts.actionsKids !== levelCounts.actionsAdults && levelCounts.mixKids === levelCounts.sumKids && levelCounts.mixAdults === levelCounts.sumAdults && levelCounts.mixAll === levelCounts.sumKids + levelCounts.sumAdults,
+    JSON.stringify(levelCounts)
+  );
+  const chosenLevel = await ev(`(() => {
+    state.settings.level = "all";
+    state.teams.forEach((team) => { team.level = "all"; });
+    applySettings();
+    const input = document.querySelector('input[name="level"][value="kids"]');
+    input.click();
+    return {
+      level: state.settings.level,
+      teams: state.teams.map((team) => team.level),
+      checked: (document.querySelector('input[name="level"]:checked') || {}).value,
+      actions: deckCount("Actions")
+    };
+  })()`);
+  check(
+    "the level control saves kids for the game",
+    chosenLevel.level === "kids" && chosenLevel.checked === "kids" && chosenLevel.teams.join(",") === "kids,kids" && chosenLevel.actions === levelCounts.expectKids,
+    JSON.stringify(chosenLevel)
+  );
+  await cdp.send("Page.reload");
+  await waitFor("document.readyState === 'complete' && !!document.getElementById('btn-tap-start') && state.settings.level === 'kids'", 10000, "level restore");
+  const restoredLevel = await ev(`({
+    level: state.settings.level,
+    teams: state.teams.map((team) => team.level),
+    checked: (document.querySelector('input[name="level"]:checked') || {}).value
+  })`);
+  check("the level control restores after refresh", restoredLevel.level === "kids" && restoredLevel.checked === "kids" && restoredLevel.teams.join(",") === "kids,kids", JSON.stringify(restoredLevel));
+
+  const draws = await ev(`(() => {
+    const kids = new Set(PROMPTS.Actions.kids);
+    const adults = new Set(PROMPTS.Actions.adults);
+    state.settings.category = "Actions";
+    state.used = [];
+    state.customDecks = [];
+    state.settings.level = "kids";
+    state.teams.forEach((team) => { team.level = "kids"; });
+    state.turnIndex = 0;
+    const kidDeck = buildDeck().map((card) => card.prompt);
+    state.settings.level = "adults";
+    state.teams.forEach((team) => { team.level = "adults"; });
+    const adultDeck = buildDeck().map((card) => card.prompt);
+    state.settings.level = "all";
+    state.teams[0].level = "kids";
+    state.teams[1].level = "adults";
+    state.used = [];
+    state.turnIndex = 0;
+    const pull = (n) => {
+      const queueCards = buildDeck();
+      const got = [];
+      for (let i = 0; i < n && i < queueCards.length; i += 1) {
+        got.push(queueCards[i].prompt);
+        state.used.push(queueCards[i].key);
+      }
+      return got;
+    };
+    const kidTurn = pull(12);
+    state.turnIndex = 1;
+    const adultTurn = pull(12);
+    const both = kidTurn.concat(adultTurn);
+    saveCustomDeck("Stars", "Star Cookies\\nMoon Pies\\nComet Candy");
+    const custom = state.customDecks[state.customDecks.length - 1];
+    state.settings.level = "kids";
+    state.teams[0].level = "kids";
+    state.turnIndex = 0;
+    state.settings.category = "custom:" + custom.id;
+    state.used = [];
+    const customDealt = buildDeck().map((card) => card.prompt);
+    return {
+      kidCount: kidDeck.length,
+      kidOk: kidDeck.length === kids.size && kidDeck.every((prompt) => kids.has(prompt)),
+      adultCount: adultDeck.length,
+      adultOk: adultDeck.length === adults.size && adultDeck.every((prompt) => adults.has(prompt)),
+      kidTurnOk: kidTurn.length === 12 && kidTurn.every((prompt) => kids.has(prompt) && !adults.has(prompt)),
+      adultTurnOk: adultTurn.length === 12 && adultTurn.every((prompt) => adults.has(prompt) && !kids.has(prompt)),
+      unique: new Set(both).size === both.length,
+      customDealt: customDealt.slice().sort().join("|"),
+      customShown: deckCount("custom:" + custom.id),
+      editorHidden: document.getElementById("deck-editor").hidden === true
+    };
+  })()`);
+  check("kids-only and adults-only games stay in level", draws.kidOk === true && draws.adultOk === true, draws.kidCount + "/" + draws.adultCount);
+  check(
+    "a kids team and an adults team draw only their own cards",
+    draws.kidTurnOk === true && draws.adultTurnOk === true && draws.unique === true,
+    JSON.stringify({ kidTurnOk: draws.kidTurnOk, adultTurnOk: draws.adultTurnOk, unique: draws.unique })
+  );
+  check(
+    "custom decks ignore the level",
+    draws.customDealt === "Comet Candy|Moon Pies|Star Cookies" && draws.customShown === 3 && draws.editorHidden === true,
+    JSON.stringify({ dealt: draws.customDealt, shown: draws.customShown, editorHidden: draws.editorHidden })
+  );
+
+  await setViewport(844, 390);
+  await closeShotDialogs();
+  const badges = await ev(`(() => {
+    state.customDecks = [];
+    state.settings.level = "all";
+    state.teams[0].level = "all";
+    state.teams[1].level = "adults";
+    state.teams[0].score = 3;
+    state.teams[1].score = 1;
+    renderHome();
+    const allHome = [...document.querySelectorAll("#home-standings .level-badge")].map((el) => el.textContent);
+    state.teams[0].level = "kids";
+    state.turnIndex = 0;
+    applySettings();
+    renderTeams();
+    showPassPhone();
+    const passKids = (document.querySelector("#pass-team .level-badge") || {}).textContent || "";
+    document.body.dataset.phase = "prep";
+    paintTeamFaces();
+    const prepKids = (document.querySelector("#prep-who .level-badge") || {}).textContent || "";
+    state.turnIndex = 1;
+    showPassPhone();
+    const passAdults = (document.querySelector("#pass-team .level-badge") || {}).textContent || "";
+    renderRecap({ name: "Team 1", level: "kids", roundPoints: 3, total: 3, guessed: ["Running", "Jumping", "Swimming"], passed: ["Dancing"], timeUp: "", nextName: "Team 2" });
+    document.body.dataset.phase = "recap";
+    const recap = (document.querySelector("#recap-line .level-badge") || {}).textContent || "";
+    const stand = [...document.querySelectorAll("#standings .level-badge")].map((el) => el.textContent);
+    renderHome();
+    const home = [...document.querySelectorAll("#home-standings .level-badge")].map((el) => el.textContent);
+    renderWinner({ name: "Team 1", roundPoints: 3, total: 3, guessed: [], passed: [], timeUp: "", nextName: "Team 2" });
+    const winner = [...document.querySelectorAll("#winner-standings .level-badge")].map((el) => el.textContent);
+    return { allHome: allHome, passKids: passKids, prepKids: prepKids, passAdults: passAdults, recap: recap, stand: stand, home: home, winner: winner };
+  })()`);
+  check(
+    "level badges show on the turn screen, recap and standings",
+    badges.allHome.join(",") === "Adults" && badges.passKids === "Kids" && badges.prepKids === "Kids" && badges.passAdults === "Adults" && badges.recap === "Kids" && badges.stand.slice().sort().join(",") === "Adults,Kids" && badges.home.slice().sort().join(",") === "Adults,Kids" && badges.winner.slice().sort().join(",") === "Adults,Kids",
+    JSON.stringify(badges)
+  );
+  await ev(`openSetup("round"); document.body.dataset.phase = "setup"; document.body.classList.remove("playing", "portrait"); document.querySelector(".setup-scroll").scrollTop = 0;`);
+  await v82Pair("setup-level");
+  await ev(`(() => {
+    const scroller = document.querySelector(".setup-scroll");
+    const list = document.getElementById("team-list");
+    scroller.scrollTop = Math.max(0, list.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - 8);
+  })()`);
+  await v82Pair("teams");
+  await ev(`state.turnIndex = 0; showPassPhone();`);
+  await closeShotDialogs();
+  await v82Pair("pass-kids");
+  await ev(`state.turnIndex = 1; showPassPhone();`);
+  await v82Pair("pass-adults");
+  await ev(`(() => {
+    state.turnIndex = 0;
+    state.teams[0].level = "kids";
+    state.settings.category = "Actions";
+    state.settings.style = "describe";
+    queue = [{ category: "Actions", prompt: "Running", key: "Actions\\nRunning" }];
+    document.body.classList.remove("portrait");
+    document.body.classList.add("playing");
+    paintCategory();
+    deal();
+    paintTeamFaces();
+  })()`);
+  await assertDialogsClosed("v8.2 kids play");
+  await v82Pair("play-kids");
+  await ev(`(() => {
+    state.turnIndex = 1;
+    state.teams[1].level = "adults";
+    queue = [{ category: "Actions", prompt: "Parallel Parking", key: "Actions\\nParallel Parking" }];
+    paintCategory();
+    deal();
+    paintTeamFaces();
+  })()`);
+  await assertDialogsClosed("v8.2 adults play");
+  await v82Pair("play-adults");
+  await ev(`(() => {
+    state.teams[0].level = "kids";
+    state.teams[1].level = "adults";
+    state.teams[0].score = 3;
+    state.teams[1].score = 0;
+    document.body.classList.remove("playing");
+    renderRecap({ name: "Team 1", level: "kids", roundPoints: 3, total: 3, guessed: ["Running", "Jumping", "Swimming"], passed: ["Dancing"], timeUp: "Dancing", nextName: "Team 2" });
+    document.body.dataset.phase = "recap";
+  })()`);
+  await assertDialogsClosed("v8.2 recap");
+  await v82Pair("recap");
+
+  await ev(`
+    state.settings.level = "all";
+    state.teams[0].level = "kids";
+    state.teams[1].level = "adults";
+    state.settings.tutorialSeen = true;
+    state.settings.category = "Actions";
+    state.customDecks = [];
+    saveState();
+  `);
+  await cdp.send("Page.reload");
+  await waitFor("document.readyState === 'complete' && !!document.getElementById('btn-tap-start')", 10000, "team level resume");
+  const resumedLevels = await ev(`({
+    level: state.settings.level,
+    teams: state.teams.map((team) => team.level)
+  })`);
+  check("resume keeps the per-team levels", resumedLevels.level === "all" && resumedLevels.teams.join(",") === "kids,adults", JSON.stringify(resumedLevels));
+
   await delay(600);
   const errors = consoleEvents.filter((event) => event.type === "error");
   check("zero console errors", errors.length === 0, errors.map((event) => event.text).join(" || ") || "none");
@@ -1920,7 +2165,10 @@ try {
     checks,
     shots,
     rendered,
-    counts: Object.fromEntries(EXPECTED.map((name) => [name, promptMap[name].length])),
+    counts: Object.fromEntries(EXPECTED.map((name) => {
+      const deck = promptMap[name] || { kids: [], adults: [] };
+      return [name, { kids: (deck.kids || []).length, adults: (deck.adults || []).length }];
+    })),
     consoleEvents
   }, null, 2));
   const failed = checks.filter((item) => !item.ok);

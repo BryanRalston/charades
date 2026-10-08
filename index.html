@@ -265,6 +265,37 @@
     background: var(--card-solid);
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
   }
+  .team-level { display: inline-flex; gap: 2px; }
+  .team-level button {
+    min-height: 28px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: transparent;
+    font-size: 11px;
+    font-weight: 750;
+  }
+  .team-level button[aria-pressed="true"] { background: var(--accent); color: #fff; border-color: transparent; }
+  .level-badge {
+    display: inline-flex;
+    align-items: center;
+    flex: none;
+    margin-left: 6px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 750;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    line-height: 1.4;
+    background: var(--fill-2);
+    color: var(--ink);
+    vertical-align: middle;
+  }
+  .level-kids { background: #d7f5e3; color: #0b6b3a; }
+  .level-adults { background: #e4e7ff; color: #3730a3; }
+  #play .level-badge, #prep .level-badge { background: rgba(255, 255, 255, 0.22); color: #fff; }
+  #prep-who { margin: 0; font-size: 15px; font-weight: 750; letter-spacing: 0.04em; text-transform: uppercase; color: #fff; }
   #up-now { font-weight: 700; letter-spacing: -0.02em; }
   #team-list {
     list-style: none;
@@ -279,7 +310,7 @@
   }
   #team-list li {
     display: grid;
-    grid-template-columns: 12px minmax(0, 1fr) auto auto;
+    grid-template-columns: 12px minmax(0, 1fr) auto auto auto;
     gap: 8px;
     align-items: center;
     min-height: 44px;
@@ -721,6 +752,7 @@
   }
   @keyframes barGrow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
   .stand-name, .stand-score { color: var(--ink); opacity: 1; }
+  .stand-name { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
   .stand-score { text-align: right; font-variant-numeric: tabular-nums; }
   #home-standings li.zero .stand-bar,
   #standings li.zero .stand-bar,
@@ -988,6 +1020,14 @@
       <div class="setup-scroll">
         <p class="rotate-hint">Rotate your phone sideways to play.</p>
         <fieldset class="sheet-card glass">
+          <legend>Level</legend>
+          <div class="times formats">
+            <label>Kids<input type="radio" name="level" value="kids"></label>
+            <label>Adults<input type="radio" name="level" value="adults"></label>
+            <label>All<input type="radio" name="level" value="all" checked></label>
+          </div>
+        </fieldset>
+        <fieldset class="sheet-card glass">
           <legend>Style</legend>
           <div class="times formats">
             <label>Act It<input type="radio" name="style" value="act"></label>
@@ -1050,6 +1090,7 @@
     </div>
     <div id="prep">
       <div class="prep-phone" aria-hidden="true"></div>
+      <p id="prep-who">Team 1</p>
       <p id="prep-style">Describe It</p>
       <h2>Hold to forehead</h2>
       <p>Tilt face-down for correct. Tilt face-up to pass.</p>
@@ -1294,13 +1335,13 @@
     function defaultState() {
       return {
         teams: [
-          { id: uid(), name: "Team 1", score: 0 },
-          { id: uid(), name: "Team 2", score: 0 }
+          { id: uid(), name: "Team 1", score: 0, level: "all" },
+          { id: uid(), name: "Team 2", score: 0, level: "all" }
         ],
         turnIndex: 0,
         used: [],
         roundsPlayed: 0,
-        settings: { seconds: 60, category: "", buttonsOnly: false, tutorialSeen: false, format: "endless", style: "describe", recordReactions: false },
+        settings: { seconds: 60, category: "", buttonsOnly: false, tutorialSeen: false, format: "endless", style: "describe", recordReactions: false, level: "all" },
         customDecks: []
       };
     }
@@ -1335,7 +1376,8 @@
         const teams = data.teams.slice(0, 8).map((team, index) => ({
           id: typeof team.id === "string" && team.id ? team.id : uid(),
           name: typeof team.name === "string" ? team.name.slice(0, 24) : "Team " + (index + 1),
-          score: Number.isFinite(team.score) ? team.score : 0
+          score: Number.isFinite(team.score) ? team.score : 0,
+          level: normalizeLevel(team.level)
         }));
         const rawSeconds = Number(data.settings && data.settings.seconds);
         const seconds = rawSeconds >= 10 && rawSeconds <= 300 && rawSeconds % 5 === 0 ? rawSeconds : 60;
@@ -1351,8 +1393,9 @@
         const format = data.settings && (data.settings.format === "score" || data.settings.format === "rounds") ? data.settings.format : "endless";
         const style = data.settings && (data.settings.style === "act" || data.settings.style === "hum") ? data.settings.style : "describe";
         const recordReactions = Boolean(data.settings && data.settings.recordReactions);
+        const level = normalizeLevel(data.settings && data.settings.level);
         const roundsPlayed = Number.isInteger(data.roundsPlayed) && data.roundsPlayed > 0 ? data.roundsPlayed : 0;
-        return { teams, turnIndex, used, roundsPlayed, customDecks, settings: { seconds, category, buttonsOnly, tutorialSeen, format, style, recordReactions } };
+        return { teams, turnIndex, used, roundsPlayed, customDecks, settings: { seconds, category, buttonsOnly, tutorialSeen, format, style, recordReactions, level } };
       } catch (err) {
         return defaultState();
       }
@@ -1367,6 +1410,41 @@
     function teamLabel(team, index) {
       const name = team && typeof team.name === "string" ? team.name.trim() : "";
       return name || "Team " + (index + 1);
+    }
+
+    function normalizeLevel(value) {
+      return value === "kids" || value === "adults" || value === "all" ? value : "all";
+    }
+
+    function teamLevel(team) {
+      return normalizeLevel(team && team.level);
+    }
+
+    function levelBadge(level) {
+      const value = normalizeLevel(level);
+      if (value === "all") return null;
+      const badge = document.createElement("span");
+      badge.className = "level-badge level-" + value;
+      badge.textContent = value === "kids" ? "Kids" : "Adults";
+      return badge;
+    }
+
+    function paintNamed(el, label, level) {
+      if (!el) return;
+      el.replaceChildren(document.createTextNode(label));
+      const badge = levelBadge(level);
+      if (badge) el.appendChild(badge);
+    }
+
+    function paintTeamFaces() {
+      const team = currentTeam();
+      const index = Math.max(0, state.teams.indexOf(team));
+      const label = teamLabel(team, index);
+      const level = teamLevel(team);
+      paintNamed(document.getElementById("prep-who"), label, level);
+      paintNamed(document.getElementById("pass-team"), label, level);
+      paintNamed(document.getElementById("play-team"), label, level);
+      document.body.classList.toggle("kids-level", level === "kids");
     }
 
     function currentTeam() {
@@ -1769,7 +1847,18 @@
       return (state.customDecks || []).find((deck) => deck.id === id) || null;
     }
 
-    function cardsForCategory(name) {
+    function promptList(name, level) {
+      const entry = PROMPTS[name];
+      if (!entry) return [];
+      if (Array.isArray(entry)) return entry.slice();
+      const kids = entry.kids || [];
+      const adults = entry.adults || [];
+      if (level === "kids") return kids;
+      if (level === "adults") return adults;
+      return kids.concat(adults);
+    }
+
+    function cardsForCategory(name, level) {
       const deck = customDeck(name);
       if (deck) {
         return deck.prompts.map((prompt) => ({
@@ -1778,7 +1867,7 @@
           key: "custom:" + deck.id + "\n" + prompt
         }));
       }
-      return (PROMPTS[name] || []).map((prompt) => ({
+      return promptList(name, level).map((prompt) => ({
         category: name,
         prompt: prompt,
         key: name + "\n" + prompt
@@ -1790,8 +1879,9 @@
     }
 
     function deckCount(name) {
-      if (name === "Mix") return mixNames().reduce((sum, category) => sum + cardsForCategory(category).length, 0);
-      return cardsForCategory(name).length;
+      const level = normalizeLevel(state.settings.level);
+      if (name === "Mix") return mixNames().reduce((sum, category) => sum + cardsForCategory(category, level).length, 0);
+      return cardsForCategory(name, level).length;
     }
 
     const DECK_ART = {
@@ -2004,7 +2094,23 @@
         remove.setAttribute("aria-label", "Delete");
         remove.disabled = state.teams.length <= 1;
         remove.addEventListener("click", () => removeTeam(team.id));
-        item.append(dot, input, score, remove);
+        const levels = document.createElement("span");
+        levels.className = "team-level";
+        levels.setAttribute("role", "group");
+        levels.setAttribute("aria-label", "Level for " + teamLabel(team, index));
+        ["kids", "adults", "all"].forEach((value) => {
+          const choice = document.createElement("button");
+          choice.type = "button";
+          choice.textContent = value === "kids" ? "Kids" : value === "adults" ? "Adults" : "All";
+          choice.setAttribute("aria-pressed", teamLevel(team) === value ? "true" : "false");
+          choice.addEventListener("click", () => {
+            team.level = value;
+            saveState();
+            renderTeams();
+          });
+          levels.appendChild(choice);
+        });
+        item.append(dot, input, levels, score, remove);
         let startX = 0;
         let drag = 0;
         let dragging = false;
@@ -2056,6 +2162,7 @@
       const next = step === "round" ? "round" : "deck";
       setup.dataset.step = next;
       document.getElementById("setup-title").textContent = next === "round" ? "Round" : "Choose a Deck";
+      if (next === "deck") renderPicker();
     }
 
     function openSetup(step) {
@@ -2072,7 +2179,7 @@
 
     function addTeam() {
       if (state.teams.length >= 8) return;
-      state.teams.push({ id: uid(), name: "Team " + (state.teams.length + 1), score: 0 });
+      state.teams.push({ id: uid(), name: "Team " + (state.teams.length + 1), score: 0, level: normalizeLevel(state.settings.level) });
       saveState();
       renderTeams();
     }
@@ -2143,6 +2250,9 @@
       document.querySelectorAll('input[name="style"]').forEach((input) => {
         input.checked = input.value === (state.settings.style || "describe");
       });
+      document.querySelectorAll('input[name="level"]').forEach((input) => {
+        input.checked = input.value === normalizeLevel(state.settings.level);
+      });
       const record = document.getElementById("record-reactions");
       if (record) record.checked = Boolean(state.settings.recordReactions);
     }
@@ -2182,14 +2292,28 @@
     function buildDeck() {
       const chosen = state.settings.category;
       const names = chosen === "Mix" ? mixNames() : [chosen];
+      const level = teamLevel(currentTeam());
       const used = new Set(state.used);
       const cards = [];
       names.forEach((name) => {
-        cardsForCategory(name).forEach((card) => {
+        cardsForCategory(name, level).forEach((card) => {
           if (!used.has(card.key)) cards.push(card);
         });
       });
       return shuffleCards(cards);
+    }
+
+    function setGlobalLevel(level) {
+      const next = normalizeLevel(level);
+      const prev = normalizeLevel(state.settings.level);
+      state.settings.level = next;
+      state.teams.forEach((team) => {
+        if (normalizeLevel(team.level) === prev) team.level = next;
+      });
+      saveState();
+      applySettings();
+      renderTeams();
+      renderPicker();
     }
 
     // Keep the latest cards out of a reshuffle so they do not come right back.
@@ -2414,8 +2538,7 @@
 
     function updatePlayHud() {
       const team = currentTeam();
-      const index = state.teams.indexOf(team);
-      document.getElementById("play-team").textContent = teamLabel(team, index);
+      paintTeamFaces();
       document.getElementById("play-score").textContent = String(team ? team.score : 0);
     }
 
@@ -2614,6 +2737,7 @@
       const index = Math.max(0, state.teams.indexOf(team));
       const summary = {
         name: teamLabel(team, index),
+        level: teamLevel(team),
         roundPoints: roundPoints,
         total: team ? team.score : 0,
         guessed: roundGuessed.slice(),
@@ -2637,8 +2761,10 @@
     }
 
     function renderRecap(summary) {
-      document.getElementById("recap-line").textContent =
-        summary.name + " scored " + summary.roundPoints + "! Total: " + summary.total + ".";
+      const line = document.getElementById("recap-line");
+      line.replaceChildren(document.createTextNode(summary.name + " scored " + summary.roundPoints + "! Total: " + summary.total + "."));
+      const badge = levelBadge(summary.level);
+      if (badge) line.appendChild(badge);
       document.getElementById("btn-next").textContent = "Next up: " + summary.nextName;
       fillList(document.getElementById("recap-guessed"), summary.guessed);
       fillList(document.getElementById("recap-passed"), summary.passed, summary.timeUp);
@@ -2695,7 +2821,9 @@
         dot.style.background = TEAM_COLORS[row.index % TEAM_COLORS.length];
         const name = document.createElement("span");
         name.className = "stand-name";
-        name.textContent = teamLabel(row.team, row.index);
+        name.appendChild(document.createTextNode(teamLabel(row.team, row.index)));
+        const badge = levelBadge(teamLevel(row.team));
+        if (badge) name.appendChild(badge);
         const bar = document.createElement("span");
         bar.className = "stand-bar";
         const fill = document.createElement("span");
@@ -2752,6 +2880,7 @@
       if (maxW < 20 || maxH < 20) return;
       let size = Math.floor(Math.min(box.clientWidth * 0.2, box.clientHeight * 0.45, 160));
       if (size < 32) size = 32;
+      if (teamLevel(currentTeam()) === "kids") size = Math.min(176, Math.floor(size * 1.12));
       el.style.fontSize = size + "px";
       const scale = Math.min(1, maxW / Math.max(el.scrollWidth, 1), maxH / Math.max(el.scrollHeight, 1));
       const next = Math.max(28, Math.floor(size * scale));
@@ -2885,9 +3014,7 @@
     }
 
     function showPassPhone() {
-      const team = currentTeam();
-      const index = Math.max(0, state.teams.indexOf(team));
-      document.getElementById("pass-team").textContent = teamLabel(team, index);
+      paintTeamFaces();
       document.body.dataset.phase = "pass";
       document.body.classList.remove("playing");
       document.getElementById("deck-empty").hidden = true;
@@ -3676,6 +3803,12 @@
         state.settings.style = input.value;
         saveState();
         paintStyle();
+      });
+    });
+    document.querySelectorAll('input[name="level"]').forEach((input) => {
+      input.addEventListener("change", () => {
+        if (!input.checked) return;
+        setGlobalLevel(input.value);
       });
     });
     document.getElementById("record-reactions").addEventListener("change", (event) => {

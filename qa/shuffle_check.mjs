@@ -21,6 +21,12 @@ function promptsFromHtml() {
   return Function("return " + block)();
 }
 
+function deckPrompts(deck) {
+  if (!deck) return [];
+  if (Array.isArray(deck)) return deck;
+  return (deck.kids || []).concat(deck.adults || []);
+}
+
 function connect(wsUrl) {
   const ws = new WebSocket(wsUrl);
   let next = 0;
@@ -74,9 +80,13 @@ const promptMap = promptsFromHtml();
 const names = Object.keys(promptMap);
 let total = 0;
 for (const name of names) {
-  const count = promptMap[name].length;
+  const deck = deckPrompts(promptMap[name]);
+  const kids = (promptMap[name].kids || []).length;
+  const adults = (promptMap[name].adults || []).length;
+  const count = deck.length;
   total += count;
   check(name + " has at least 40 prompts", count >= 40, String(count));
+  check(name + " has at least 40 kids and 40 adults", kids >= 40 && adults >= 40, kids + "/" + adults);
 }
 check("seventeen categories", names.length === 17, String(names.length));
 console.log("total cards " + total);
@@ -144,7 +154,7 @@ try {
   await ev("localStorage.removeItem('charades.v1')");
 
   const direct = await ev(`(() => {
-    const source = PROMPTS.Actions.slice();
+    const source = PROMPTS.Actions.kids.concat(PROMPTS.Actions.adults);
     state.settings.category = "Actions";
     state.used = [];
     const first = buildDeck().map((card) => card.prompt);
@@ -157,7 +167,7 @@ try {
     const leaked = deck.filter((card) => kept.indexOf(card.key) !== -1).map((card) => card.prompt);
     const mixKeys = [];
     CATEGORY_NAMES.forEach((name) => {
-      PROMPTS[name].forEach((prompt) => mixKeys.push(name + "\\n" + prompt));
+      PROMPTS[name].kids.concat(PROMPTS[name].adults).forEach((prompt) => mixKeys.push(name + "\\n" + prompt));
     });
     state.settings.category = "Mix";
     state.used = mixKeys.slice();
@@ -208,7 +218,7 @@ try {
     return seen;
   })()`);
   const uniqueFirst = new Set(firstRound);
-  const sourcePrefix = promptMap.Actions.slice(0, 24).join("\n");
+  const sourcePrefix = deckPrompts(promptMap.Actions).slice(0, 24).join("\n");
   check("a round deals 24 different cards", firstRound.length === 24 && uniqueFirst.size === 24, "unique " + uniqueFirst.size);
   check("those cards are not the list order", firstRound.join("\n") !== sourcePrefix, firstRound.slice(0, 4).join(", "));
 
@@ -239,10 +249,10 @@ try {
       { id: "b", name: "Team 2", score: 0 }
     ],
     turnIndex: 0,
-    used: promptMap.Actions.map((prompt) => "Actions\n" + prompt),
+    used: deckPrompts(promptMap.Actions).map((prompt) => "Actions\n" + prompt),
     settings: { seconds: 90, category: "Actions" }
   };
-  const held = promptMap.Actions.slice(-24);
+  const held = deckPrompts(promptMap.Actions).slice(-24);
   await ev("localStorage.setItem('charades.v1', " + JSON.stringify(JSON.stringify(saved)) + ")");
   await cdp.send("Page.reload");
   await waitFor("document.readyState === 'complete' && document.body.dataset.phase === 'home'", 10000, "exhausted reload");
@@ -267,7 +277,7 @@ try {
     return seen;
   })()`);
   const cameBack = after.filter((prompt) => held.indexOf(prompt) !== -1);
-  const known = after.every((prompt) => promptMap.Actions.indexOf(prompt) !== -1);
+  const known = after.every((prompt) => deckPrompts(promptMap.Actions).indexOf(prompt) !== -1);
   check("reshuffle deals prompts again", known && new Set(after).size === after.length, after.slice(0, 4).join(", "));
   check("reshuffle skips the most recent cards", cameBack.length === 0, cameBack.join(", ") || "none");
   check("zero console errors", consoleEvents.length === 0, consoleEvents.join(" || ") || "none");
