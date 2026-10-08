@@ -6,14 +6,14 @@
       "detail": "{\"math\":[\"015ff8a014515ed3d7d9ea3c858999989a101864c13b7335a754bdb687aab4b6\",2627],\"noteReading\":[\"a1a7a1edf2849608a145e6a1faffe8c27be619a80ae52cacefaa34e2f4850b1b\",612],\"orientationLeads\":[\"f1a607bc77870bd1c831b52dbe5ffd03e327f09cf075617ea98856dadd40c36c\",149],\"onOrientation\":[\"4f67f723eb4867fff0dc5e9d01331c4dc7ee2ac0bd385806ed994577c940ca7f\",251],\"onMotion\":[\"38a8a44d7a950d2e33244ad64212c3fdd6e1db11e04a112efb1b19dba3508d16\",660],\"attachSensors\":[\"e7f4c8dd03a561dca848cff9a3fea5a1cc767f18601027399e25d28e867a4e4a\",394]}"
     },
     {
-      "name": "sw cache is charades-v8-5-1",
+      "name": "sw cache is charades-v8-5-2",
       "ok": true,
       "detail": ""
     },
     {
       "name": "sw network timeout falls back after 2.5s",
       "ok": true,
-      "detail": "2503ms true"
+      "detail": "2513ms true"
     },
     {
       "name": "headings render as Christian, Classic, Mix",
@@ -93,12 +93,12 @@
     {
       "name": "Bible Characters has at least 40 prompts",
       "ok": true,
-      "detail": "115"
+      "detail": "80"
     },
     {
       "name": "Bible Characters has at least 30 kids and 30 adults",
       "ok": true,
-      "detail": "42/73"
+      "detail": "42/38"
     },
     {
       "name": "Bible Stories has at least 40 prompts",
@@ -113,12 +113,12 @@
     {
       "name": "Miracles & Parables has at least 40 prompts",
       "ok": true,
-      "detail": "68"
+      "detail": "60"
     },
     {
       "name": "Miracles & Parables has at least 30 kids and 30 adults",
       "ok": true,
-      "detail": "32/36"
+      "detail": "30/30"
     },
     {
       "name": "Christmas & Easter has at least 40 prompts",
@@ -133,12 +133,12 @@
     {
       "name": "Church Life has at least 40 prompts",
       "ok": true,
-      "detail": "112"
+      "detail": "73"
     },
     {
       "name": "Church Life has at least 30 kids and 30 adults",
       "ok": true,
-      "detail": "42/70"
+      "detail": "32/41"
     },
     {
       "name": "Bible Animals has at least 40 prompts",
@@ -153,12 +153,12 @@
     {
       "name": "Bible Places & Things has at least 40 prompts",
       "ok": true,
-      "detail": "114"
+      "detail": "66"
     },
     {
       "name": "Bible Places & Things has at least 30 kids and 30 adults",
       "ok": true,
-      "detail": "44/70"
+      "detail": "32/34"
     },
     {
       "name": "Hum It has at least 40 prompts",
@@ -273,7 +273,7 @@
     {
       "name": "no unlisted near-duplicates",
       "ok": true,
-      "detail": "allowed Miracles & Parables: Lost Sheep / Lost Coin; Miracles & Parables: Jesus Heals a Boy / Jesus Heals a Leper; Bible Places & Things: Oil Lamp / Clay Lamp; Hum It: Jesus Loves Me / Jesus Loves the Little Children; Hum It: Jesus Loves Me / Oh How I Love Jesus; Chores: Make the Bed / Make the Guest Bed; Chores: Weeding Garden / Pull Weeds; Movies: Mary Poppins / Mary Poppins Returns; Outdoor Fun: Sand Pail / Sand Shovel"
+      "detail": "allowed Miracles & Parables: Lost Sheep / Lost Coin; Hum It: Jesus Loves Me / Jesus Loves the Little Children; Hum It: Jesus Loves Me / Oh How I Love Jesus; Chores: Make the Bed / Make the Guest Bed; Chores: Weeding Garden / Pull Weeds; Movies: Mary Poppins / Mary Poppins Returns; Outdoor Fun: Sand Pail / Sand Shovel"
     },
     {
       "name": "removed and collapsed cards are absent",
@@ -363,7 +363,7 @@
     {
       "name": "holding the tilt does not score again",
       "ok": true,
-      "detail": "Tying a Necktie"
+      "detail": "Hugging"
     },
     {
       "name": "the opposite tilt does not count before neutral",
@@ -388,7 +388,7 @@
     {
       "name": "holding pass does not advance again",
       "ok": true,
-      "detail": "Yawning"
+      "detail": "Opening Umbrella"
     },
     {
       "name": "calibration re-arms after a screen angle change",
@@ -433,12 +433,12 @@
     {
       "name": "recap lists the guessed prompt",
       "ok": true,
-      "detail": "Pillow Fight, Yawning, Conducting an Orchestra"
+      "detail": "Blowing Balloon, Opening Umbrella, Spinning"
     },
     {
       "name": "recap lists the passed prompt",
       "ok": true,
-      "detail": "Tying a Necktie, Silly Walktime's up"
+      "detail": "Hugging, Crawlingtime's up"
     },
     {
       "name": "recap shows the round total",
@@ -453,7 +453,7 @@
     {
       "name": "time-up card shows its name and a tag",
       "ok": true,
-      "detail": "Silly Walk | [{\"prompt\":\"Tying a Necktie\",\"tag\":\"\"},{\"prompt\":\"Silly Walk\",\"tag\":\"time's up\"}]"
+      "detail": "Crawling | [{\"prompt\":\"Hugging\",\"tag\":\"\"},{\"prompt\":\"Crawling\",\"tag\":\"time's up\"}]"
     },
     {
       "name": "score survives a refresh",
@@ -498,12 +498,12 @@
     {
       "name": "reshuffle deals a prompt again",
       "ok": true,
-      "detail": "Singing"
+      "detail": "Rolling Dough"
     },
     {
       "name": "refresh mid-round resumes at prep",
       "ok": true,
-      "detail": "{\"before\":{\"team\":\"Team 2\",\"turnIndex\":1,\"used\":[\"Actions\\nUsing Chopsticks\",\"Actions\\nShuffling Cards\",\"Actions\\nDealing Cards\",\"Actions\\nConducting an Orchestra\",\"Actions\\nSealing an Envelope\",\"Actions\\nAddressing a Letter\",\"Actions\\nSetting an Alarm\",\"Actions\\nFolding a Fitted Sheet\",\"Actions\\nPumping a Tire\",\"Actions\\nSending a Package\",\"Actions\\nBuckling a Seatbelt\",\"Actions\\nCarrying Groceries\",\"Actions\\nLoading a Trunk\",\"Actions\\nReading a Menu\",\"Actions\\nChecking a Compass\",\"Actions\\nPitching a Curve\",\"Actions\\nKeeping the Beat\",\"Actions\\nMending a Hem\",\"Actions\\nFollowing Directions\",\"Actions\\nIroning a Shirt\",\"Actions\\nUnlocking a Door\",\"Actions\\nHanging a Picture\",\"Actions\\nFlipping a Coin\",\"Actions\\nWalking a Tightrope\",\"Actions\\nSinging\"]},\"resumed\":{\"phase\":\"prep\",\"team\":\"Team 2\",\"turnIndex\":1,\"used\":[\"Actions\\nUsing Chopsticks\",\"Actions\\nShuffling Cards\",\"Actions\\nDealing Cards\",\"Actions\\nConducting an Orchestra\",\"Actions\\nSealing an Envelope\",\"Actions\\nAddressing a Letter\",\"Actions\\nSetting an Alarm\",\"Actions\\nFolding a Fitted Sheet\",\"Actions\\nPumping a Tire\",\"Actions\\nSending a Package\",\"Actions\\nBuckling a Seatbelt\",\"Actions\\nCarrying Groceries\",\"Actions\\nLoading a Trunk\",\"Actions\\nReading a Menu\",\"Actions\\nChecking a Compass\",\"Actions\\nPitching a Curve\",\"Actions\\nKeeping the Beat\",\"Actions\\nMending a Hem\",\"Actions\\nFollowing Directions\",\"Actions\\nIroning a Shirt\",\"Actions\\nUnlocking a Door\",\"Actions\\nHanging a Picture\",\"Actions\\nFlipping a Coin\",\"Actions\\nWalking a Tightrope\",\"Actions\\nSinging\"]}}"
+      "detail": "{\"before\":{\"team\":\"Team 2\",\"turnIndex\":1,\"used\":[\"Actions\\nUsing Chopsticks\",\"Actions\\nShuffling Cards\",\"Actions\\nDealing Cards\",\"Actions\\nConducting an Orchestra\",\"Actions\\nSealing an Envelope\",\"Actions\\nAddressing a Letter\",\"Actions\\nSetting an Alarm\",\"Actions\\nFolding a Fitted Sheet\",\"Actions\\nPumping a Tire\",\"Actions\\nSending a Package\",\"Actions\\nBuckling a Seatbelt\",\"Actions\\nCarrying Groceries\",\"Actions\\nLoading a Trunk\",\"Actions\\nReading a Menu\",\"Actions\\nChecking a Compass\",\"Actions\\nPitching a Curve\",\"Actions\\nKeeping the Beat\",\"Actions\\nMending a Hem\",\"Actions\\nFollowing Directions\",\"Actions\\nIroning a Shirt\",\"Actions\\nUnlocking a Door\",\"Actions\\nHanging a Picture\",\"Actions\\nFlipping a Coin\",\"Actions\\nWalking a Tightrope\",\"Actions\\nRolling Dough\"]},\"resumed\":{\"phase\":\"prep\",\"team\":\"Team 2\",\"turnIndex\":1,\"used\":[\"Actions\\nUsing Chopsticks\",\"Actions\\nShuffling Cards\",\"Actions\\nDealing Cards\",\"Actions\\nConducting an Orchestra\",\"Actions\\nSealing an Envelope\",\"Actions\\nAddressing a Letter\",\"Actions\\nSetting an Alarm\",\"Actions\\nFolding a Fitted Sheet\",\"Actions\\nPumping a Tire\",\"Actions\\nSending a Package\",\"Actions\\nBuckling a Seatbelt\",\"Actions\\nCarrying Groceries\",\"Actions\\nLoading a Trunk\",\"Actions\\nReading a Menu\",\"Actions\\nChecking a Compass\",\"Actions\\nPitching a Curve\",\"Actions\\nKeeping the Beat\",\"Actions\\nMending a Hem\",\"Actions\\nFollowing Directions\",\"Actions\\nIroning a Shirt\",\"Actions\\nUnlocking a Door\",\"Actions\\nHanging a Picture\",\"Actions\\nFlipping a Coin\",\"Actions\\nWalking a Tightrope\",\"Actions\\nRolling Dough\"]}}"
     },
     {
       "name": "resume keeps the remaining time",
@@ -528,12 +528,12 @@
     {
       "name": "leave sheet pauses, blocks tilt and keys, and returns home",
       "ok": true,
-      "detail": "{\"visible\":{\"prep\":true,\"countdown\":true,\"play\":true,\"empty\":true,\"recap\":true},\"clear\":true,\"open\":true,\"held\":true,\"resumed\":true,\"delta\":0,\"menu\":true,\"snap\":{\"score\":\"4,0\",\"turn\":0,\"names\":\"Team 1|Team 2\",\"ms\":14900}}"
+      "detail": "{\"visible\":{\"prep\":true,\"countdown\":true,\"play\":true,\"empty\":true,\"recap\":true},\"clear\":true,\"open\":true,\"held\":true,\"resumed\":true,\"delta\":0,\"menu\":true,\"snap\":{\"score\":\"4,0\",\"turn\":0,\"names\":\"Team 1|Team 2\",\"ms\":14965}}"
     },
     {
       "name": "resume restores the score, turn, teams and time",
       "ok": true,
-      "detail": "{\"resumedGame\":{\"setup\":true,\"phase\":\"setup\"},\"restored\":{\"score\":\"4,0\",\"turn\":0,\"names\":\"Team 1|Team 2\",\"left\":14892},\"snap\":{\"score\":\"4,0\",\"turn\":0,\"names\":\"Team 1|Team 2\",\"ms\":14900}}"
+      "detail": "{\"resumedGame\":{\"setup\":true,\"phase\":\"setup\"},\"restored\":{\"score\":\"4,0\",\"turn\":0,\"names\":\"Team 1|Team 2\",\"left\":14946},\"snap\":{\"score\":\"4,0\",\"turn\":0,\"names\":\"Team 1|Team 2\",\"ms\":14965}}"
     },
     {
       "name": "countdown waits until the phone is upright",
@@ -643,7 +643,7 @@
     {
       "name": "Bible Stories play shot uses a real prompt",
       "ok": true,
-      "detail": "Jesus Blesses the Children"
+      "detail": "Samson and Delilah"
     },
     {
       "name": "no dialog is open before v7 play-bible-stories",
@@ -653,7 +653,7 @@
     {
       "name": "Actions play shot uses a real prompt",
       "ok": true,
-      "detail": "Dealing Cards"
+      "detail": "Galloping"
     },
     {
       "name": "no dialog is open before v7 play-actions",
@@ -663,7 +663,7 @@
     {
       "name": "Animals play shot uses a real prompt",
       "ok": true,
-      "detail": "Owl"
+      "detail": "Grey Wolf"
     },
     {
       "name": "no dialog is open before v7 play-animals",
@@ -673,7 +673,7 @@
     {
       "name": "play shots use three different prompts",
       "ok": true,
-      "detail": "{\"Bible Stories\":\"Jesus Blesses the Children\",\"Actions\":\"Dealing Cards\",\"Animals\":\"Owl\"}"
+      "detail": "{\"Bible Stories\":\"Samson and Delilah\",\"Actions\":\"Galloping\",\"Animals\":\"Grey Wolf\"}"
     },
     {
       "name": "no dialog is open before v7 recap",
@@ -728,7 +728,7 @@
     {
       "name": "record toggle is visible on the round step",
       "ok": true,
-      "detail": "{\"top\":241.00852966308594,\"bottom\":254.00852966308594,\"width\":13}"
+      "detail": "{\"top\":241.00363159179688,\"bottom\":254.00363159179688,\"width\":13}"
     },
     {
       "name": "all 18 deck pictures load at 640 pixels",
@@ -763,7 +763,7 @@
     {
       "name": "Actions style shot uses a real prompt",
       "ok": true,
-      "detail": "Walking Dog"
+      "detail": "Crying"
     },
     {
       "name": "no dialog is open before v8 play-act",
@@ -773,7 +773,7 @@
     {
       "name": "Animals style shot uses a real prompt",
       "ok": true,
-      "detail": "Butterfly"
+      "detail": "Gecko"
     },
     {
       "name": "no dialog is open before v8 play-describe",
@@ -783,7 +783,7 @@
     {
       "name": "Hum It style shot uses a real prompt",
       "ok": true,
-      "detail": "This Is the Day"
+      "detail": "Joy to the World"
     },
     {
       "name": "no dialog is open before v8 play-hum",
@@ -793,7 +793,7 @@
     {
       "name": "style shots use three different prompts",
       "ok": true,
-      "detail": "{\"act\":\"Walking Dog\",\"describe\":\"Butterfly\",\"hum\":\"This Is the Day\"}"
+      "detail": "{\"act\":\"Crying\",\"describe\":\"Gecko\",\"hum\":\"Joy to the World\"}"
     },
     {
       "name": "getUserMedia stays unused when record is off",
@@ -813,7 +813,7 @@
     {
       "name": "a fake camera records a capped clip and stops the tracks",
       "ok": true,
-      "detail": "{\"stop\":\"cap\",\"blob\":\"31395\",\"tracks\":\"ended,ended\",\"cap\":\"1000\"}"
+      "detail": "{\"stop\":\"cap\",\"blob\":\"31539\",\"tracks\":\"ended,ended\",\"cap\":\"1000\"}"
     },
     {
       "name": "the recap shows the reaction preview",
@@ -853,7 +853,7 @@
     {
       "name": "deck list shows two full rows at 390x844",
       "ok": true,
-      "detail": "{\"width\":390,\"height\":844,\"viewH\":722,\"viewTop\":57,\"full\":5,\"rows\":3,\"cardH\":167,\"rowTops\":[277,454,78]}"
+      "detail": "{\"width\":390,\"height\":844,\"viewH\":722,\"viewTop\":56,\"full\":5,\"rows\":3,\"cardH\":167,\"rowTops\":[275,453,77]}"
     },
     {
       "name": "the new deck tile is in the deck list",
@@ -883,12 +883,12 @@
     {
       "name": "prompts.js loads from the service worker cache",
       "ok": true,
-      "detail": "{\"ok\":true,\"bytes\":27939}"
+      "detail": "{\"ok\":true,\"bytes\":26474}"
     },
     {
       "name": "deck counts follow the level",
       "ok": true,
-      "detail": "{\"actionsAll\":158,\"actionsKids\":111,\"actionsAdults\":47,\"expectKids\":111,\"expectAdults\":47,\"expectAll\":158,\"mixKids\":964,\"mixAdults\":1012,\"mixAll\":1976,\"sumKids\":964,\"sumAdults\":1012}"
+      "detail": "{\"actionsAll\":158,\"actionsKids\":111,\"actionsAdults\":47,\"expectKids\":111,\"expectAdults\":47,\"expectAll\":158,\"mixKids\":940,\"mixAdults\":906,\"mixAll\":1846,\"sumKids\":940,\"sumAdults\":906}"
     },
     {
       "name": "the level control saves kids for the game",
@@ -990,31 +990,31 @@
   "counts": {
     "Bible Characters": {
       "kids": 42,
-      "adults": 73
+      "adults": 38
     },
     "Bible Stories": {
       "kids": 35,
       "adults": 30
     },
     "Miracles & Parables": {
-      "kids": 32,
-      "adults": 36
+      "kids": 30,
+      "adults": 30
     },
     "Christmas & Easter": {
       "kids": 56,
       "adults": 52
     },
     "Church Life": {
-      "kids": 42,
-      "adults": 70
+      "kids": 32,
+      "adults": 41
     },
     "Bible Animals": {
       "kids": 51,
       "adults": 61
     },
     "Bible Places & Things": {
-      "kids": 44,
-      "adults": 70
+      "kids": 32,
+      "adults": 34
     },
     "Hum It": {
       "kids": 54,

@@ -1,5 +1,5 @@
-const CACHE = "charades-v8-5-1";
-const ASSET_VERSION = "8.5.1";
+const CACHE = "charades-v8-5-2";
+const ASSET_VERSION = "8.5.2";
 const NETWORK_TIMEOUT_MS = 2500;
 const ASSETS = [
   "./",
