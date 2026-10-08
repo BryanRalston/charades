@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
 import { spawn } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { setTimeout as delay } from "node:timers/promises";
@@ -9,6 +10,7 @@ const REDESIGN = QA + "\\redesign";
 const V5 = QA + "\\v5";
 const V6 = QA + "\\v6";
 const V7 = QA + "\\v7";
+const V8 = QA + "\\v8";
 const V6_LOCK = {
   math: ["015ff8a014515ed3d7d9ea3c858999989a101864c13b7335a754bdb687aab4b6", 2627],
   noteReading: ["a1a7a1edf2849608a145e6a1faffe8c27be619a80ae52cacefaa34e2f4850b1b", 612],
@@ -28,6 +30,7 @@ const EXPECTED = [
   "Church Life",
   "Bible Animals",
   "Bible Places & Things",
+  "Hum It",
   "Actions",
   "Jobs",
   "Sports",
@@ -48,6 +51,7 @@ mkdirSync(REDESIGN, { recursive: true });
 mkdirSync(V5, { recursive: true });
 mkdirSync(V6, { recursive: true });
 mkdirSync(V7, { recursive: true });
+mkdirSync(V8, { recursive: true });
 
 function protectedSlices(html) {
   const mathStart = html.indexOf("/* tilt-math-start */");
@@ -151,6 +155,8 @@ const chrome = spawn(CHROME, [
   "--remote-allow-origins=*",
   "--user-data-dir=" + userData,
   "--autoplay-policy=no-user-gesture-required",
+  "--use-fake-device-for-media-stream",
+  "--use-fake-ui-for-media-stream",
   "about:blank"
 ], { stdio: "ignore" });
 
@@ -287,6 +293,12 @@ try {
     shots.push("v7/" + name);
   }
 
+  async function v8Shot(name) {
+    const png = await cdp.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
+    writeFileSync(V8 + "\\" + name, Buffer.from(png.data, "base64"));
+    shots.push("v8/" + name);
+  }
+
   async function setViewport(width, height) {
     const landscape = width > height;
     await cdp.send("Emulation.setDeviceMetricsOverride", {
@@ -312,11 +324,12 @@ try {
 
   const tiltNow = protectedSlices(readFileSync(ROOT + "\\index.html", "utf8"));
   const tiltSame = Object.keys(V6_LOCK).every((key) => tiltNow[key][0] === V6_LOCK[key][0] && tiltNow[key][1] === V6_LOCK[key][1]);
-  check("tilt math and sensor handlers are byte-identical to v6", tiltSame, JSON.stringify(tiltNow));
+  check("tilt math and sensor handlers are byte-identical to v7", tiltSame, JSON.stringify(tiltNow));
   const swSource = readFileSync(ROOT + "\\sw.js", "utf8");
+  const deckFiles = ["bible-characters","bible-stories","miracles-parables","christmas-easter","church-life","bible-animals","bible-places-things","hum-it","actions","jobs","sports","animals","chores","movies","everyday-objects","foods","outdoor-fun","mix"];
   check(
-    "sw cache is charades-v7",
-    swSource.indexOf('const CACHE = "charades-v7"') !== -1 && swSource.indexOf('ASSET_VERSION = "7"') !== -1,
+    "sw cache is charades-v8",
+    swSource.indexOf('const CACHE = "charades-v8"') !== -1 && swSource.indexOf('ASSET_VERSION = "8"') !== -1 && deckFiles.every((name) => swSource.indexOf("./assets/decks/" + name + ".webp") !== -1),
     ""
   );
   const swStart = swSource.indexOf("function networkFirst");
@@ -355,7 +368,7 @@ try {
     orientError: window.__orientOverrideError || ''
   })`);
   check("headings render as Christian, Classic, Mix", JSON.stringify(rendered.headings) === JSON.stringify(["Christian", "Classic", "Mix"]), rendered.headings.join(" | "));
-  check("category buttons match the 16 names plus Mix", JSON.stringify(rendered.categories) === JSON.stringify(EXPECTED.concat(["Mix"])), rendered.categories.join(" | "));
+  check("category buttons match the deck names plus Mix", JSON.stringify(rendered.categories) === JSON.stringify(EXPECTED.concat(["Mix"])), rendered.categories.join(" | "));
   check("Tap to start is present", rendered.start.text === "Tap to start" && rendered.start.width > 40 && rendered.start.height > 40, JSON.stringify(rendered.start));
   check("screen angle is landscape-left 90", rendered.angle === 90, "angle " + rendered.angle + " " + rendered.orientError);
   check("player UI does not link the feature map", rendered.links.every((href) => !href || href.indexOf("FEATURE_MAP") === -1), rendered.links.join(", "));
@@ -379,7 +392,7 @@ try {
   })()`);
   await v6Shot("play-colors-contact.png");
   await ev("const sheet = document.getElementById('color-sheet'); if (sheet) sheet.remove();");
-  check("play colors are saturated for every category", colorSheet.actions === "#EA580C,#C2410C" && colorSheet.muddy === false && colorSheet.count === 16, JSON.stringify(colorSheet));
+  check("play colors are saturated for every category", colorSheet.actions === "#EA580C,#C2410C" && colorSheet.muddy === false && colorSheet.count === EXPECTED.length, JSON.stringify(colorSheet));
   const landscapeHint = await ev("getComputedStyle(document.querySelector('.rotate-hint')).display");
   check("landscape hides the sideways note", landscapeHint === "none", landscapeHint);
   await setScheme("light");
@@ -1415,11 +1428,15 @@ try {
   );
   await ev(`(() => {
     document.body.classList.remove("playing");
-    renderRecap({ name: "Team 1", roundPoints: 3, total: 3, guessed: ["Running"], passed: ["Jumping"], timeUp: "", nextName: "Team 2" });
+    clearGame();
+    state.teams[0].score = 3;
+    state.teams[1].score = 0;
+    renderRecap({ name: "Team 1", roundPoints: 3, total: 3, guessed: ["Running", "Jumping", "Swimming"], passed: ["Dancing"], timeUp: "", nextName: "Team 2" });
     document.body.dataset.phase = "recap";
   })()`);
   await v7Pair("recap");
   await ev(`(() => {
+    state.settings.format = "score";
     state.teams[0].score = 20;
     state.teams[1].score = 6;
     renderWinner({ name: "Team 1", roundPoints: 2, total: 20, guessed: [], passed: [], timeUp: "", nextName: "Team 2" });
@@ -1431,6 +1448,315 @@ try {
     showPassPhone();
   })()`);
   await v7Pair("pass");
+
+  const animals = promptMap["Bible Animals"] || [];
+  check("Bible Animals keeps one dove and one raven", animals.filter((prompt) => /dove/i.test(prompt)).join(",") === "Dove" && animals.filter((prompt) => /raven/i.test(prompt)).join(",") === "Raven", animals.filter((prompt) => /dove|raven/i.test(prompt)).join(","));
+  check("Bible Animals stays at 100 or more", animals.length >= 100, String(animals.length));
+  const hum = promptMap["Hum It"] || [];
+  check("Hum It has about 60 songs", hum.length === 60 && hum[0] === "Jesus Loves Me" && hum.indexOf("This Little Light of Mine") === 1 && hum.indexOf("Jingle Bells") === -1, String(hum.length));
+  const trackedBriefs = execFileSync("git", ["ls-files", "briefs"], { cwd: ROOT, encoding: "utf8" }).trim();
+  const ignore = readFileSync(ROOT + "\\.gitignore", "utf8");
+  check("briefs are untracked", trackedBriefs === "" && ignore.indexOf("briefs/") !== -1, trackedBriefs || "clean");
+
+  const consistent = await ev(`(() => {
+    clearGame();
+    state.settings.category = "Actions";
+    state.settings.format = "endless";
+    state.settings.tutorialSeen = true;
+    document.body.classList.remove("portrait", "playing");
+    delete document.body.dataset.paused;
+    timerMark = 0;
+    const rounds = [["Running", "correct"], ["Jumping", "correct"], ["Swimming", "correct"], ["Dancing", "pass"]];
+    rounds.forEach((pair) => {
+      queue = [{ category: "Actions", prompt: "Extra", key: "Actions\\nExtra" }];
+      currentCard = { category: "Actions", prompt: pair[0], key: "Actions\\n" + pair[0] };
+      document.body.dataset.phase = "play";
+      resolveRound(pair[1], "button");
+    });
+    currentCard = { category: "Actions", prompt: "Singing", key: "Actions\\nSinging" };
+    document.body.dataset.phase = "play";
+    endRound();
+    const scores = [...document.querySelectorAll("#standings .stand-score")].map((node) => node.textContent);
+    const passed = document.getElementById("recap-passed").textContent;
+    return {
+      line: document.getElementById("recap-line").textContent,
+      guessed: document.getElementById("recap-guessed").textContent,
+      passed: passed,
+      scores: scores,
+      phase: document.body.dataset.phase
+    };
+  })()`);
+  check(
+    "real cards keep the recap and standings together",
+    consistent.line === "Team 1 scored 3! Total: 3." && consistent.guessed.indexOf("Running") !== -1 && consistent.guessed.indexOf("Jumping") !== -1 && consistent.guessed.indexOf("Swimming") !== -1 && consistent.passed.indexOf("Dancing") !== -1 && consistent.passed.indexOf("Singing") !== -1 && consistent.passed.indexOf("time's up") !== -1 && consistent.scores[0] === "3" && consistent.scores[1] === "0",
+    JSON.stringify(consistent)
+  );
+  const winners = await ev(`(() => {
+    const run = (setup) => {
+      clearGame();
+      state.settings.category = "Actions";
+      setup();
+      document.body.dataset.phase = "play";
+      currentCard = null;
+      timerMark = 0;
+      endRound();
+      return document.getElementById("winner-line").textContent;
+    };
+    const score = run(() => { state.settings.format = "score"; state.teams[0].score = 20; state.teams[1].score = 9; });
+    const rounds = run(() => { state.settings.format = "rounds"; state.teams[0].score = 14; state.teams[1].score = 9; state.roundsPlayed = state.teams.length * 3 - 1; });
+    const tieScore = run(() => { state.settings.format = "score"; state.teams[0].score = 20; state.teams[1].score = 20; });
+    const tieRounds = run(() => { state.settings.format = "rounds"; state.teams[0].score = 9; state.teams[1].score = 9; state.roundsPlayed = state.teams.length * 3 - 1; });
+    return { score, rounds, tieScore, tieRounds };
+  })()`);
+  check("winner wording follows the match format", winners.score === "Team 1 wins with 20 points!" && winners.rounds === "Team 1 wins, 14 to 9, after 3 rounds each." && winners.tieScore === "It's a tie at 20 points!" && winners.tieRounds === "It's a tie at 9 points after 3 rounds each.", JSON.stringify(winners));
+
+  await setViewport(844, 390);
+  await setScheme("light");
+  const contrast = await ev(`(() => {
+    clearGame();
+    renderHome();
+    document.body.dataset.phase = "home";
+    const read = (selector) => {
+      const name = document.querySelector(selector + " .stand-name");
+      const bar = document.querySelector(selector + " .stand-bar");
+      const nameStyle = name ? getComputedStyle(name) : null;
+      const barStyle = bar ? getComputedStyle(bar) : null;
+      return { color: nameStyle && nameStyle.color, opacity: nameStyle && nameStyle.opacity, bar: barStyle && barStyle.opacity };
+    };
+    renderRecap({ name: "Team 1", roundPoints: 0, total: 0, guessed: [], passed: [], timeUp: "", nextName: "Team 2" });
+    renderWinner({ name: "Team 1", roundPoints: 0, total: 0, guessed: [], passed: [], timeUp: "", nextName: "Team 2" });
+    return { home: read("#home-standings"), recap: read("#standings"), winner: read("#winner-standings") };
+  })()`);
+  check(
+    "zero scores keep full text contrast and dim only the bar",
+    ["home", "recap", "winner"].every((key) => contrast[key].color === "rgb(28, 28, 30)" && contrast[key].opacity === "1" && contrast[key].bar === "0.4"),
+    JSON.stringify(contrast)
+  );
+
+  const length = await ev(`(() => {
+    clearGame();
+    document.body.dataset.phase = "setup";
+    showStep("round");
+    setRoundSeconds(10, true);
+    const minus = document.getElementById("length-minus");
+    minus.click();
+    const atFloor = state.settings.seconds;
+    setRoundSeconds(300, true);
+    document.getElementById("length-plus").click();
+    const atCap = state.settings.seconds;
+    setRoundSeconds(10, true);
+    document.getElementById("length-plus").click();
+    const stepped = state.settings.seconds;
+    setRoundSeconds(45, true);
+    const label = document.getElementById("custom-seconds-text").textContent;
+    const open = document.getElementById("length-stepper").hidden === false;
+    paintRing(45);
+    const ring = document.getElementById("ring-progress");
+    const full = Number(ring.style.strokeDashoffset);
+    paintRing(15);
+    const mid = Number(ring.style.strokeDashoffset);
+    paintRing(0);
+    const empty = Number(ring.style.strokeDashoffset);
+    document.body.dataset.phase = "play";
+    delete document.body.dataset.paused;
+    state.settings.seconds = 45;
+    timerLeftMs = 11000;
+    timerMark = performance.now();
+    onTimer();
+    const quiet = document.getElementById("timer").classList.contains("urgent");
+    timerLeftMs = 10000;
+    timerMark = performance.now();
+    onTimer();
+    const pulse45 = document.getElementById("timer").classList.contains("urgent");
+    const anim = getComputedStyle(document.querySelector(".timer-wrap")).animationName;
+    state.settings.seconds = 10;
+    timerLeftMs = 10000;
+    timerMark = performance.now();
+    onTimer();
+    const pulse10 = document.getElementById("timer").classList.contains("urgent");
+    setRoundSeconds(45, true);
+    return { atFloor, atCap, stepped, label, open, full, mid, empty, quiet, pulse45, anim, pulse10 };
+  })()`);
+  check(
+    "custom length clamps, steps by 5, and scales the ring and pulse",
+    length.atFloor === 10 && length.atCap === 300 && length.stepped === 15 && length.label === "45s" && length.open === true && Math.abs(length.full) < 1 && Math.abs(length.mid - 192.68) < 1 && Math.abs(length.empty - 289.03) < 1 && length.quiet === false && length.pulse45 === true && length.pulse10 === true && length.anim.indexOf("pulse") !== -1,
+    JSON.stringify(length)
+  );
+  async function v8Pair(name) {
+    await setScheme("light");
+    await delay(40);
+    await v8Shot(name + "-light.png");
+    await setScheme("dark");
+    await delay(40);
+    await v8Shot(name + "-dark.png");
+    await setScheme("light");
+  }
+  await ev(`(() => { document.body.dataset.phase = "setup"; showStep("round"); setRoundSeconds(45, true); })()`);
+  await v8Pair("stepper");
+  const recordBox = await ev(`(() => { const box = document.getElementById("record-reactions").getBoundingClientRect(); return { top: box.top, bottom: box.bottom, width: box.width }; })()`);
+  check("record toggle is visible on the round step", recordBox.top >= 0 && recordBox.bottom <= 390 && recordBox.width > 8, JSON.stringify(recordBox));
+  await v8Pair("setup-style");
+
+  const deckArt = await ev(`(async () => {
+    openSetup("deck");
+    const imgs = [...document.querySelectorAll("#category-picker img.cat-art")];
+    const sizeOf = () => [...document.querySelectorAll("#category-picker .cat-btn")].map((el) => {
+      const box = el.getBoundingClientRect();
+      return Math.round(box.width) + "x" + Math.round(box.height);
+    }).join("|");
+    const before = sizeOf();
+    for (const img of imgs) {
+      img.scrollIntoView({ block: "center" });
+      if (!img.complete || img.naturalWidth !== 640) {
+        try { await img.decode(); } catch (err) {}
+      }
+    }
+    const failed = imgs.filter((img) => img.naturalWidth !== 640).map((img) => img.getAttribute("src"));
+    return { count: imgs.length, failed: failed, stable: before === sizeOf(), alt: imgs.every((img) => (img.alt || "").indexOf("deck illustration") !== -1) };
+  })()`);
+  check("all 18 deck pictures load at 640 pixels", deckArt.count === 18 && deckArt.failed.length === 0 && deckArt.alt === true, JSON.stringify(deckArt));
+  check("deck cards do not jump when pictures load", deckArt.stable === true, JSON.stringify(deckArt));
+  await setViewport(844, 390);
+  await ev(`openSetup("deck");`);
+  await v8Pair("deck");
+
+  const deckShare = await ev(`(async () => {
+    const deck = saveCustomDeck("Picnic", "Ants\\nBasket\\nBlanket");
+    const tile = document.querySelector("#my-deck-list .cat-btn");
+    const art = tile.querySelector(".cat-art-custom");
+    const customTile = { img: Boolean(tile.querySelector("img")), art: Boolean(art), bg: art ? getComputedStyle(art).backgroundImage : "" };
+    const url = await openDeckShare(deck);
+    const canvas = document.getElementById("share-qr");
+    const pixels = canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height).data;
+    let dark = 0;
+    for (let i = 0; i < pixels.length; i += 4) if (pixels[i] < 40 && pixels[i + 1] < 40 && pixels[i + 2] < 40) dark += 1;
+    const prompts = deck.prompts.slice();
+    state.customDecks = [];
+    saveState();
+    renderMyDecks();
+    location.hash = url.slice(url.indexOf("#"));
+    return { prompts, url, dark, customTile };
+  })()`);
+  await waitFor("document.getElementById('deck-offer').hidden === false", 5000, "deck offer");
+  await v8Pair("deck-share");
+  const addedDeck = await ev(`(() => {
+    document.getElementById("btn-add-shared").click();
+    const deck = state.customDecks[state.customDecks.length - 1];
+    selectCategory("custom:" + deck.id);
+    const dealt = cardsForCategory("custom:" + deck.id).map((card) => card.prompt);
+    state.settings.category = "Mix";
+    const mixed = buildDeck().some((card) => card.prompt === "Ants" && card.category === "Picnic");
+    return { prompts: deck.prompts, dealt, mixed, hidden: document.getElementById("deck-offer").hidden };
+  })()`);
+  check("custom deck tile is a gradient with no image", deckShare.customTile.img === false && deckShare.customTile.art === true && deckShare.customTile.bg.indexOf("gradient") !== -1, JSON.stringify(deckShare.customTile));
+  check("a shared deck round-trips with the same prompts", addedDeck.hidden === true && addedDeck.prompts.join("|") === "Ants|Basket|Blanket" && addedDeck.dealt.join("|") === "Ants|Basket|Blanket" && addedDeck.mixed === true, JSON.stringify(addedDeck));
+  check("the deck QR draws dark modules", deckShare.dark > 40, String(deckShare.dark));
+
+  const styleRead = await ev(`(() => {
+    return ["act", "describe", "hum"].map((value) => {
+      state.settings.style = value;
+      paintCategory();
+      return document.getElementById("play-style").textContent + "/" + document.getElementById("prep-style").textContent;
+    });
+  })()`);
+  check("styles show on prep and play", JSON.stringify(styleRead) === JSON.stringify(["Act It/Act It", "Describe It/Describe It", "Hum It/Hum It"]), JSON.stringify(styleRead));
+  const styleShots = [["act", "Actions", "play-act"], ["describe", "Animals", "play-describe"], ["hum", "Hum It", "play-hum"]];
+  const stylePrompts = {};
+  for (const entry of styleShots) {
+    const prompt = await ev(`(() => {
+      state.settings.style = ${JSON.stringify(entry[0])};
+      state.settings.category = ${JSON.stringify(entry[1])};
+      state.used = [];
+      queue = buildDeck();
+      document.body.dataset.phase = "play";
+      document.body.classList.add("playing");
+      document.body.classList.remove("portrait");
+      paintCategory();
+      deal();
+      return document.getElementById("prompt").textContent;
+    })()`);
+    stylePrompts[entry[0]] = prompt;
+    check(entry[1] + " style shot uses a real prompt", (promptMap[entry[1]] || []).indexOf(prompt) !== -1, prompt);
+    await v8Pair(entry[2]);
+  }
+  check("style shots use three different prompts", stylePrompts.act !== stylePrompts.describe && stylePrompts.describe !== stylePrompts.hum && stylePrompts.act !== stylePrompts.hum, JSON.stringify(stylePrompts));
+
+  const cameraOrder = await ev(`(async () => {
+    const calls = [];
+    DeviceOrientationEvent.requestPermission = () => { calls.push("orient"); return Promise.resolve("granted"); };
+    DeviceMotionEvent.requestPermission = () => { calls.push("motion"); return Promise.resolve("granted"); };
+    window.__origGum = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+    navigator.mediaDevices.getUserMedia = () => { calls.push("gum"); return Promise.reject(new Error("denied")); };
+    clearGame();
+    state.settings.tutorialSeen = true;
+    state.settings.category = "Actions";
+    state.settings.recordReactions = false;
+    state.settings.seconds = 30;
+    document.body.dataset.phase = "setup";
+    showStep("round");
+    document.getElementById("btn-tap-start").click();
+    const off = calls.slice();
+    await new Promise((resolve) => setTimeout(resolve, 80));
+    calls.length = 0;
+    state.settings.recordReactions = true;
+    document.body.dataset.phase = "setup";
+    showStep("round");
+    document.getElementById("btn-tap-start").click();
+    const on = calls.slice();
+    return { off, on };
+  })()`);
+  check("getUserMedia stays unused when record is off", cameraOrder.off.indexOf("gum") === -1 && cameraOrder.off[0] === "orient" && cameraOrder.off[1] === "motion", JSON.stringify(cameraOrder.off));
+  check("motion permission calls come before the camera", cameraOrder.on[0] === "orient" && cameraOrder.on[1] === "motion" && cameraOrder.on.indexOf("gum") > 1, JSON.stringify(cameraOrder.on));
+  await waitFor("document.body.dataset.phase === 'play' || document.body.dataset.phase === 'countdown' || document.body.dataset.phase === 'prep'", 8000, "denied camera still starts");
+  const deniedPhase = await ev("document.body.dataset.phase");
+  check("a denied camera still starts the round", deniedPhase === "prep" || deniedPhase === "countdown" || deniedPhase === "play", deniedPhase);
+
+  await ev(`(() => {
+    navigator.mediaDevices.getUserMedia = window.__origGum;
+    clearGame();
+    stopTimer();
+    window.clearTimeout(countdownHandle);
+    state.settings.tutorialSeen = true;
+    state.settings.category = "Actions";
+    state.settings.recordReactions = true;
+    state.settings.seconds = 1;
+    document.body.dataset.phase = "setup";
+    showStep("round");
+    document.getElementById("record-reactions").checked = true;
+    document.getElementById("btn-tap-start").click();
+    return document.body.dataset.phase;
+  })()`);
+  await waitFor("document.documentElement.dataset.recordStop === 'cap' && Number(document.documentElement.dataset.recordBlob) > 0 && document.documentElement.dataset.recordTracks.indexOf('live') === -1 && document.documentElement.dataset.recordCapMs === '1000'", 15000, "reaction clip cap");
+  const recorded = await ev(`({ stop: document.documentElement.dataset.recordStop, blob: document.documentElement.dataset.recordBlob, tracks: document.documentElement.dataset.recordTracks, cap: document.documentElement.dataset.recordCapMs })`);
+  check("a fake camera records a capped clip and stops the tracks", recorded.stop === "cap" && Number(recorded.blob) > 0 && recorded.tracks.indexOf("live") === -1 && recorded.cap === "1000", JSON.stringify(recorded));
+  await ev(`(() => { if (document.body.dataset.phase === "play" || document.body.dataset.phase === "empty") endRound(); })()`);
+  await waitFor("document.getElementById('recap-video').hidden === false", 5000, "reaction preview");
+  check("the recap shows the reaction preview", await ev("document.getElementById('recap-video').hidden === false"), "");
+  await setViewport(844, 390);
+  await v8Pair("recap-video");
+  await ev(`(() => {
+    clearGame();
+    state.teams[0].score = 3;
+    state.teams[1].score = 0;
+    renderRecap({ name: "Team 1", roundPoints: 3, total: 3, guessed: ["Running", "Jumping", "Swimming"], passed: ["Dancing", "Singing"], timeUp: "Singing", nextName: "Team 2" });
+    document.body.dataset.phase = "recap";
+  })()`);
+  await v8Pair("recap");
+  await ev(`(() => {
+    state.settings.format = "score";
+    state.teams[0].score = 20;
+    state.teams[1].score = 9;
+    renderWinner({ name: "Team 1", roundPoints: 3, total: 20, guessed: [], passed: [], timeUp: "", nextName: "Team 2" });
+    document.body.dataset.phase = "winner";
+  })()`);
+  await v8Pair("winner");
+
+  await ev(`setRoundSeconds(45, true);`);
+  await cdp.send("Page.navigate", { url: BASE });
+  await waitFor("document.readyState === 'complete' && !!document.getElementById('btn-tap-start')", 10000, "reload custom length");
+  await delay(300);
+  const persisted = await ev(`({ seconds: state.settings.seconds, label: document.getElementById("custom-seconds-text").textContent, open: document.getElementById("length-stepper").hidden === false })`);
+  check("a custom length reloads from localStorage", persisted.seconds === 45 && persisted.label === "45s" && persisted.open === true, JSON.stringify(persisted));
 
   await delay(600);
   const errors = consoleEvents.filter((event) => event.type === "error");

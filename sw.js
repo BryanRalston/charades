@@ -1,5 +1,5 @@
-const CACHE = "charades-v7";
-const ASSET_VERSION = "7";
+const CACHE = "charades-v8";
+const ASSET_VERSION = "8";
 const NETWORK_TIMEOUT_MS = 2500;
 const ASSETS = [
   "./",
@@ -7,7 +7,25 @@ const ASSETS = [
   "./manifest.webmanifest",
   "./icon-192.png",
   "./icon-512.png",
-  "./splash.png"
+  "./splash.png",
+  "./assets/decks/bible-characters.webp",
+  "./assets/decks/bible-stories.webp",
+  "./assets/decks/miracles-parables.webp",
+  "./assets/decks/christmas-easter.webp",
+  "./assets/decks/church-life.webp",
+  "./assets/decks/bible-animals.webp",
+  "./assets/decks/bible-places-things.webp",
+  "./assets/decks/hum-it.webp",
+  "./assets/decks/actions.webp",
+  "./assets/decks/jobs.webp",
+  "./assets/decks/sports.webp",
+  "./assets/decks/animals.webp",
+  "./assets/decks/chores.webp",
+  "./assets/decks/movies.webp",
+  "./assets/decks/everyday-objects.webp",
+  "./assets/decks/foods.webp",
+  "./assets/decks/outdoor-fun.webp",
+  "./assets/decks/mix.webp"
 ];
 
 self.addEventListener("install", (event) => {

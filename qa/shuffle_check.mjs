@@ -78,7 +78,7 @@ for (const name of names) {
   total += count;
   check(name + " has at least 40 prompts", count >= 40, String(count));
 }
-check("sixteen categories", names.length === 16, String(names.length));
+check("seventeen categories", names.length === 17, String(names.length));
 console.log("total cards " + total);
 
 const userData = process.env.TEMP + "\\charades-shuffle-" + Date.now();
@@ -93,6 +93,8 @@ const chrome = spawn(CHROME, [
   "--remote-allow-origins=*",
   "--user-data-dir=" + userData,
   "--autoplay-policy=no-user-gesture-required",
+  "--use-fake-device-for-media-stream",
+  "--use-fake-ui-for-media-stream",
   "about:blank"
 ], { stdio: "ignore" });
 

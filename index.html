@@ -358,15 +358,15 @@
   .cat-card { position: relative; }
   .cat-btn {
     position: relative;
-    display: grid;
-    grid-template-rows: 28px 2.6em;
-    align-content: start;
-    justify-items: start;
-    gap: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 0;
     width: 100%;
-    height: 112px;
-    min-height: 112px;
-    padding: 12px 14px 28px;
+    height: auto;
+    min-height: 0;
+    padding: 0 0 8px;
     border-radius: 22px;
     border: 1px solid var(--line);
     background: linear-gradient(160deg, var(--a, #fff), var(--b, #e5e5ea));
@@ -375,9 +375,20 @@
     letter-spacing: -0.02em;
     line-height: 1.15;
     text-align: left;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
     overflow: hidden;
   }
+  .cat-art {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border-radius: 18px 18px 10px 10px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.16);
+  }
+  .cat-art-custom { background: linear-gradient(145deg, #f2f2f7, #d1d1d6 52%, #8e8e93); box-shadow: none; }
+  .cat-name { display: block; min-height: calc(2.4em + 20px); padding: 8px 34px 12px 12px; color: #1c1c1e; font-weight: 700; }
   .cat-btn .glyph { width: 28px; height: 28px; }
   .cat-btn .cat-check {
     position: absolute;
@@ -407,7 +418,7 @@
     text-align: left;
     background: linear-gradient(120deg, #5e5ce6, #bf5af2 45%, #ff375f 80%, #ff9f0a);
   }
-  .group-mix .cat-count { color: #fff; }
+  .group-mix .cat-name, .group-mix .cat-count { color: #fff; }
   .group-mix .cat-btn::after {
     content: "";
     position: absolute;
@@ -500,6 +511,14 @@
   #prep h2 { font-size: clamp(32px, 7vh, 48px); letter-spacing: -0.04em; font-weight: 700; }
   #prep h2, #countdown-num, #prompt { color: #fff; }
   #prep p { color: rgba(255, 255, 255, 0.86); font-size: 17px; }
+  #prep-style, #play-style {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 750;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #fff;
+  }
   .prep-phone {
     width: 92px;
     height: 56px;
@@ -679,6 +698,8 @@
     gap: 8px;
     min-height: 28px;
     font-weight: 650;
+    color: var(--ink);
+    opacity: 1;
   }
   .crown { width: 22px; height: 18px; display: block; }
   .stand-bar { height: 8px; border-radius: 999px; background: var(--fill-2); overflow: hidden; }
@@ -691,7 +712,7 @@
     animation: barGrow 0.6s var(--ease);
   }
   @keyframes barGrow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-  .stand-name, .stand-score { color: var(--ink); }
+  .stand-name, .stand-score { color: var(--ink); opacity: 1; }
   .stand-score { text-align: right; font-variant-numeric: tabular-nums; }
   #home-standings li.zero .stand-bar,
   #standings li.zero .stand-bar,
@@ -711,12 +732,12 @@
     min-height: 28px;
     font-weight: 650;
   }
-  #standings li { animation: rise 0.45s var(--ease) both; }
+  #standings li { animation: rise 0.45s var(--ease); }
   #standings li:nth-child(2) { animation-delay: 0.05s; }
   #standings li:nth-child(3) { animation-delay: 0.1s; }
   @keyframes rise {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: none; }
+    from { transform: translateY(8px); }
+    to { transform: none; }
   }
   .mark {
     width: 18px;
@@ -795,7 +816,7 @@
     font-weight: 650;
     color: var(--ink);
   }
-  #deck-empty, #confirm-modal, #pause-modal {
+  #deck-empty, #confirm-modal, #pause-modal, #share-modal, #deck-offer {
     position: fixed;
     inset: 0;
     z-index: 50;
@@ -805,7 +826,7 @@
     justify-content: center;
     padding: 16px;
   }
-  #deck-empty[hidden], #confirm-modal[hidden], #pause-modal[hidden], #tilt-debug[hidden],
+  #deck-empty[hidden], #confirm-modal[hidden], #pause-modal[hidden], #share-modal[hidden], #deck-offer[hidden], #tilt-debug[hidden],
   #undo-chip[hidden], #team-undo[hidden] { display: none !important; }
   .dialog {
     width: min(100%, 400px);
@@ -871,6 +892,32 @@
   #winner-confetti { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
   #winner-crown .crown { width: 72px; height: 54px; }
   #btn-tutorial-go, #btn-pass-start, #btn-rematch { min-width: 200px; }
+  #recap-video { display: flex; align-items: center; gap: 10px; width: min(860px, 100%); }
+  #recap-video[hidden] { display: none; }
+  #reaction-preview { width: 168px; height: 94px; border-radius: 12px; background: #000; }
+  .reaction-actions { display: flex; gap: 8px; }
+  .reaction-sink { position: fixed; left: -2400px; top: 0; width: 480px; height: 270px; opacity: 0; pointer-events: none; }
+  #my-decks { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+  #my-decks h2 { font-size: 13px; font-weight: 650; letter-spacing: 0.06em; text-transform: uppercase; color: var(--secondary); padding: 4px 4px 0; }
+  .my-deck-form { display: flex; flex-direction: column; gap: 8px; }
+  .my-deck-form input, .my-deck-form textarea {
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--card-solid);
+    color: var(--ink);
+    padding: 8px 10px;
+  }
+  #share-link { width: 100%; border-radius: 12px; border: 1px solid var(--line); padding: 8px 10px; color: var(--ink); background: var(--card-solid); }
+  #share-qr { width: 180px; height: 180px; background: #fff; border-radius: 12px; }
+  .length-stepper { display: flex; align-items: center; justify-content: center; gap: 18px; margin-top: 12px; }
+  .length-stepper[hidden] { display: none; }
+  #length-minus, #length-plus {
+    width: 48px; height: 48px; border-radius: 999px; border: 1px solid var(--line);
+    background: var(--card-solid); color: var(--ink); font-size: 28px; font-weight: 650;
+  }
+  #length-readout { min-width: 4.2ch; text-align: center; font-size: 40px; font-weight: 750; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; color: var(--ink); }
+  .deck-share { margin-top: 6px; min-height: 36px; border-radius: 999px; border: 1px solid var(--line); background: var(--fill); color: var(--ink); font-weight: 650; }
   .times.formats label { font-size: 14px; text-align: center; padding: 4px; }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -918,11 +965,29 @@
     </header>
     <div id="step-deck" class="setup-step">
       <div id="category-picker"></div>
+      <section id="my-decks">
+        <h2>My Decks</h2>
+        <div class="sheet-card glass my-deck-form">
+          <input id="deck-name" maxlength="24" placeholder="Deck name" aria-label="Deck name">
+          <textarea id="deck-prompts" rows="3" placeholder="One prompt per line" aria-label="Prompts"></textarea>
+          <button type="button" id="btn-save-deck" class="pill">Save deck</button>
+        </div>
+        <div id="my-deck-list" class="cat-grid"></div>
+      </section>
       <button type="button" id="btn-deck-next" class="pill">Next</button>
     </div>
     <div id="step-round" class="setup-step">
       <div class="setup-scroll">
         <p class="rotate-hint">Rotate your phone sideways to play.</p>
+        <fieldset class="sheet-card glass">
+          <legend>Style</legend>
+          <div class="times formats">
+            <label>Act It<input type="radio" name="style" value="act"></label>
+            <label>Describe It<input type="radio" name="style" value="describe" checked></label>
+            <label>Hum It<input type="radio" name="style" value="hum"></label>
+          </div>
+          <label class="buttons-only"><input type="checkbox" id="record-reactions"> Record reactions</label>
+        </fieldset>
         <fieldset class="sheet-card glass">
           <legend>Match</legend>
           <div class="times formats">
@@ -937,6 +1002,12 @@
             <label>30<input type="radio" name="seconds" value="30"></label>
             <label>60<input type="radio" name="seconds" value="60" checked></label>
             <label>90<input type="radio" name="seconds" value="90"></label>
+            <label><span id="custom-seconds-text">Custom</span><input type="radio" name="seconds" value="custom"></label>
+          </div>
+          <div id="length-stepper" class="length-stepper" hidden>
+            <button type="button" id="length-minus" aria-label="Shorter round">−</button>
+            <strong id="length-readout">60</strong>
+            <button type="button" id="length-plus" aria-label="Longer round">+</button>
           </div>
         </fieldset>
         <div class="sheet-card glass">
@@ -971,12 +1042,14 @@
     </div>
     <div id="prep">
       <div class="prep-phone" aria-hidden="true"></div>
+      <p id="prep-style">Describe It</p>
       <h2>Hold to forehead</h2>
       <p>Tilt face-down for correct. Tilt face-up to pass.</p>
     </div>
     <div id="stage">
       <div id="countdown" aria-live="assertive"><span id="countdown-num">3</span></div>
       <div id="prompt-box">
+        <div id="play-style">Describe It</div>
         <div id="prompt-cat"></div>
         <div id="prompt" aria-live="polite"></div>
       </div>
@@ -997,6 +1070,13 @@
   <section id="recap" aria-label="Round recap">
     <div id="confetti" aria-hidden="true"></div>
     <p class="recap-score" id="recap-line"></p>
+    <div id="recap-video" hidden>
+      <video id="reaction-preview" playsinline controls></video>
+      <div class="reaction-actions">
+        <button type="button" id="btn-save-video" class="pill secondary">Save</button>
+        <button type="button" id="btn-share-video" class="pill">Share</button>
+      </div>
+    </div>
     <div class="recap-grid">
       <div class="lists">
         <section class="glass">
@@ -1075,6 +1155,30 @@
     </div>
   </div>
 
+  <video id="reaction-cam" class="reaction-sink" playsinline muted></video>
+  <canvas id="reaction-canvas" class="reaction-sink" width="480" height="270"></canvas>
+
+  <div id="share-modal" hidden>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="share-title">
+      <p id="share-title">Share deck</p>
+      <input id="share-link" readonly aria-label="Deck link">
+      <canvas id="share-qr" width="180" height="180" aria-label="Deck QR code"></canvas>
+      <div class="dialog-actions">
+        <button type="button" id="btn-share-close">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="deck-offer" hidden>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="deck-offer-text">
+      <p id="deck-offer-text">Add deck?</p>
+      <div class="dialog-actions">
+        <button type="button" id="btn-add-shared" class="pill">Add deck</button>
+        <button type="button" id="btn-skip-shared" class="pill secondary">Not now</button>
+      </div>
+    </div>
+  </div>
+
   <button type="button" id="undo-chip" class="undo-chip" hidden>Undo last card</button>
   <button type="button" id="team-undo" class="undo-chip" hidden>Undo delete</button>
 
@@ -1094,7 +1198,7 @@
     const MOTION_WAIT_MS = 1000;
     const TILT_DEBUG = new URLSearchParams(location.search).get("debug") === "1";
     const GROUPS = [
-      ["Christian", ["Bible Characters", "Bible Stories", "Miracles & Parables", "Christmas & Easter", "Church Life", "Bible Animals", "Bible Places & Things"]],
+      ["Christian", ["Bible Characters", "Bible Stories", "Miracles & Parables", "Christmas & Easter", "Church Life", "Bible Animals", "Bible Places & Things", "Hum It"]],
       ["Classic", ["Actions", "Jobs", "Sports", "Animals", "Chores", "Movies", "Everyday Objects", "Foods", "Outdoor Fun"]],
       ["Mix", []]
     ];
@@ -1105,7 +1209,7 @@
       "Miracles & Parables": ["Walking on Water","Calming the Storm","Loaves and Fish","Man Through Roof","Raising Lazarus","Coin in Fish","Withered Hand","Ten Lepers","Centurion's Servant","Jairus Daughter","Woman Touches Hem","Mute Man Speaks","Deaf Ears Open","Lame Man Walks","Fig Tree","The Good Samaritan","The Prodigal Son","Lost Sheep","Lost Coin","Mustard Seed","The Sower","Priceless Pearl","House on Rock","House on Sand","Lamp on Stand","Hidden Treasure","The Talents","Wedding Feast","Two Sons","Persistent Widow","Friend at Midnight","Rich Fool","Narrow Gate","Yeast in Dough","Sheep and Goats","New Wineskins","Old Wineskins","Vine and Branches","Ten Lamps","Vineyard Workers","Muddy Eyes Open","Wedding Garment","Jealous Brother","Forgiven Debt","Wheat Together","Weeds Together","Dragnet of Fish","Shut Door","Pool Steps","Bed Carried Home","Helping Hand Up","Full Jars","Wedding at Cana","Peter's Mother","Bent Woman","Two Blind Men","Great Catch","Feeding the 5,000"],
       "Christmas & Easter": ["Baby Jesus","Manger Bed","Shepherds","Angel Choir","Christmas Tree","Candy Cane","Stocking","Wrapped Gift","Sleigh Bells","Snowman","Nativity Scene","Gold Gift","Frankincense","Myrrh","Drummer Boy","Christmas Cookie","Holly Wreath","Advent Candle","Jingle Bells","Gingerbread House","Christmas Carol","Ornament","Wreath","Reindeer","North Star","Swaddling Cloth","Palm Branch","Easter Egg","Rolled Away Stone","Easter Lily","Easter Basket","Jelly Beans","Sunrise Service","Hosanna","Donkey Ride","Last Supper","Foot Washing","Garden Prayer","Rooster Crows","Linen Cloth","Angel at Tomb","He Is Risen","Bread and Cup","Hot Cross Bun","Easter Sunrise","Christmas Lights","Star Topper","Ribbon Bow","Gift Tag","Toy Train","Nutcracker","Sugar Cookie","Hot Cocoa","Gingerbread Man","Icing Smile","Cookie Cutter","Paper Chain","Popcorn Garland","Pine Cone","Christmas Card","Sleigh Ride","Santa Hat","Santa Sack","Milk and Cookies","Carrot Snack","Snowflake","Winter Scarf","Mitten","Cozy Blanket","Christmas Eve","Christmas Morning","Wrapping Paper","Tape and Bow","Tree Skirt","Glass Ball","Handmade Ornament","Cookie Plate","Note for Santa","Christmas Pajamas","Christmas Pageant","Shepherd Costume","Angel Costume","Paper Crown","Advent Calendar","Poinsettia","Cinnamon Stick","Wreath on Door","Light Strings","Bells Ring","Carol Singers","Silent Night","Deck the Halls","We Three Kings","Little Drum","Hay in Manger","Angel Wings","Three Gifts","Camel Ride","Easter Dress","Easter Bonnet","Egg Hunt","Basket Grass","Chocolate Bunny","Marshmallow Chick","Carrot Cake","Empty Cross","White Lily","Sunrise Hymn","Flower Cross","Alleluia","Palm Leaves","Hosanna Shout","Servant Towel","Basin of Water"],
       "Church Life": ["Singing Hymns","Passing Offering","Prayer Hands","Communion Cup","Baptism","Church Pew","Choir Robe","Organ Music","Handbells","Sunday School","Memory Verse","Handshake Peace","Church Potluck","Casserole","Greeter Smile","Church Bulletin","Pew Bible","Cross Necklace","Stained Glass","Steeple","Church Bell","Pastor Preaching","Usher Seating","Bible Craft","Gold Star","Flannel Board","Youth Group","Church Camp","Campfire Song","Saying Grace","Amen","Hallelujah","Raising Hands","Clapping Praise","Kneeling Prayer","Lighting Candle","Flower Duty","Nursery Rocking","Fellowship Hall","Coffee Hour","Name Tag","Welcome Table","Food Pantry","Choir Practice","Scripture Reading","Offering Plate","Hymnal","Sunday Best","Church Van","Potluck Dessert","Altar Flowers","Welcome Hug","Door Holder","Opening Prayer","Closing Prayer","Psalm Reading","Kids Sermon","Object Lesson","Puppet Show","Coloring Page","Verse Card","Sticker Chart","Offering Envelope","Prayer Request","Prayer Circle","Eyes Closed","Bowed Head","Folded Hands","Hymn Number","Piano Keys","Choir Director","Music Stand","Pulpit","Microphone","Baptism Pool","White Robe","Communion Tray","Little Cup","Broken Bread","Candle Lighter","Candle Snuffer","Church Steps","Children's Church","Craft Table","Cotton Ball Sheep","Verse Bracelet","Youth Room","Game Night","Camp Cabin","Camp Song","Canned Food","Coat Drive","Mitten Tree","Shoe Box","Visitor Card","Donut Box","Juice Pitcher","Serving Line","Folding Chair","Ice Cream Social","Church Picnic","Christmas Play","Bell Choir","Kids Choir","Solo Singer","Welcome Bag","Bible Cover","Ribbon Bookmark","Prayer Journal","Bedtime Prayer","Mealtime Grace","Banana Pudding","After Church","Church Bus","Sunday Hat","Lyrics Screen"],
-      "Bible Animals": ["Dove","Lamb","Lion","Donkey","Whale","Fish","Raven","Sheep","Goat","Camel","Horse","Colt","Ox","Sparrow","Eagle","Rooster","Hen","Locust","Frog","Quail","Deer","Wolf","Bear","Fox","Pig","Dog","Ant","Calf","Ram","Pigeon","Mule","Turtledove","Fatted Calf","Talking Donkey","Lost Lamb","Noah's Dove","Jonah's Fish","Shepherd Dog","Pair of Doves","Work Horse","Young Colt","Mother Hen","Baby Chick","Wild Goat","Bull","Heifer","Wild Ox","Chariot Horse","Riding Donkey","Loaded Camel","Ewe","Goat Kid","Spotted Goat","Speckled Sheep","Fat Cow","Grazing Sheep","Lion Cub","Bear Cub","Fawn","Gazelle","Mountain Goat","Hare","Stork","Swallow","Two Sparrows","Homing Pigeon","Soaring Eagle","Partridge","Quail Flock","Hen Chicks","Ostrich","Strutting Peacock","Pelican","Grasshopper","Moth","Gnat","Honeybee","Hornet","Ant Hill","Locust Cloud","Caterpillar","Worm","Spider","Little Fish","Net of Fish","Donkey Colt","Plow Ox","Yoke Team","Wandering Sheep","Muddy Pigs","Noah Raven","Ark Dove","Morning Quail","Scapegoat","Young Bull","Manger Ox","Manger Donkey","Playful Calf","Twin Goats","Stable Ox"],
+      "Bible Animals": ["Dove","Lamb","Lion","Donkey","Whale","Fish","Raven","Sheep","Goat","Camel","Horse","Colt","Ox","Sparrow","Eagle","Rooster","Hen","Locust","Frog","Quail","Deer","Wolf","Bear","Fox","Pig","Dog","Ant","Calf","Ram","Pigeon","Mule","Fatted Calf","Talking Donkey","Lost Lamb","Jonah's Fish","Shepherd Dog","Work Horse","Young Colt","Mother Hen","Baby Chick","Wild Goat","Bull","Heifer","Wild Ox","Chariot Horse","Riding Donkey","Loaded Camel","Ewe","Goat Kid","Spotted Goat","Speckled Sheep","Fat Cow","Grazing Sheep","Lion Cub","Bear Cub","Fawn","Gazelle","Mountain Goat","Hare","Stork","Swallow","Two Sparrows","Homing Pigeon","Soaring Eagle","Partridge","Quail Flock","Hen Chicks","Ostrich","Strutting Peacock","Pelican","Grasshopper","Moth","Gnat","Honeybee","Hornet","Ant Hill","Locust Cloud","Caterpillar","Worm","Spider","Little Fish","Net of Fish","Donkey Colt","Plow Ox","Yoke Team","Wandering Sheep","Muddy Pigs","Morning Quail","Scapegoat","Young Bull","Manger Ox","Manger Donkey","Playful Calf","Twin Goats","Stable Ox","Serpent","Viper","Adder","Scorpion","Bat","Lizard","Hawk","Vulture","Leech","Wild Boar","Behemoth","Hyrax","Crane","Heron","Flea","Mole","Cobra","Asp"],
       "Bible Places & Things": ["Manger","Stable","Temple","Tabernacle","Stone Altar","Ark of Covenant","Stone Tablets","Wooden Staff","Sling","Harp","Crown","Throne","Water Well","Desert Tent","Holy Mountain","Jordan River","Garden Tomb","Wooden Cup","Unleavened Bread","Scroll","Oil Lamp","Clay Jar","Reed Basket","Grapevine","Rainbow","Pillar of Fire","Pillar of Cloud","Trumpet","Shofar","Menorah","Temple Veil","Fishing Boat","Fishing Net","Sycamore Tree","Empty Jar","Mustard Plant","City Gate","City Wall","Shepherd Staff","Prayer Shawl","Sandal","Water Jar","Alabaster Jar","Sheepfold","Bethlehem","Nazareth","Jerusalem","Galilee","Jericho","Egypt","Canaan","Sinai","Bethel","Hebron","Nineveh","Babylon","Damascus","Mount Carmel","Mount of Olives","Sea of Galilee","Dead Sea","Nile River","Promised Land","Wooden Ark","Grassy Hill","Bethany","Cana","Capernaum","Emmaus","Gethsemane","Lampstand","Incense Altar","Bronze Basin","Anointing Oil","Barley Loaf","Twelve Baskets","Stone Jars","Hand Mill","Mud Brick","Well Rope","Clay Lamp","Reed Pen","Stone Pillow","Altar Stones","Memorial Stones","Smooth Stone","Shepherd Bag","Lyre","Tambourine","Silver Trumpet","Blue Tassel","Sandal Strap","Oil Flask","Palm Tree","Cedar Tree","Lily of Field","Olive Press","Winepress","Threshing Floor","Winnowing Fork","Storehouse","Cornerstone","Watchtower","Vineyard","Mustard Tree","Lost Coin Purse","Widow Coin","Fish Coin","Roof Tiles","Sleeping Mat","Jericho Road","Oil and Wine","Two Coins","Bushel Basket","Budding Staff","Carrying Poles","Sheep Gate","Pool of Siloam"],
       "Actions": ["Running","Jumping","Swimming","Dancing","Sleeping","Sneezing","Laughing","Crying","Eating","Drinking","Climbing","Crawling","Hopping","Skipping","Waving","Clapping","Marching","Tiptoeing","Spinning","Stretching","Yawning","Brushing Teeth","Combing Hair","Tying Shoes","Blowing Bubbles","Flying Kite","Riding Bike","Rowing Boat","Pitching Tent","Reading Book","Writing Letter","Taking Photo","Opening Gift","Wrapping Present","Baking Cookies","Flipping Pancakes","Walking Dog","Washing Hands","Blowing Nose","Hiccuping","Balancing","Juggling","Bowling","Ice Skating","Pushing Swing","Catching Ball","Throwing Ball","Blowing Candles","Peeling Banana","Zipping Jacket","High Five","Making Faces","Whistling","Humming","Singing","Whispering","Shouting","Giggling","Hugging","Galloping","Jumping Jacks","Touching Toes","Somersault","Crab Walk","Bear Crawl","Frog Jump","Bunny Hop","Duck Walk","Bowing","Curtsying","Saluting","Nodding","Shrugging","Pointing","Thumbs Up","Blowing Kiss","Winking","Scratching Head","Covering Eyes","Peeking","Robot Walk","Silly Walk","Moonwalk","Dizzy Spin","Hop One Foot","Double Dutch","Kicking Ball","Bouncing Ball","Dribbling","Shooting Hoop","Swinging Bat","Tennis Swing","Golf Swing","Finger Painting","Coloring","Cutting Paper","Folding Paper","Paper Airplane","Blowing Balloon","Buttoning Coat","Putting On Hat","Opening Umbrella","Puddle Splash","Pillow Fight","Blanket Fort","Turning Pages","Raising Hand","Sitting Crisscross","Stomping","Snapping Fingers","Rubbing Tummy","Patting Head","Washing Face","Gargling","Slurping","Sipping Straw","Stirring Pot","Pouring Milk","Cracking Egg","Rolling Dough","Licking Spoon","Waving Goodbye","Shaking Gift","Tying Bow","Knocking","Answering Door","Copying Leader","Melting Down","Growing Tall","Robot Dance"],
       "Jobs": ["Firefighter","Teacher","Doctor","Nurse","Chef","Farmer","Pilot","Astronaut","Police Officer","Mail Carrier","Dentist","Veterinarian","Librarian","Baker","Painter","Musician","Singer","Builder","Carpenter","Plumber","Electrician","Mechanic","Bus Driver","Sailor","Fisher","Judge","Scientist","Photographer","Reporter","Cashier","Server","Lifeguard","Coach","Zookeeper","Florist","Barber","Janitor","Principal","Pastor","Crossing Guard","Flight Attendant","Park Ranger","Miner","Blacksmith","Tailor","Potter","Shepherd","Beekeeper","Gardener","Conductor","Paramedic","School Nurse","Eye Doctor","Pharmacist","Pet Groomer","Dog Trainer","Cowboy","Cowgirl","Stable Hand","Jockey","Lighthouse Keeper","Ship Captain","Astronomer","Weather Reporter","News Anchor","Camera Operator","Actor","Dancer","Ballerina","Clown","Magician","Puppeteer","Storyteller","Author","Illustrator","Cartoonist","Toymaker","Jeweler","Watchmaker","Cobbler","Quilter","Grocer","Ice Cream Seller","Barista","Babysitter","Daycare Teacher","Tutor","Counselor","Lunch Server","Taxi Driver","Train Engineer","Ticket Taker","Director","Drummer","Violinist","Pianist","Guitarist","Music Teacher","Art Teacher","Gym Teacher","Referee","Umpire","Mascot","Camp Counselor","Trail Guide","Aquarium Keeper","Inventor","Engineer","Architect","Bricklayer","Roofer","Locksmith","Delivery Driver","Pizza Driver","Bank Teller","Museum Guide","Organist","Groundskeeper","Cake Decorator","Candy Maker","Explorer","Detective","Sign Interpreter","Forest Ranger"],
@@ -1115,7 +1219,8 @@
       "Movies": ["Frozen","Moana","Cars","Up","Coco","Brave","Tangled","Encanto","Luca","Soul","Onward","Hercules","Mulan","Aladdin","Bambi","Dumbo","Pinocchio","Cinderella","Peter Pan","Mary Poppins","The Lion King","Finding Nemo","Toy Story","Ratatouille","WALL-E","Inside Out","Monsters Inc","The Incredibles","Madagascar","Kung Fu Panda","Minions","Sing","Trolls","Paddington","Matilda","Home Alone","The Sandlot","Space Jam","Jumanji","Hook","Babe","Beethoven","Lassie","Happy Feet","Zootopia","Sleeping Beauty","Snow White","The Lorax","Elf","Ice Age","The Croods","Boss Baby","Despicable Me","Big Hero 6","Wreck-It Ralph","Charlotte's Web","Stuart Little","The Polar Express","Arthur Christmas","Bolt","Chicken Little","Meet the Robinsons","Brother Bear","Treasure Planet","Lilo and Stitch","Tarzan","Pocahontas","The Little Mermaid","The Rescuers","The Aristocats","Oliver and Company","The Jungle Book","Robin Hood","Winnie the Pooh","101 Dalmatians","Pete's Dragon","Alice in Wonderland","Mary Poppins Returns","Christopher Robin","The Peanuts Movie","Finding Dory","Monsters University","Elemental","Wish","The Good Dinosaur","Puss in Boots","The Lego Movie","The BFG","Fantastic Mr Fox","Chicken Run","Bee Movie","Megamind","The Grinch","Trolls World Tour","Trolls Band Together","Migration","Sonic the Hedgehog","The Mighty Ducks","Cool Runnings","Remember the Titans","Little Giants","Air Bud","Homeward Bound","Annie","Enchanted","Ella Enchanted","The Princess Diaries","Freaky Friday","The Parent Trap","Old Yeller","Pollyanna","Swiss Family Robinson","The Princess Bride","Spy Kids","Agent Cody Banks","Daddy Day Care","Nanny McPhee","Evan Almighty","Rio","Turbo","Abominable","Smallfoot","Missing Link","Early Man","The Willoughbys","Over the Moon","Klaus","The Christmas Chronicles","The Star","The Nativity Story","Curious George","The Wild Robot","The Bad Guys","Wonka","The Iron Giant","The Santa Clause","A Bug's Life","Planes","The Ten Commandments","My Neighbor Totoro","Ponyo","Balto","Free Willy","The Secret Garden","Benji","Shark Tale","Over the Hedge","Peter Rabbit","Dog Man","Elio"],
       "Everyday Objects": ["Spoon","Fork","Plate","Bowl","Chair","Table","Lamp","Clock","Phone","House Key","Book","Pencil","Shoe","Hat","Glasses","Umbrella","Pillow","Blanket","Toothbrush","Comb","Mirror","Towel","Bar of Soap","Ball","Teddy Bear","Scissors","Glue Stick","Crayon","Notebook","Lunchbox","Water Bottle","Backpack","Door","Window","TV Remote","Television","Couch","Rug","Broom","Bucket","Sponge","Hammer","Flashlight","Candle","Picture Frame","Flower Pot","Calendar","Wristwatch","Bicycle","Stroller","Coffee Mug","Toothpaste","Hairbrush","Pencil Case","Rubber Duck","Doorknob","Light Switch","Tissue Box","Alarm Clock","Piggy Bank","Napkin","Mug","Straw","Pitcher","Cutting Board","Spatula","Whisk","Ladle","Measuring Cup","Mixing Bowl","Oven Mitt","Apron","Paper Towel","Trash Can","Step Stool","High Chair","Night Light","Light Bulb","Fan","Thermometer","Bandage","Shampoo","Bathtub","Faucet","Washcloth","Hanger","Dresser","Scarf","Raincoat","Slippers","Lunch Bag","Thermos","Eraser","Ruler","Marker","Paintbrush","Chalk","Magnet","Stapler","Envelope","Globe","Bookmark","Camera","Headphones","Puzzle","Dice","Yo Yo","Balloon","Wagon","Helmet","Doll","Building Bricks","Toy Car","Rattle","Quilt","Curtain","Mailbox","Laundry Basket","Clothesline","Dustpan","Spray Bottle","Birdhouse","Wind Chime","Compass","Lantern","Suitcase","Sun Hat","Whistle","Trophy","Drum","Guitar","Coin Jar","Sticky Note","Keyboard","Flash Card"],
       "Foods": ["Pizza","Taco","Burger","Hot Dog","Sandwich","Tomato Soup","Garden Salad","Spaghetti","Mac and Cheese","Pancakes","Waffles","French Toast","Scrambled Eggs","Bacon","Cereal","Oatmeal","Toast","Bagel","Donut","Muffin","Cookie","Birthday Cake","Apple Pie","Ice Cream","Popsicle","Apple","Banana","Grapes","Orange","Strawberry","Watermelon","Carrot","Broccoli","Corn Cob","Baked Potato","French Fries","Popcorn","Pretzel","Nachos","Cheese","Yogurt","Milk","Apple Juice","Lemonade","Hot Chocolate","Marshmallow","Peanut Butter","Grape Jelly","Chicken Nuggets","Grilled Cheese","Fruit Salad","Bread Roll","Mashed Potatoes","Green Beans","Quesadilla","Burrito","Fried Rice","Noodles","Dumpling","Chili","Cornbread","Biscuit","Meatballs","Fish Sticks","Tuna Salad","Egg Salad","String Cheese","Honey","Syrup","Brownie","Cupcake","Cinnamon Roll","Croissant","Hash Brown","Blueberry","Peach","Pear","Pineapple","Mango","Kiwi","Applesauce","Smoothie","Milkshake","Pudding","Chocolate Milk","Orange Juice","Cucumber","Celery","Pumpkin","Sweet Potato","Garlic Bread","Breadstick","Tortilla","Salsa","Crackers","Granola Bar","Trail Mix","Pickle","Lasagna","Ravioli","Chicken Soup","Baked Beans","Potato Salad","Soft Pretzel","Cotton Candy","Caramel Apple","Churro","Egg Roll","Banana Bread","Cinnamon Toast","Watermelon Slice","Bean Burrito","Cheeseburger","Waffle Cone","Fruit Cup","Yogurt Cup","Oatmeal Cookie","Pumpkin Pie","Rice Bowl","Taco Salad","Grilled Chicken","Lemon Slice","Cheese Cubes","Apple Slices"],
-      "Outdoor Fun": ["Camping","Hiking","Fishing","Picnic","Kite Flying","Bike Ride","Scooter Ride","Skateboard","Hopscotch","Playing Tag","Hide and Seek","Simon Says","Red Rover","Capture the Flag","Nature Walk","Bird Watching","Star Gazing","Roasting Marshmallows","Campfire","Canoe Ride","Paddle Boat","Sandcastle","Beach Ball","Finding Shells","Sunscreen","Sunglasses","Tossing Frisbee","Playground Slide","Swing Set","Seesaw","Monkey Bars","Climbing Tree","Leaf Pile","Building Snowman","Sledding Hill","Roller Skating","Planting Seeds","Watering Can","Butterfly Net","Bug Hunt","Skipping Stones","Treasure Hunt","Flashlight Walk","Picnic Blanket","Trail Walk","Tent Camping","Sleeping Bag","Collecting Leaves","Puddle Jump","Rain Boots","Creek Walk","Log Balance","Compass Walk","Backyard Camp","Lemonade Stand","Sprinkler Run","Water Balloon","Hose Spray","Pool Day","Pool Noodle","Sand Pail","Sand Shovel","Shell Necklace","Tide Pool","Wave Jump","Beach Walk","Kite String","Windy Hill","Bike Parade","Snow Angel","Snow Fort","Saucer Sled","Frozen Pond","Bird Feeder","Cloud Watching","Sunset Watch","Moon Watch","Firefly Hunt","Creek Splash","Stick Raft","Leaf Boat","Tadpole Look","Leaf Rubbing","Acorn Hunt","Painted Rock","Chalk Drawing","Whiffle Ball","Soccer Goal","Flying Disc","Balloon Volleyball","Scavenger Hunt","Color Hunt","Listening Walk","Picnic Lunch","Roasted Hot Dog","Making Smores","Graham Cracker","Sticky Fingers","Tent Zipper","Morning Dew","Trail Snack","Lookout Point","Feed the Ducks","Hayride","Corn Maze","Pumpkin Patch","Apple Picking","Berry Picking","Petting Zoo","Sunflower Row","Ladybug Find","Rain Gauge","Giant Bubble","Splash Pad","Paper Boat","Pinwheel","Shadow Tag","Park Bench","Mud Pie","Duck Pond"]
+      "Outdoor Fun": ["Camping","Hiking","Fishing","Picnic","Kite Flying","Bike Ride","Scooter Ride","Skateboard","Hopscotch","Playing Tag","Hide and Seek","Simon Says","Red Rover","Capture the Flag","Nature Walk","Bird Watching","Star Gazing","Roasting Marshmallows","Campfire","Canoe Ride","Paddle Boat","Sandcastle","Beach Ball","Finding Shells","Sunscreen","Sunglasses","Tossing Frisbee","Playground Slide","Swing Set","Seesaw","Monkey Bars","Climbing Tree","Leaf Pile","Building Snowman","Sledding Hill","Roller Skating","Planting Seeds","Watering Can","Butterfly Net","Bug Hunt","Skipping Stones","Treasure Hunt","Flashlight Walk","Picnic Blanket","Trail Walk","Tent Camping","Sleeping Bag","Collecting Leaves","Puddle Jump","Rain Boots","Creek Walk","Log Balance","Compass Walk","Backyard Camp","Lemonade Stand","Sprinkler Run","Water Balloon","Hose Spray","Pool Day","Pool Noodle","Sand Pail","Sand Shovel","Shell Necklace","Tide Pool","Wave Jump","Beach Walk","Kite String","Windy Hill","Bike Parade","Snow Angel","Snow Fort","Saucer Sled","Frozen Pond","Bird Feeder","Cloud Watching","Sunset Watch","Moon Watch","Firefly Hunt","Creek Splash","Stick Raft","Leaf Boat","Tadpole Look","Leaf Rubbing","Acorn Hunt","Painted Rock","Chalk Drawing","Whiffle Ball","Soccer Goal","Flying Disc","Balloon Volleyball","Scavenger Hunt","Color Hunt","Listening Walk","Picnic Lunch","Roasted Hot Dog","Making Smores","Graham Cracker","Sticky Fingers","Tent Zipper","Morning Dew","Trail Snack","Lookout Point","Feed the Ducks","Hayride","Corn Maze","Pumpkin Patch","Apple Picking","Berry Picking","Petting Zoo","Sunflower Row","Ladybug Find","Rain Gauge","Giant Bubble","Splash Pad","Paper Boat","Pinwheel","Shadow Tag","Park Bench","Mud Pie","Duck Pond"],
+      "Hum It": ["Jesus Loves Me","This Little Light of Mine","Amazing Grace","Father Abraham","Happy Birthday","Twinkle Twinkle","Deep and Wide","The B-I-B-L-E","My God Is So Big","Rise and Shine","Peace Like a River","Joy to the World","Away in a Manger","How Great Thou Art","Holy Holy Holy","Blessed Assurance","What a Friend","Great Is Thy Faithfulness","It Is Well","A Mighty Fortress","This Is the Day","Only a Boy Named David","Arky Arky","Old MacDonald","Wheels on the Bus","Row Your Boat","Mary Had a Lamb","Head Shoulders Knees","You Are My Sunshine","Itsy Bitsy Spider","Yankee Doodle","Oh Susanna","Rock a Bye Baby","Farmer in the Dell","Mulberry Bush","Baa Baa Black Sheep","Little Teapot","Ants Go Marching","Five Little Ducks","Swing Low","Do Lord","Wise Man Built","Pharaoh Pharaoh","O Little Town","The First Noel","We Wish You Merry","Frosty the Snowman","Let It Snow","Over the River","Praise God from Whom","Oh How I Love Jesus","Joyful Joyful","Old Rugged Cross","Everlasting Arms","Trust and Obey","Ill Fly Away","Down in My Heart","Christ Is Risen","Nothing but the Blood","Count Your Blessings"]
     };
 
     let state = loadState();
@@ -1146,6 +1251,18 @@
     let practiceLatch = true;
     let lastTickLeft = -1;
     let lastSummary = null;
+    let stepperOpen = false;
+    let cameraStream = null;
+    let canvasStream = null;
+    let reactionRecorder = null;
+    let reactionChunks = [];
+    let reactionUrl = "";
+    let reactionBlob = null;
+    let reactionNotes = [];
+    let reactionStopReason = "";
+    let reactionDrawTimer = 0;
+    let reactionStartedAt = 0;
+    let pendingDeck = null;
     const sensor = {
       permission: "unknown",
       listening: false,
@@ -1180,12 +1297,30 @@
         turnIndex: 0,
         used: [],
         roundsPlayed: 0,
-        settings: { seconds: 60, category: "", buttonsOnly: false, tutorialSeen: false, format: "endless" }
+        settings: { seconds: 60, category: "", buttonsOnly: false, tutorialSeen: false, format: "endless", style: "describe", recordReactions: false },
+        customDecks: []
       };
     }
 
     function uid() {
       return Math.random().toString(36).slice(2, 10);
+    }
+
+    function normalizeDecks(raw) {
+      if (!Array.isArray(raw)) return [];
+      return raw.slice(0, 24).map((deck) => {
+        const prompts = Array.isArray(deck && deck.prompts) ? deck.prompts : [];
+        const clean = [];
+        prompts.forEach((prompt) => {
+          if (typeof prompt !== "string") return;
+          const text = prompt.trim().slice(0, 48);
+          if (text && clean.indexOf(text) === -1) clean.push(text);
+        });
+        const name = deck && typeof deck.name === "string" ? deck.name.trim().slice(0, 24) : "";
+        const id = deck && typeof deck.id === "string" && deck.id ? deck.id : uid();
+        if (!name || !clean.length) return null;
+        return { id: id, name: name, prompts: clean.slice(0, 200) };
+      }).filter(Boolean);
     }
 
     function loadState() {
@@ -1199,17 +1334,22 @@
           name: typeof team.name === "string" ? team.name.slice(0, 24) : "Team " + (index + 1),
           score: Number.isFinite(team.score) ? team.score : 0
         }));
-        const seconds = data.settings && [30, 60, 90].indexOf(data.settings.seconds) !== -1 ? data.settings.seconds : 60;
+        const rawSeconds = Number(data.settings && data.settings.seconds);
+        const seconds = rawSeconds >= 10 && rawSeconds <= 300 && rawSeconds % 5 === 0 ? rawSeconds : 60;
+        const customDecks = normalizeDecks(data.customDecks);
         let category = data.settings && typeof data.settings.category === "string" ? data.settings.category : "";
-        if (category !== "Mix" && CATEGORY_NAMES.indexOf(category) === -1) category = "";
+        const customIds = customDecks.map((deck) => "custom:" + deck.id);
+        if (category !== "Mix" && CATEGORY_NAMES.indexOf(category) === -1 && customIds.indexOf(category) === -1) category = "";
         let turnIndex = Number.isInteger(data.turnIndex) ? data.turnIndex : 0;
         if (turnIndex < 0 || turnIndex >= teams.length) turnIndex = 0;
         const used = Array.isArray(data.used) ? data.used.filter((item) => typeof item === "string") : [];
         const buttonsOnly = Boolean(data.settings && data.settings.buttonsOnly);
         const tutorialSeen = Boolean(data.settings && data.settings.tutorialSeen);
         const format = data.settings && (data.settings.format === "score" || data.settings.format === "rounds") ? data.settings.format : "endless";
+        const style = data.settings && (data.settings.style === "act" || data.settings.style === "hum") ? data.settings.style : "describe";
+        const recordReactions = Boolean(data.settings && data.settings.recordReactions);
         const roundsPlayed = Number.isInteger(data.roundsPlayed) && data.roundsPlayed > 0 ? data.roundsPlayed : 0;
-        return { teams, turnIndex, used, roundsPlayed, settings: { seconds, category, buttonsOnly, tutorialSeen, format } };
+        return { teams, turnIndex, used, roundsPlayed, customDecks, settings: { seconds, category, buttonsOnly, tutorialSeen, format, style, recordReactions } };
       } catch (err) {
         return defaultState();
       }
@@ -1541,6 +1681,7 @@
       "Everyday Objects": "M9 10.5h6M12 10.5V6M8 18.5h8l1-6H7z",
       "Foods": "M12 6.5c-2.4 2.2-4 4.6-4 7.2a4 4 0 0 0 8 0c0-2.6-1.6-5-4-7.2z",
       "Outdoor Fun": "M12 4.5v2.2M12 17.3v2.2M4.5 12h2.2M17.3 12h2.2M6.7 6.7l1.6 1.6M15.7 15.7l1.6 1.6M17.3 6.7l-1.6 1.6M8.3 15.7l-1.6 1.6M12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z",
+      "Hum It": "M9 17.2a2 2 0 1 1-1.5-1.9L9 6.8l8-1.5v7.4a2 2 0 1 1-1.5-1.9V7.6L9 8.8z",
       "Mix": "M12 3l1.2 4.2L17.5 8.5 13.2 9.8 12 14l-1.2-4.2L6.5 8.5l4.3-1.3zM18 13.2l.7 2.2 2.3.7-2.3.7-.7 2.2-.7-2.2-2.3-.7 2.3-.7z"
     };
     const TEAM_COLORS = ["#0a84ff", "#ff375f", "#30d158", "#ff9f0a", "#bf5af2", "#64d2ff", "#ffd60a", "#ff6482"];
@@ -1561,6 +1702,7 @@
       "Everyday Objects": ["#EAB308", "#CA8A04"],
       "Foods": ["#F43F5E", "#E11D48"],
       "Outdoor Fun": ["#65A30D", "#4D7C0F"],
+      "Hum It": ["#C026D3", "#A21CAF"],
       "Mix": ["#A855F7", "#7E22CE"]
     };
     function categoryColors() {
@@ -1582,7 +1724,8 @@
       "Movies": ["#f3e9ff", "#c9a6f0"],
       "Everyday Objects": ["#fff8dc", "#ffe08a"],
       "Foods": ["#ffe8ea", "#ff9aa8"],
-      "Outdoor Fun": ["#fff4d2", "#ffd15c"]
+      "Outdoor Fun": ["#fff4d2", "#ffd15c"],
+      "Hum It": ["#fde7ff", "#f0abfc"]
     };
 
     function glyphSvg(name) {
@@ -1617,11 +1760,93 @@
       return svg;
     }
 
-    function deckCount(name) {
-      if (name === "Mix") {
-        return CATEGORY_NAMES.reduce((sum, category) => sum + (PROMPTS[category] || []).length, 0);
+    function customDeck(name) {
+      if (name.indexOf("custom:") !== 0) return null;
+      const id = name.slice(7);
+      return (state.customDecks || []).find((deck) => deck.id === id) || null;
+    }
+
+    function cardsForCategory(name) {
+      const deck = customDeck(name);
+      if (deck) {
+        return deck.prompts.map((prompt) => ({
+          category: deck.name,
+          prompt: prompt,
+          key: "custom:" + deck.id + "\n" + prompt
+        }));
       }
-      return (PROMPTS[name] || []).length;
+      return (PROMPTS[name] || []).map((prompt) => ({
+        category: name,
+        prompt: prompt,
+        key: name + "\n" + prompt
+      }));
+    }
+
+    function mixNames() {
+      return CATEGORY_NAMES.concat((state.customDecks || []).map((deck) => "custom:" + deck.id));
+    }
+
+    function deckCount(name) {
+      if (name === "Mix") return mixNames().reduce((sum, category) => sum + cardsForCategory(category).length, 0);
+      return cardsForCategory(name).length;
+    }
+
+    const DECK_ART = {
+      "Bible Characters": "bible-characters",
+      "Bible Stories": "bible-stories",
+      "Miracles & Parables": "miracles-parables",
+      "Christmas & Easter": "christmas-easter",
+      "Church Life": "church-life",
+      "Bible Animals": "bible-animals",
+      "Bible Places & Things": "bible-places-things",
+      "Hum It": "hum-it",
+      "Actions": "actions",
+      "Jobs": "jobs",
+      "Sports": "sports",
+      "Animals": "animals",
+      "Chores": "chores",
+      "Movies": "movies",
+      "Everyday Objects": "everyday-objects",
+      "Foods": "foods",
+      "Outdoor Fun": "outdoor-fun",
+      "Mix": "mix"
+    };
+
+    function deckArt(name) {
+      const slug = DECK_ART[name];
+      if (!slug) {
+        const tile = document.createElement("span");
+        tile.className = "cat-art cat-art-custom";
+        tile.setAttribute("aria-hidden", "true");
+        return tile;
+      }
+      const img = document.createElement("img");
+      img.className = "cat-art";
+      img.src = "assets/decks/" + slug + ".webp";
+      img.alt = name + " deck illustration";
+      img.width = 640;
+      img.height = 360;
+      img.loading = "lazy";
+      img.decoding = "async";
+      return img;
+    }
+
+    function deckButton(category, label) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "cat-btn" + (category === "Mix" ? " mix" : "");
+      button.dataset.category = category;
+      const tones = ACCENTS[category];
+      if (tones) {
+        button.style.setProperty("--a", tones[0]);
+        button.style.setProperty("--b", tones[1]);
+      }
+      button.appendChild(deckArt(category));
+      const name = document.createElement("span");
+      name.className = "cat-name";
+      name.textContent = label;
+      button.append(name, checkSvg());
+      return button;
     }
 
     function renderPicker() {
@@ -1641,18 +1866,7 @@
         buttons.forEach((name) => {
           const card = document.createElement("div");
           card.className = "cat-card";
-          const button = document.createElement("button");
-          button.type = "button";
-          button.className = "cat-btn" + (name === "Mix" ? " mix" : "");
-          button.dataset.category = name;
-          const tones = ACCENTS[name];
-          if (tones) {
-            button.style.setProperty("--a", tones[0]);
-            button.style.setProperty("--b", tones[1]);
-          }
-          if (GLYPHS[name]) button.appendChild(glyphSvg(name));
-          button.appendChild(document.createTextNode(name));
-          button.appendChild(checkSvg());
+          const button = deckButton(name, name);
           button.addEventListener("click", () => selectCategory(name));
           const count = document.createElement("span");
           count.className = "cat-count";
@@ -1663,6 +1877,45 @@
         section.appendChild(grid);
         root.appendChild(section);
       });
+      renderMyDecks();
+    }
+
+    function renderMyDecks() {
+      const list = document.getElementById("my-deck-list");
+      if (!list) return;
+      list.replaceChildren();
+      (state.customDecks || []).forEach((deck) => {
+        const category = "custom:" + deck.id;
+        const card = document.createElement("div");
+        card.className = "cat-card";
+        const button = deckButton(category, deck.name);
+        button.addEventListener("click", () => selectCategory(category));
+        const count = document.createElement("span");
+        count.className = "cat-count";
+        count.textContent = String(deck.prompts.length);
+        const share = document.createElement("button");
+        share.type = "button";
+        share.className = "deck-share";
+        share.textContent = "Share";
+        share.setAttribute("aria-label", "Share " + deck.name);
+        share.addEventListener("click", () => { openDeckShare(deck); });
+        card.append(button, count, share);
+        list.appendChild(card);
+      });
+      applySelection();
+    }
+
+    function saveCustomDeck(name, text) {
+      const deck = normalizeDecks([{ name: name, prompts: String(text || "").split(/\r?\n/) }])[0];
+      if (!deck) return null;
+      state.customDecks = (state.customDecks || []).concat(deck).slice(-24);
+      saveState();
+      renderMyDecks();
+      const nameInput = document.getElementById("deck-name");
+      const promptInput = document.getElementById("deck-prompts");
+      if (nameInput) nameInput.value = "";
+      if (promptInput) promptInput.value = "";
+      return deck;
     }
 
     function selectCategory(name) {
@@ -1816,15 +2069,40 @@
       renderTeams();
     }
 
-    function applySettings() {
+    function paintLength() {
+      const seconds = Number(state.settings.seconds) || 60;
+      const custom = stepperOpen || (seconds !== 30 && seconds !== 60 && seconds !== 90);
       document.querySelectorAll('input[name="seconds"]').forEach((input) => {
-        input.checked = Number(input.value) === state.settings.seconds;
+        input.checked = input.value === "custom" ? custom : !custom && Number(input.value) === seconds;
       });
+      const text = document.getElementById("custom-seconds-text");
+      if (text) text.textContent = custom ? seconds + "s" : "Custom";
+      const stepper = document.getElementById("length-stepper");
+      if (stepper) stepper.hidden = !custom;
+      const readout = document.getElementById("length-readout");
+      if (readout) readout.textContent = String(seconds);
+    }
+
+    function setRoundSeconds(value, custom) {
+      const stepped = Math.round(Number(value) / 5) * 5;
+      state.settings.seconds = Math.max(10, Math.min(300, stepped));
+      stepperOpen = Boolean(custom) || (state.settings.seconds !== 30 && state.settings.seconds !== 60 && state.settings.seconds !== 90);
+      saveState();
+      paintLength();
+    }
+
+    function applySettings() {
+      paintLength();
       const buttons = document.getElementById("buttons-only");
       if (buttons) buttons.checked = Boolean(state.settings.buttonsOnly);
       document.querySelectorAll('input[name="format"]').forEach((input) => {
         input.checked = input.value === (state.settings.format || "endless");
       });
+      document.querySelectorAll('input[name="style"]').forEach((input) => {
+        input.checked = input.value === (state.settings.style || "describe");
+      });
+      const record = document.getElementById("record-reactions");
+      if (record) record.checked = Boolean(state.settings.recordReactions);
     }
 
     function randomBelow(limit) {
@@ -1861,13 +2139,12 @@
 
     function buildDeck() {
       const chosen = state.settings.category;
-      const names = chosen === "Mix" ? CATEGORY_NAMES : [chosen];
+      const names = chosen === "Mix" ? mixNames() : [chosen];
       const used = new Set(state.used);
       const cards = [];
       names.forEach((name) => {
-        (PROMPTS[name] || []).forEach((prompt) => {
-          const key = name + "\n" + prompt;
-          if (!used.has(key)) cards.push({ category: name, prompt: prompt, key: key });
+        cardsForCategory(name).forEach((card) => {
+          if (!used.has(card.key)) cards.push(card);
         });
       });
       return shuffleCards(cards);
@@ -1982,6 +2259,21 @@
       play.style.setProperty("--cat-deep", pair[1]);
       const red = state.settings.category === "Sports" || state.settings.category === "Christmas & Easter";
       play.classList.toggle("red-deck", red);
+      paintStyle();
+    }
+
+    function styleName(value) {
+      if (value === "act") return "Act It";
+      if (value === "hum") return "Hum It";
+      return "Describe It";
+    }
+
+    function paintStyle() {
+      const label = styleName(state.settings.style);
+      const playStyle = document.getElementById("play-style");
+      const prepStyle = document.getElementById("prep-style");
+      if (playStyle) playStyle.textContent = label;
+      if (prepStyle) prepStyle.textContent = label;
     }
 
     function markRound() {
@@ -2025,6 +2317,7 @@
       onTimer();
       updatePlayHud();
       acquireWakeLock();
+      if (cameraStream) startReactionRecording();
       deal();
       fitSoon();
     }
@@ -2112,12 +2405,14 @@
         if (team) team.score += 1;
         roundPoints += 1;
         roundGuessed.push(card.prompt);
+        noteReaction(card.prompt, "check");
         bumpScore();
         flash("correct");
         beep();
         buzz();
       } else {
         roundPassed.push(card.prompt);
+        noteReaction(card.prompt, "x");
         flash("pass");
         passTone();
         buzz(40);
@@ -2243,11 +2538,15 @@
       if (phase !== "play" && phase !== "empty") return;
       let timeUp = "";
       if (phase === "play" && currentCard) {
+        noteReaction(currentCard.prompt, "x");
         state.used.push(currentCard.key);
         timeUp = currentCard.prompt;
         roundPassed.push(currentCard.prompt);
         currentCard = null;
       }
+      const capMs = Number(document.documentElement.dataset.recordCapMs) || 0;
+      const elapsed = Date.now() - reactionStartedAt;
+      stopReactionRecording(capMs && elapsed >= capMs - 150 ? "cap" : "end");
       clearRound();
       delete document.body.dataset.paused;
       const pauseModal = document.getElementById("pause-modal");
@@ -2294,6 +2593,7 @@
       renderConfetti(summary.roundPoints);
       renderStandings();
       renderTeams();
+      showReactionPreview();
     }
 
     function crownSvg() {
@@ -2425,8 +2725,12 @@
 
     function clearGame() {
       const seen = Boolean(state.settings && state.settings.tutorialSeen);
+      const decks = state.customDecks || [];
+      freeReaction();
+      stepperOpen = false;
       state = defaultState();
       state.settings.tutorialSeen = seen;
+      state.customDecks = decks;
       saveState();
       clearRound();
       roundGuessed = [];
@@ -2459,6 +2763,7 @@
       applySettings();
       applySelection();
       renderTeams();
+      renderMyDecks();
       updatePortrait();
     }
 
@@ -2536,6 +2841,18 @@
       updatePortrait();
     }
 
+    function winnerLine(top, secondScore, tied) {
+      const format = state.settings.format || "endless";
+      const score = top ? top.team.score : 0;
+      if (tied && format === "rounds") return "It's a tie at " + score + " points after 3 rounds each.";
+      if (tied) return "It's a tie at " + score + " points!";
+      const name = teamLabel(top.team, top.index);
+      if (format === "score") return name + " wins with " + score + " points!";
+      if (format === "rounds" && state.teams.length === 2) return name + " wins, " + score + " to " + secondScore + ", after 3 rounds each.";
+      if (format === "rounds") return name + " wins with " + score + " points after 3 rounds each.";
+      return name + " wins with " + score + " points.";
+    }
+
     function renderWinner(summary) {
       const rows = state.teams.map((team, index) => ({ team: team, index: index }));
       rows.sort((a, b) => b.team.score - a.team.score || a.index - b.index);
@@ -2546,7 +2863,7 @@
       const crown = document.getElementById("winner-crown");
       crown.replaceChildren();
       crown.appendChild(crownSvg());
-      document.getElementById("winner-line").textContent = summary.name + " scored " + summary.roundPoints + ". First place: " + (top ? top.team.score : 0) + ".";
+      document.getElementById("winner-line").textContent = winnerLine(top, second, tied);
       fillStandings(document.getElementById("winner-standings"));
       renderConfetti(3, document.getElementById("winner-confetti"));
     }
@@ -2592,6 +2909,425 @@
       el.classList.add("bump");
     }
 
+    function noteReaction(name, mark) {
+      reactionNotes.push({ name: String(name || "").slice(0, 48), mark: mark === "check" ? "check" : "x" });
+    }
+
+    function drawReactionFrame() {
+      const canvas = document.getElementById("reaction-canvas");
+      const cam = document.getElementById("reaction-cam");
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.fillStyle = "#111";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      if (cam && cam.readyState >= 2) {
+        try { ctx.drawImage(cam, 0, 0, canvas.width, canvas.height); } catch (err) {}
+      }
+      const notes = reactionNotes.slice(-4);
+      ctx.font = "700 28px sans-serif";
+      notes.forEach((note, index) => {
+        const y = canvas.height - 16 - (notes.length - 1 - index) * 36;
+        ctx.fillStyle = "rgba(0,0,0,0.45)";
+        ctx.fillRect(12, y - 28, canvas.width - 24, 34);
+        ctx.fillStyle = note.mark === "check" ? "#30d158" : "#ff453a";
+        ctx.fillText((note.mark === "check" ? "✓ " : "✕ ") + note.name, 20, y);
+      });
+    }
+
+    function startReactionRecording() {
+      if (!cameraStream || reactionRecorder || document.body.dataset.phase === "practice") return;
+      const canvas = document.getElementById("reaction-canvas");
+      const cam = document.getElementById("reaction-cam");
+      if (!canvas || !cam || typeof canvas.captureStream !== "function" || typeof MediaRecorder === "undefined") return;
+      cam.srcObject = cameraStream;
+      cam.muted = true;
+      const played = cam.play();
+      if (played && typeof played.catch === "function") played.catch(() => {});
+      reactionNotes = [];
+      reactionChunks = [];
+      reactionStopReason = "";
+      const cap = (Number(state.settings.seconds) || 60) * 1000;
+      document.documentElement.dataset.recordCapMs = String(cap);
+      document.documentElement.dataset.recordStop = "";
+      document.documentElement.dataset.recordBlob = "";
+      document.documentElement.dataset.recordDone = "";
+      document.documentElement.dataset.recordTracks = "";
+      canvasStream = canvas.captureStream(8);
+      cameraStream.getAudioTracks().forEach((track) => canvasStream.addTrack(track));
+      const mime = MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported("video/mp4") ? "video/mp4" : "video/webm";
+      try { reactionRecorder = new MediaRecorder(canvasStream, { mimeType: mime }); }
+      catch (err) {
+        try { reactionRecorder = new MediaRecorder(canvasStream); } catch (err2) { return; }
+      }
+      reactionRecorder.ondataavailable = (event) => {
+        if (event.data && event.data.size) reactionChunks.push(event.data);
+      };
+      reactionRecorder.onstop = () => {
+        const blob = new Blob(reactionChunks, { type: (reactionRecorder && reactionRecorder.mimeType) || mime });
+        reactionBlob = blob;
+        document.documentElement.dataset.recordBlob = String(blob.size);
+        document.documentElement.dataset.recordDone = "1";
+        const tracks = cameraStream ? cameraStream.getTracks() : [];
+        tracks.forEach((track) => { try { track.stop(); } catch (err) {} });
+        if (canvasStream) canvasStream.getTracks().forEach((track) => { try { track.stop(); } catch (err) {} });
+        document.documentElement.dataset.recordTracks = tracks.map((track) => track.readyState).join(",");
+        cameraStream = null;
+        canvasStream = null;
+        showReactionPreview();
+      };
+      reactionStartedAt = Date.now();
+      try { reactionRecorder.start(200); } catch (err) { reactionRecorder = null; return; }
+      if (reactionDrawTimer) window.clearInterval(reactionDrawTimer);
+      reactionDrawTimer = window.setInterval(() => {
+        drawReactionFrame();
+        if (Date.now() - reactionStartedAt >= cap) stopReactionRecording("cap");
+      }, 80);
+      drawReactionFrame();
+    }
+
+    function stopReactionRecording(reason) {
+      if (!reactionRecorder || reactionStopReason) return;
+      reactionStopReason = reason || "end";
+      document.documentElement.dataset.recordStop = reactionStopReason;
+      if (reactionDrawTimer) window.clearInterval(reactionDrawTimer);
+      reactionDrawTimer = 0;
+      if (reactionRecorder.state !== "inactive") {
+        try { reactionRecorder.stop(); } catch (err) {}
+      }
+    }
+
+    function showReactionPreview() {
+      const box = document.getElementById("recap-video");
+      const video = document.getElementById("reaction-preview");
+      if (!box || !video || !reactionBlob || !reactionBlob.size) return;
+      if (reactionUrl) URL.revokeObjectURL(reactionUrl);
+      reactionUrl = URL.createObjectURL(reactionBlob);
+      video.src = reactionUrl;
+      box.hidden = false;
+    }
+
+    function freeReaction() {
+      if (reactionDrawTimer) window.clearInterval(reactionDrawTimer);
+      reactionDrawTimer = 0;
+      if (reactionRecorder && reactionRecorder.state !== "inactive") {
+        reactionRecorder.onstop = null;
+        try { reactionRecorder.stop(); } catch (err) {}
+      }
+      reactionRecorder = null;
+      reactionStopReason = "";
+      [cameraStream, canvasStream].forEach((stream) => {
+        if (!stream) return;
+        stream.getTracks().forEach((track) => { try { track.stop(); } catch (err) {} });
+      });
+      cameraStream = null;
+      canvasStream = null;
+      if (reactionUrl) URL.revokeObjectURL(reactionUrl);
+      reactionUrl = "";
+      reactionBlob = null;
+      reactionChunks = [];
+      const video = document.getElementById("reaction-preview");
+      if (video) { video.removeAttribute("src"); }
+      const box = document.getElementById("recap-video");
+      if (box) box.hidden = true;
+    }
+
+    function requestReactionCamera() {
+      if (!state.settings.recordReactions) return;
+      const devices = navigator.mediaDevices;
+      if (!devices || typeof devices.getUserMedia !== "function") return;
+      const pending = devices.getUserMedia({ video: { facingMode: "user" }, audio: true }).catch(() => {
+        return devices.getUserMedia({ video: { facingMode: "user" } });
+      });
+      pending.then((stream) => acceptCamera(stream)).catch(() => {});
+    }
+
+    function acceptCamera(stream) {
+      if (!stream) return;
+      const phase = document.body.dataset.phase;
+      if (phase === "recap" || phase === "winner" || phase === "home") {
+        stream.getTracks().forEach((track) => { try { track.stop(); } catch (err) {} });
+        document.documentElement.dataset.recordTracks = stream.getTracks().map((track) => track.readyState).join(",");
+        return;
+      }
+      cameraStream = stream;
+      if (phase === "play") startReactionRecording();
+    }
+
+    function saveReaction() {
+      if (!reactionBlob) return;
+      const link = document.createElement("a");
+      const ext = reactionBlob.type.indexOf("mp4") !== -1 ? "mp4" : "webm";
+      link.href = reactionUrl || URL.createObjectURL(reactionBlob);
+      link.download = "charades-reactions." + ext;
+      link.click();
+    }
+
+    function shareReaction() {
+      if (!reactionBlob) return;
+      const ext = reactionBlob.type.indexOf("mp4") !== -1 ? "mp4" : "webm";
+      const file = new File([reactionBlob], "charades-reactions." + ext, { type: reactionBlob.type || "video/webm" });
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file], title: "Charades reactions" }).catch(() => saveReaction());
+        return;
+      }
+      saveReaction();
+    }
+
+    function bytesToB64(bytes) {
+      let bin = "";
+      bytes.forEach((byte) => { bin += String.fromCharCode(byte); });
+      return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    }
+
+    function b64ToBytes(text) {
+      const pad = text.length % 4 ? "=".repeat(4 - (text.length % 4)) : "";
+      const bin = atob(text.replace(/-/g, "+").replace(/_/g, "/") + pad);
+      const out = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i += 1) out[i] = bin.charCodeAt(i);
+      return out;
+    }
+
+    async function encodeDeckHash(deck) {
+      const json = JSON.stringify({ n: deck.name, p: deck.prompts });
+      const bytes = new TextEncoder().encode(json);
+      let payload = "p" + bytesToB64(bytes);
+      if (typeof CompressionStream === "function") {
+        try {
+          const stream = new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+          const packed = new Uint8Array(await new Response(stream).arrayBuffer());
+          payload = "z" + bytesToB64(packed);
+        } catch (err) {}
+      }
+      return "#d=" + payload;
+    }
+
+    async function decodeDeckHash() {
+      const hash = location.hash;
+      if (hash.indexOf("#d=") !== 0) return null;
+      const payload = hash.slice(3);
+      if (!payload) return null;
+      const data = b64ToBytes(payload.slice(1));
+      let json = "";
+      if (payload.charAt(0) === "z" && typeof DecompressionStream === "function") {
+        const stream = new Blob([data]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+        json = await new Response(stream).text();
+      } else if (payload.charAt(0) === "p") json = new TextDecoder().decode(data);
+      else return null;
+      const obj = JSON.parse(json);
+      if (!obj || typeof obj.n !== "string" || !Array.isArray(obj.p)) return null;
+      return obj;
+    }
+
+    async function openDeckShare(deck) {
+      const hash = await encodeDeckHash(deck);
+      const url = location.origin + location.pathname + hash;
+      const field = document.getElementById("share-link");
+      if (field) field.value = url;
+      drawQr(document.getElementById("share-qr"), url);
+      const modal = document.getElementById("share-modal");
+      if (modal) modal.hidden = false;
+      return url;
+    }
+
+    async function offerSharedDeck() {
+      const modal = document.getElementById("deck-offer");
+      if (!modal) return;
+      try { pendingDeck = await decodeDeckHash(); } catch (err) { pendingDeck = null; }
+      if (!pendingDeck) return;
+      const text = document.getElementById("deck-offer-text");
+      if (text) text.textContent = "Add deck";
+      modal.hidden = false;
+    }
+
+    function addSharedDeck() {
+      if (!pendingDeck) return;
+      const deck = normalizeDecks([{ name: pendingDeck.n, prompts: pendingDeck.p }])[0];
+      if (deck) {
+        state.customDecks = (state.customDecks || []).concat(deck).slice(-24);
+        saveState();
+        renderMyDecks();
+      }
+      pendingDeck = null;
+      document.getElementById("deck-offer").hidden = true;
+      history.replaceState(null, "", location.pathname + location.search);
+    }
+
+    const QR_SPEC = [[1,7,1,19,0,0],[2,10,1,34,0,0],[3,15,1,55,0,0],[4,20,1,80,0,0],[5,26,1,108,0,0],[6,18,2,68,0,0],[7,20,2,78,0,0],[8,24,2,97,0,0],[9,30,2,116,0,0],[10,18,2,68,2,69]];
+    const QR_ALIGN = { 2:[6,18], 3:[6,22], 4:[6,26], 5:[6,30], 6:[6,34], 7:[6,22,38], 8:[6,24,42], 9:[6,26,46], 10:[6,28,50] };
+    const QR_EXP = new Uint8Array(512);
+    const QR_LOG = new Uint8Array(256);
+    (() => {
+      let x = 1;
+      for (let i = 0; i < 255; i += 1) {
+        QR_EXP[i] = x;
+        QR_LOG[x] = i;
+        x <<= 1;
+        if (x & 256) x ^= 0x11d;
+      }
+      for (let i = 255; i < 512; i += 1) QR_EXP[i] = QR_EXP[i - 255];
+    })();
+    function qrMul(a, b) { return !a || !b ? 0 : QR_EXP[QR_LOG[a] + QR_LOG[b]]; }
+    function qrPush(out, value, width) { for (let i = width - 1; i >= 0; i -= 1) out.push((value >>> i) & 1); }
+    function qrRemainder(data, nsym) {
+      const gen = [1];
+      for (let i = 0; i < nsym; i += 1) {
+        const next = new Array(gen.length + 1).fill(0);
+        for (let j = 0; j < gen.length; j += 1) {
+          next[j] ^= gen[j];
+          next[j + 1] ^= qrMul(gen[j], QR_EXP[i]);
+        }
+        gen.length = 0;
+        next.forEach((v) => gen.push(v));
+      }
+      const rem = new Array(nsym).fill(0);
+      data.forEach((byte) => {
+        const coef = byte ^ rem[0];
+        for (let i = 0; i < nsym - 1; i += 1) rem[i] = rem[i + 1];
+        rem[nsym - 1] = 0;
+        if (coef) for (let i = 0; i < nsym; i += 1) rem[i] ^= qrMul(gen[i + 1], coef);
+      });
+      return rem;
+    }
+    function qrVersionBits(version) {
+      let rem = version;
+      for (let i = 0; i < 12; i += 1) rem = (rem << 1) ^ (((rem >>> 11) & 1) * 0x1f25);
+      return ((version << 12) | rem) & 0x3ffff;
+    }
+    function qrMatrix(text) {
+      const raw = new TextEncoder().encode(text);
+      let version = 0;
+      let bits = null;
+      for (let v = 1; v <= 10; v += 1) {
+        const spec = QR_SPEC[v - 1];
+        const capacity = spec[2] * spec[3] + spec[4] * spec[5];
+        const stream = [];
+        qrPush(stream, 4, 4);
+        qrPush(stream, raw.length, v < 10 ? 8 : 16);
+        raw.forEach((byte) => qrPush(stream, byte, 8));
+        const room = capacity * 8 - stream.length;
+        if (room < 0) continue;
+        for (let i = 0; i < Math.min(4, room); i += 1) stream.push(0);
+        while (stream.length % 8) stream.push(0);
+        const data = [];
+        for (let i = 0; i < stream.length; i += 8) {
+          let value = 0;
+          for (let j = 0; j < 8; j += 1) value = (value << 1) | stream[i + j];
+          data.push(value);
+        }
+        for (let pad = 0; data.length < capacity; pad += 1) data.push(pad % 2 ? 0x11 : 0xec);
+        const blocks = [];
+        let offset = 0;
+        for (let g = 0; g < 2; g += 1) {
+          const count = g ? spec[4] : spec[2];
+          const size = g ? spec[5] : spec[3];
+          for (let i = 0; i < count; i += 1) {
+            const chunk = data.slice(offset, offset + size);
+            offset += size;
+            blocks.push({ data: chunk, ecc: qrRemainder(chunk, spec[1]) });
+          }
+        }
+        const words = [];
+        const maxData = Math.max.apply(null, blocks.map((block) => block.data.length));
+        for (let i = 0; i < maxData; i += 1) blocks.forEach((block) => { if (i < block.data.length) words.push(block.data[i]); });
+        for (let i = 0; i < spec[1]; i += 1) blocks.forEach((block) => words.push(block.ecc[i]));
+        bits = [];
+        words.forEach((byte) => qrPush(bits, byte, 8));
+        const remain = v === 1 || v >= 7 ? 0 : 7;
+        for (let i = 0; i < remain; i += 1) bits.push(0);
+        version = v;
+        break;
+      }
+      if (!version) return null;
+      const n = 21 + (version - 1) * 4;
+      const grid = Array.from({ length: n }, () => new Array(n).fill(0));
+      const hold = Array.from({ length: n }, () => new Array(n).fill(0));
+      const mark = (r, c, dark) => { if (r < 0 || c < 0 || r >= n || c >= n) return; grid[r][c] = dark ? 1 : 0; hold[r][c] = 1; };
+      const finder = (r0, c0) => {
+        for (let r = -1; r <= 7; r += 1) for (let c = -1; c <= 7; c += 1) {
+          const edge = r < 0 || c < 0 || r > 6 || c > 6;
+          const ring = r === 0 || c === 0 || r === 6 || c === 6;
+          const core = r >= 2 && r <= 4 && c >= 2 && c <= 4;
+          mark(r0 + r, c0 + c, !edge && (ring || core));
+        }
+      };
+      finder(0, 0); finder(0, n - 7); finder(n - 7, 0);
+      for (let i = 8; i < n - 8; i += 1) { mark(6, i, i % 2 === 0); mark(i, 6, i % 2 === 0); }
+      const centers = QR_ALIGN[version] || [];
+      centers.forEach((r, i) => centers.forEach((c, j) => {
+        if ((i === 0 && j === 0) || (i === 0 && j === centers.length - 1) || (i === centers.length - 1 && j === 0)) return;
+        for (let dr = -2; dr <= 2; dr += 1) for (let dc = -2; dc <= 2; dc += 1) {
+          const edge = Math.abs(dr) === 2 || Math.abs(dc) === 2;
+          mark(r + dr, c + dc, edge || (dr === 0 && dc === 0));
+        }
+      }));
+      for (let i = 0; i <= 5; i += 1) hold[i][8] = 1;
+      hold[7][8] = 1; hold[8][8] = 1; hold[8][7] = 1;
+      for (let i = 9; i < 15; i += 1) hold[8][14 - i] = 1;
+      for (let i = 0; i < 8; i += 1) hold[8][n - 1 - i] = 1;
+      for (let i = 8; i < 15; i += 1) hold[n - 15 + i][8] = 1;
+      hold[n - 8][8] = 1;
+      if (version >= 7) {
+        for (let i = 0; i < 18; i += 1) {
+          const a = n - 11 + (i % 3);
+          const b = Math.floor(i / 3);
+          hold[b][a] = 1; hold[a][b] = 1;
+        }
+      }
+      let upward = true;
+      let index = 0;
+      for (let col = n - 1; col > 0; col -= 2) {
+        if (col === 6) col -= 1;
+        for (let step = 0; step < n; step += 1) {
+          const row = upward ? n - 1 - step : step;
+          for (let k = 0; k < 2; k += 1) {
+            const c = col - k;
+            if (hold[row][c]) continue;
+            let dark = index < bits.length && bits[index] === 1;
+            index += 1;
+            if (((row + c) % 2) === 0) dark = !dark;
+            grid[row][c] = dark ? 1 : 0;
+          }
+        }
+        upward = !upward;
+      }
+      const formatBits = 0b111011111000100;
+      const bitAt = (i) => (formatBits >>> i) & 1;
+      for (let i = 0; i <= 5; i += 1) grid[i][8] = bitAt(i);
+      grid[7][8] = bitAt(6); grid[8][8] = bitAt(7); grid[8][7] = bitAt(8);
+      for (let i = 9; i < 15; i += 1) grid[8][14 - i] = bitAt(i);
+      for (let i = 0; i < 8; i += 1) grid[8][n - 1 - i] = bitAt(i);
+      for (let i = 8; i < 15; i += 1) grid[n - 15 + i][8] = bitAt(i);
+      grid[n - 8][8] = 1;
+      if (version >= 7) {
+        const info = qrVersionBits(version);
+        for (let i = 0; i < 18; i += 1) {
+          const dark = (info >>> i) & 1;
+          const a = n - 11 + (i % 3);
+          const b = Math.floor(i / 3);
+          grid[b][a] = dark; grid[a][b] = dark;
+        }
+      }
+      return { n: n, grid: grid };
+    }
+    function drawQr(canvas, text) {
+      if (!canvas) return false;
+      const qr = qrMatrix(text);
+      const ctx = canvas.getContext("2d");
+      const side = canvas.width || 180;
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, side, side);
+      if (!qr) return false;
+      const quiet = 4;
+      const scale = Math.max(1, Math.floor(side / (qr.n + quiet * 2)));
+      const origin = Math.floor((side - (qr.n + quiet * 2) * scale) / 2);
+      ctx.fillStyle = "#000";
+      for (let r = 0; r < qr.n; r += 1) for (let c = 0; c < qr.n; c += 1) {
+        if (qr.grid[r][c]) ctx.fillRect(origin + (c + quiet) * scale, origin + (r + quiet) * scale, scale, scale);
+      }
+      return true;
+    }
+
     function onTapStart() {
       const startPhase = document.body.dataset.phase;
       if ((startPhase !== "setup" && startPhase !== "home" && startPhase !== "pass") || startLock) return;
@@ -2608,6 +3344,7 @@
         return;
       }
       tutorialReady = false;
+      freeReaction();
       startLock = true;
       pendingResumeMs = 0;
       try { sessionStorage.removeItem(ROUND_MS_KEY); } catch (err) {}
@@ -2628,6 +3365,7 @@
         motionPromise = Promise.reject(err);
       }
       primeAudio();
+      requestReactionCamera();
       const asked = orientPromise !== null || motionPromise !== null;
       Promise.all([
         Promise.resolve(orientPromise == null ? "granted" : orientPromise).catch(() => "denied"),
@@ -2866,10 +3604,44 @@
     document.querySelectorAll('input[name="seconds"]').forEach((input) => {
       input.addEventListener("change", () => {
         if (!input.checked) return;
-        state.settings.seconds = Number(input.value);
-        saveState();
+        if (input.value === "custom") {
+          stepperOpen = true;
+          paintLength();
+          return;
+        }
+        stepperOpen = false;
+        setRoundSeconds(Number(input.value), false);
       });
     });
+    document.getElementById("length-minus").addEventListener("click", () => setRoundSeconds(state.settings.seconds - 5, true));
+    document.getElementById("length-plus").addEventListener("click", () => setRoundSeconds(state.settings.seconds + 5, true));
+    document.querySelectorAll('input[name="style"]').forEach((input) => {
+      input.addEventListener("change", () => {
+        if (!input.checked) return;
+        state.settings.style = input.value;
+        saveState();
+        paintStyle();
+      });
+    });
+    document.getElementById("record-reactions").addEventListener("change", (event) => {
+      state.settings.recordReactions = Boolean(event.target.checked);
+      saveState();
+    });
+    document.getElementById("btn-save-deck").addEventListener("click", () => {
+      saveCustomDeck(document.getElementById("deck-name").value, document.getElementById("deck-prompts").value);
+    });
+    document.getElementById("btn-share-close").addEventListener("click", () => {
+      document.getElementById("share-modal").hidden = true;
+    });
+    document.getElementById("btn-add-shared").addEventListener("click", addSharedDeck);
+    document.getElementById("btn-skip-shared").addEventListener("click", () => {
+      pendingDeck = null;
+      document.getElementById("deck-offer").hidden = true;
+      history.replaceState(null, "", location.pathname + location.search);
+    });
+    document.getElementById("btn-save-video").addEventListener("click", saveReaction);
+    document.getElementById("btn-share-video").addEventListener("click", shareReaction);
+    window.addEventListener("hashchange", () => { offerSharedDeck(); });
     document.getElementById("buttons-only").addEventListener("change", (event) => {
       state.settings.buttonsOnly = Boolean(event.target.checked);
       saveState();
@@ -2905,6 +3677,7 @@
     window.setInterval(refreshSensorUi, 250);
     registerSW();
     updatePortrait();
+    offerSharedDeck();
     maybeResume();
 
     function maybeResume() {
