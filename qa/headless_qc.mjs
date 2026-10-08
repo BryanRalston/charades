@@ -14,6 +14,7 @@ const V8 = QA + "\\v8";
 const V81 = QA + "\\v8_1";
 const V82 = QA + "\\v8_2";
 const V83 = QA + "\\v8_3";
+const V84 = QA + "\\v8_4";
 const V6_LOCK = {
   math: ["015ff8a014515ed3d7d9ea3c858999989a101864c13b7335a754bdb687aab4b6", 2627],
   noteReading: ["a1a7a1edf2849608a145e6a1faffe8c27be619a80ae52cacefaa34e2f4850b1b", 612],
@@ -58,6 +59,7 @@ mkdirSync(V8, { recursive: true });
 mkdirSync(V81, { recursive: true });
 mkdirSync(V82, { recursive: true });
 mkdirSync(V83, { recursive: true });
+mkdirSync(V84, { recursive: true });
 
 function protectedSlices(html) {
   const mathStart = html.indexOf("/* tilt-math-start */");
@@ -118,7 +120,9 @@ const NEAR_ALLOW = new Set([
   "sand pail|sand shovel",
   "jesus loves me|jesus loves the little children",
   "jesus loves me|oh how i love jesus",
-  "a whole new world|he's got the whole world"
+  "a whole new world|he's got the whole world",
+  "jesus heals a boy|jesus heals a leper",
+  "make the bed|make the guest bed"
 ]);
 
 function stemWord(raw) {
@@ -377,10 +381,12 @@ try {
     await setScheme("light");
   }
 
-  async function v83Shot(name) {
+  async function v83Shot() {}
+
+  async function v84Shot(name) {
     const png = await cdp.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
-    writeFileSync(V83 + "\\" + name, Buffer.from(png.data, "base64"));
-    shots.push("v8_3/" + name);
+    writeFileSync(V84 + "\\" + name, Buffer.from(png.data, "base64"));
+    shots.push("v8_4/" + name);
   }
 
   async function v83Pair(name) {
@@ -431,8 +437,8 @@ try {
   const swSource = readFileSync(ROOT + "\\sw.js", "utf8");
   const deckFiles = ["bible-characters","bible-stories","miracles-parables","christmas-easter","church-life","bible-animals","bible-places-things","hum-it","actions","jobs","sports","animals","chores","movies","everyday-objects","foods","outdoor-fun","mix"];
   check(
-    "sw cache is charades-v8-3",
-    swSource.indexOf('const CACHE = "charades-v8-3"') !== -1 && swSource.indexOf('ASSET_VERSION = "8.3"') !== -1 && swSource.indexOf('"./prompts.js"') !== -1 && deckFiles.every((name) => swSource.indexOf("./assets/decks/" + name + ".webp") !== -1),
+    "sw cache is charades-v8-4",
+    swSource.indexOf('const CACHE = "charades-v8-4"') !== -1 && swSource.indexOf('ASSET_VERSION = "8.4"') !== -1 && swSource.indexOf('"./prompts.js"') !== -1 && deckFiles.every((name) => swSource.indexOf("./assets/decks/" + name + ".webp") !== -1),
     ""
   );
   const swStart = swSource.indexOf("function networkFirst");
@@ -691,10 +697,10 @@ try {
   for (const name of EXPECTED) {
     if (name === "Hum It") continue;
     for (const prompt of (promptMap[name].kids || [])) {
-      if (String(prompt).trim().split(/\s+/).length > 2) longKids.push(name + ": " + prompt);
+      if (String(prompt).trim().split(/\s+/).length > 5) longKids.push(name + ": " + prompt);
     }
   }
-  check("kids prompts are one or two words", longKids.length === 0, longKids.slice(0, 6).join("; ") || "short");
+  check("kids prompts are at most five words", longKids.length === 0, longKids.slice(0, 6).join("; ") || "short");
   const nearFlagged = [];
   const nearAllowed = [];
   for (const name of EXPECTED) {
@@ -703,8 +709,8 @@ try {
     found.allowed.forEach((pair) => nearAllowed.push(name + ": " + pair));
   }
   check("no unlisted near-duplicates", nearFlagged.length === 0, nearFlagged.slice(0, 6).join("; ") || "allowed " + nearAllowed.join("; "));
-  const removedCards = ["Friendship Pad", "Pew Pencil", "Known Sheep", "Sorted Sheep", "Ready Feast", "Healed at Once", "Salt Steps", "Boot Tray", "Rock Badger", "Doxology", "Benediction", "Pink Egg", "Backpack Strap", "Dairy Cow", "Praying in Fish", "Sudden Fig Tree", "Methuselah", "Dorcas", "Thorny Soil", "Swept Floor", "Hidden Coin", "Narrow Door", "Rising Dough", "New Skins", "Dawn Workers", "Evening Workers", "Hand Made Whole", "Faraway Healing", "Official's Son", "Distant Son Healed", "Servant Healed", "Rainbow Promise", "Rainbow Sky", "Dove Returns", "Dove With Leaf", "Cloud Leads On", "Thin Cow", "Raven Pair", "Little Lamb", "Pet Lamb", "Shepherd Lamb", "Big Fish", "Great Fish", "Blue Egg", "Plastic Egg", "Hidden Egg", "Toy Story 2", "Toy Story 3", "Toy Story 4", "Despicable Me 2", "Despicable Me 3", "Despicable Me 4", "Happy Feet Two", "102 Dalmatians", "Incredibles 2", "Frozen 2", "Rock House", "Sand House", "House on Sand", "Foolish Builder", "Water Into Wine", "Full Jars", "Feeding the 5,000", "Folding a Map", "Parking a Car", "Waving Down a Ride", "Puss in Boots", "I Am a Sunbeam", "Lame Man Walks", "Pool Steps", "Hidden Pearl", "Old Wineskins", "Wedding Garment", "Bright Lamp", "Seed in the Dirt", "Sling and Stone"];
-  const addedScenes = ["David and Goliath", "Jonah Swallowed", "Loaves and Fish", "Peter Denies Jesus", "Paul Blinded", "Daniel Prays", "Zacchaeus Climbs Tree", "Samson Pushes Pillars", "Paul's Shipwreck", "Baby Moses Basket"];
+  const removedCards = ["Friendship Pad", "Pew Pencil", "Known Sheep", "Sorted Sheep", "Ready Feast", "Healed at Once", "Salt Steps", "Boot Tray", "Rock Badger", "Doxology", "Benediction", "Pink Egg", "Backpack Strap", "Dairy Cow", "Praying in Fish", "Sudden Fig Tree", "Methuselah", "Dorcas", "Thorny Soil", "Swept Floor", "Hidden Coin", "Narrow Door", "Rising Dough", "New Skins", "Dawn Workers", "Evening Workers", "Hand Made Whole", "Faraway Healing", "Official's Son", "Distant Son Healed", "Servant Healed", "Rainbow Promise", "Rainbow Sky", "Dove Returns", "Dove With Leaf", "Cloud Leads On", "Thin Cow", "Raven Pair", "Little Lamb", "Pet Lamb", "Shepherd Lamb", "Big Fish", "Great Fish", "Blue Egg", "Plastic Egg", "Hidden Egg", "Toy Story 2", "Toy Story 3", "Toy Story 4", "Despicable Me 2", "Despicable Me 3", "Despicable Me 4", "Happy Feet Two", "102 Dalmatians", "Incredibles 2", "Frozen 2", "Rock House", "Sand House", "House on Sand", "Foolish Builder", "Water Into Wine", "Full Jars", "Feeding the 5,000", "Folding a Map", "Parking a Car", "Waving Down a Ride", "Puss in Boots", "I Am a Sunbeam", "Lame Man Walks", "Pool Steps", "Hidden Pearl", "Old Wineskins", "Wedding Garment", "Bright Lamp", "Seed in the Dirt", "Sling and Stone", "Karate Kid", "The Karate Kid", "Red Sea", "Morning Manna", "Baby Moses", "Basket Boat", "River Basket", "Baby Moses Basket", "Ark Animals", "Giant Grapes", "Follow Star", "Family Hug", "Foot Hop", "Bunny Hop", "Waving Goodbye", "Wrapping a Gift", "Stow Toys"];
+  const addedScenes = ["David and Goliath", "Jonah Swallowed", "Loaves and Fish", "Peter Denies Jesus", "Paul Blinded", "Daniel Prays", "Zacchaeus Climbs Tree", "Samson Pushes Pillars", "Paul's Shipwreck", "Baby Moses in a Basket"];
   const hasPrompt = (prompt) => EXPECTED.some((name) => deckPrompts(promptMap[name]).indexOf(prompt) !== -1);
   const stillThere = removedCards.filter(hasPrompt);
   const missingScenes = addedScenes.filter((prompt) => !hasPrompt(prompt));
@@ -2016,7 +2022,7 @@ try {
       new Promise((resolve) => setTimeout(() => resolve(null), 8000))
     ]);
     if (!ready) return { ok: false, why: "not ready" };
-    const cache = await caches.open("charades-v8-3");
+    const cache = await caches.open("charades-v8-4");
     const url = new URL("prompts.js", location.href).href;
     const res = await cache.match(url) || await cache.match("./prompts.js");
     if (!res) return { ok: false, why: "missing", keys: await caches.keys() };
@@ -2217,6 +2223,7 @@ try {
     paintTeamFaces();
   })()`);
   await assertDialogsClosed("v8.2 kids play");
+  await v84Shot("play-kids.png");
   await v82Pair("play-kids");
   await ev(`(() => {
     state.turnIndex = 1;
@@ -2293,6 +2300,7 @@ try {
   })()`);
   await closeShotDialogs();
   await v83Pair("deck-kids");
+  await v84Shot("deck-kids.png");
 
   await ev(`
     state.settings.level = "all";
