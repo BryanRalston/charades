@@ -26,24 +26,39 @@
       "detail": ""
     },
     {
+      "name": "landscape hides the sideways note",
+      "ok": true,
+      "detail": "none"
+    },
+    {
+      "name": "debug readout stays hidden without the flag",
+      "ok": true,
+      "detail": "{\"hidden\":true,\"display\":\"none\"}"
+    },
+    {
+      "name": "debug readout is visible with ?debug=1",
+      "ok": true,
+      "detail": "beta none\ngamma none\nangle 90\nup.z none\npitch none\nneutral 0\ndelta 0\nsource none\npermission unknown\neps 0\nlast trigger none"
+    },
+    {
       "name": "Bible Characters has at least 40 prompts",
       "ok": true,
-      "detail": "130"
+      "detail": "117"
     },
     {
       "name": "Bible Stories has at least 40 prompts",
       "ok": true,
-      "detail": "130"
+      "detail": "112"
     },
     {
       "name": "Miracles & Parables has at least 40 prompts",
       "ok": true,
-      "detail": "120"
+      "detail": "100"
     },
     {
       "name": "Christmas & Easter has at least 40 prompts",
       "ok": true,
-      "detail": "126"
+      "detail": "118"
     },
     {
       "name": "Church Life has at least 40 prompts",
@@ -53,12 +68,12 @@
     {
       "name": "Bible Animals has at least 40 prompts",
       "ok": true,
-      "detail": "111"
+      "detail": "109"
     },
     {
       "name": "Bible Places & Things has at least 40 prompts",
       "ok": true,
-      "detail": "124"
+      "detail": "118"
     },
     {
       "name": "Actions has at least 40 prompts",
@@ -73,22 +88,22 @@
     {
       "name": "Sports has at least 40 prompts",
       "ok": true,
-      "detail": "117"
+      "detail": "115"
     },
     {
       "name": "Animals has at least 40 prompts",
       "ok": true,
-      "detail": "118"
+      "detail": "113"
     },
     {
       "name": "Chores has at least 40 prompts",
       "ok": true,
-      "detail": "112"
+      "detail": "108"
     },
     {
       "name": "Movies has at least 40 prompts",
       "ok": true,
-      "detail": "180"
+      "detail": "169"
     },
     {
       "name": "Everyday Objects has at least 40 prompts",
@@ -103,17 +118,32 @@
     {
       "name": "Outdoor Fun has at least 40 prompts",
       "ok": true,
-      "detail": "122"
+      "detail": "120"
     },
     {
-      "name": "Tap to start calls requestPermission",
+      "name": "no prompt appears in two categories",
       "ok": true,
-      "detail": "calls 1"
+      "detail": "unique"
+    },
+    {
+      "name": "Tap to start calls requestPermission synchronously",
+      "ok": true,
+      "detail": "sync calls 2 installed {\"orientation\":true,\"motion\":true}"
+    },
+    {
+      "name": "tilt stays off until a sensor event",
+      "ok": true,
+      "detail": "Tilt off, use buttons"
+    },
+    {
+      "name": "tilt status shows on while events arrive",
+      "ok": true,
+      "detail": "Tilt on"
     },
     {
       "name": "a 10 degree tilt does not score",
       "ok": true,
-      "detail": "tilt 10 score 0"
+      "detail": "tilt -10 score 0"
     },
     {
       "name": "face-down counts as correct once",
@@ -123,7 +153,7 @@
     {
       "name": "holding the tilt does not score again",
       "ok": true,
-      "detail": "Blowing Kiss"
+      "detail": "Crying"
     },
     {
       "name": "the opposite tilt does not count before neutral",
@@ -143,7 +173,7 @@
     {
       "name": "holding pass does not advance again",
       "ok": true,
-      "detail": "Brushing Teeth"
+      "detail": "Zipping Jacket"
     },
     {
       "name": "landscape-right face-down counts as correct",
@@ -173,12 +203,12 @@
     {
       "name": "recap lists the guessed prompt",
       "ok": true,
-      "detail": "Patting Head, Brushing Teeth, Hopping"
+      "detail": "Hopping, Zipping Jacket, Thumbs Up"
     },
     {
       "name": "recap lists the passed prompt",
       "ok": true,
-      "detail": "Blowing Kiss"
+      "detail": "Crying"
     },
     {
       "name": "recap shows the round total",
@@ -201,6 +231,16 @@
       "detail": "{\"score\":\"3\",\"up\":\"Up now: Team 2\",\"seconds\":\"30\",\"category\":\"Actions\"}"
     },
     {
+      "name": "motion fallback counts face-down as correct",
+      "ok": true,
+      "detail": "{\"score\":\"1\",\"last\":\"correct\",\"source\":\"motion\",\"tilt\":\"40\",\"orientAt\":0} from 0"
+    },
+    {
+      "name": "portrait still shows the sideways note",
+      "ok": true,
+      "detail": "block"
+    },
+    {
       "name": "portrait shows the rotate overlay",
       "ok": true,
       "detail": "flex Rotate your phone\n\nLandscape works best for heads-up play."
@@ -213,7 +253,7 @@
     {
       "name": "reshuffle deals a prompt again",
       "ok": true,
-      "detail": "Reading Book"
+      "detail": "Hop One Foot"
     },
     {
       "name": "zero console errors",
@@ -268,22 +308,22 @@
     "orientError": ""
   },
   "counts": {
-    "Bible Characters": 130,
-    "Bible Stories": 130,
-    "Miracles & Parables": 120,
-    "Christmas & Easter": 126,
+    "Bible Characters": 117,
+    "Bible Stories": 112,
+    "Miracles & Parables": 100,
+    "Christmas & Easter": 118,
     "Church Life": 120,
-    "Bible Animals": 111,
-    "Bible Places & Things": 124,
+    "Bible Animals": 109,
+    "Bible Places & Things": 118,
     "Actions": 130,
     "Jobs": 124,
-    "Sports": 117,
-    "Animals": 118,
-    "Chores": 112,
-    "Movies": 180,
+    "Sports": 115,
+    "Animals": 113,
+    "Chores": 108,
+    "Movies": 169,
     "Everyday Objects": 136,
     "Foods": 124,
-    "Outdoor Fun": 122
+    "Outdoor Fun": 120
   },
   "consoleEvents": []
 }
