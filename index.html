@@ -844,10 +844,10 @@
     display: none;
     position: fixed;
     z-index: 40;
-    top: max(10px, env(safe-area-inset-top));
-    left: max(36px, calc(env(safe-area-inset-left) + 16px));
-    width: 44px;
-    height: 44px;
+    top: max(46px, calc(env(safe-area-inset-top) + 36px));
+    left: max(16px, calc(env(safe-area-inset-left) + 12px));
+    width: 40px;
+    height: 40px;
     place-items: center;
     border: 1px solid rgba(0, 0, 0, 0.16);
     border-radius: 50%;
@@ -863,6 +863,7 @@
   body[data-phase="play"] #btn-pause,
   body[data-phase="empty"] #btn-pause,
   body[data-phase="recap"] #btn-pause { display: grid; }
+  body[data-phase="recap"] #btn-pause { top: max(10px, env(safe-area-inset-top)); }
   .undo-chip {
     position: fixed;
     left: 50%;
@@ -2970,6 +2971,7 @@
       const teamChip = document.getElementById("team-undo");
       if (teamChip) teamChip.hidden = true;
       releaseWakeLock();
+      releaseLandscape();
       document.getElementById("deck-empty").hidden = true;
       document.getElementById("confirm-modal").hidden = true;
       closeDeckEditor();
@@ -3695,6 +3697,50 @@
       releaseWakeLock();
     }
 
+    // Palm guard: during prep/countdown/play the ✕ only opens on a quick, single-finger tap.
+    // A grip, a long press or a multi-finger touch is ignored, so a hand on the phone can't freeze the round.
+    let leaveDownAt = 0;
+    let leaveMulti = false;
+    let leaveByTouch = false;
+    function noteLeaveDown(event) {
+      // Phones send a fake mousedown after the finger lifts; keep the touch start time.
+      if (event && event.type === "mousedown" && leaveByTouch) return;
+      leaveByTouch = Boolean(event && event.type === "touchstart");
+      leaveDownAt = performance.now();
+      leaveMulti = Boolean(event && event.touches && event.touches.length > 1);
+    }
+    function noteAnyTouch(event) {
+      if (event && event.touches && event.touches.length > 1) leaveMulti = true;
+    }
+    function onLeaveTap() {
+      const phase = document.body.dataset.phase;
+      const live = phase === "prep" || phase === "countdown" || phase === "play" || phase === "empty";
+      const held = leaveDownAt ? performance.now() - leaveDownAt : 0;
+      const multi = leaveMulti;
+      leaveDownAt = 0;
+      leaveMulti = false;
+      leaveByTouch = false;
+      if (live && (held > 450 || multi)) return;
+      openLeaveSheet();
+    }
+
+    // Main Menu and New Game teardown: leave fullscreen and release the landscape lock.
+    function releaseLandscape() {
+      try {
+        if (screen.orientation && typeof screen.orientation.unlock === "function") screen.orientation.unlock();
+      } catch (err) {}
+      try {
+        const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+        if (fsEl) {
+          const exit = document.exitFullscreen || document.webkitExitFullscreen;
+          if (typeof exit === "function") {
+            const pending = exit.call(document);
+            if (pending && typeof pending.catch === "function") pending.catch(() => {});
+          }
+        }
+      } catch (err) {}
+    }
+
     function openLeaveSheet() {
       const phase = document.body.dataset.phase;
       if (document.body.dataset.paused === "user") return;
@@ -3756,11 +3802,22 @@
         }
       } catch (err) {}
       delete document.body.dataset.paused;
+      window.clearTimeout(countdownHandle);
+      countdownHandle = 0;
+      prepHold = false;
+      if (sensor.calibTimer) window.clearTimeout(sensor.calibTimer);
+      sensor.calibTimer = 0;
+      window.removeEventListener("deviceorientation", onOrientation);
+      window.removeEventListener("devicemotion", onMotion);
+      sensor.listening = false;
+      hideUndo();
       document.body.classList.remove("playing");
       releaseWakeLock();
+      releaseLandscape();
       document.body.dataset.phase = "home";
       updatePortrait();
       renderHome();
+      refreshSensorUi();
       saveState();
     }
 
@@ -3876,7 +3933,10 @@
     });
     document.getElementById("btn-correct").addEventListener("click", () => onResultButton("correct"));
     document.getElementById("btn-pass").addEventListener("click", () => onResultButton("pass"));
-    document.getElementById("btn-pause").addEventListener("click", openLeaveSheet);
+    document.getElementById("btn-pause").addEventListener("touchstart", noteLeaveDown, { passive: true });
+    document.getElementById("btn-pause").addEventListener("mousedown", noteLeaveDown);
+    document.addEventListener("touchstart", noteAnyTouch, { passive: true });
+    document.getElementById("btn-pause").addEventListener("click", onLeaveTap);
     document.getElementById("btn-resume").addEventListener("click", keepPlaying);
     document.getElementById("btn-pause-end").addEventListener("click", leaveToMenu);
     document.getElementById("undo-chip").addEventListener("click", undoLast);

@@ -6,14 +6,14 @@
       "detail": "{\"math\":[\"015ff8a014515ed3d7d9ea3c858999989a101864c13b7335a754bdb687aab4b6\",2627],\"noteReading\":[\"a1a7a1edf2849608a145e6a1faffe8c27be619a80ae52cacefaa34e2f4850b1b\",612],\"orientationLeads\":[\"f1a607bc77870bd1c831b52dbe5ffd03e327f09cf075617ea98856dadd40c36c\",149],\"onOrientation\":[\"4f67f723eb4867fff0dc5e9d01331c4dc7ee2ac0bd385806ed994577c940ca7f\",251],\"onMotion\":[\"38a8a44d7a950d2e33244ad64212c3fdd6e1db11e04a112efb1b19dba3508d16\",660],\"attachSensors\":[\"e7f4c8dd03a561dca848cff9a3fea5a1cc767f18601027399e25d28e867a4e4a\",394]}"
     },
     {
-      "name": "sw cache is charades-v8-5-5",
+      "name": "sw cache is charades-v8-5-6",
       "ok": true,
       "detail": ""
     },
     {
       "name": "sw network timeout falls back after 2.5s",
       "ok": true,
-      "detail": "2512ms true"
+      "detail": "2511ms true"
     },
     {
       "name": "headings render as Christian, Classic, Mix",
@@ -363,7 +363,7 @@
     {
       "name": "holding the tilt does not score again",
       "ok": true,
-      "detail": "Reading Book"
+      "detail": "Shrugging"
     },
     {
       "name": "the opposite tilt does not count before neutral",
@@ -388,7 +388,7 @@
     {
       "name": "holding pass does not advance again",
       "ok": true,
-      "detail": "Ironing a Shirt"
+      "detail": "Double Dutch"
     },
     {
       "name": "calibration re-arms after a screen angle change",
@@ -433,12 +433,12 @@
     {
       "name": "recap lists the guessed prompt",
       "ok": true,
-      "detail": "Coloring, Ironing a Shirt, Crab Walk"
+      "detail": "Balancing, Double Dutch, Pouring Milk"
     },
     {
       "name": "recap lists the passed prompt",
       "ok": true,
-      "detail": "Reading Book, Skippingtime's up"
+      "detail": "Shrugging, Laughingtime's up"
     },
     {
       "name": "recap shows the round total",
@@ -453,7 +453,7 @@
     {
       "name": "time-up card shows its name and a tag",
       "ok": true,
-      "detail": "Skipping | [{\"prompt\":\"Reading Book\",\"tag\":\"\"},{\"prompt\":\"Skipping\",\"tag\":\"time's up\"}]"
+      "detail": "Laughing | [{\"prompt\":\"Shrugging\",\"tag\":\"\"},{\"prompt\":\"Laughing\",\"tag\":\"time's up\"}]"
     },
     {
       "name": "score survives a refresh",
@@ -498,12 +498,12 @@
     {
       "name": "reshuffle deals a prompt again",
       "ok": true,
-      "detail": "Growing Tall"
+      "detail": "Ice Skating"
     },
     {
       "name": "refresh mid-round resumes at prep",
       "ok": true,
-      "detail": "{\"before\":{\"team\":\"Team 2\",\"turnIndex\":1,\"used\":[\"Actions\\nHailing a Taxi\",\"Actions\\nThree Point Turn\",\"Actions\\nUsing Chopsticks\",\"Actions\\nShuffling Cards\",\"Actions\\nDealing Cards\",\"Actions\\nConducting an Orchestra\",\"Actions\\nSealing an Envelope\",\"Actions\\nAddressing a Letter\",\"Actions\\nSetting an Alarm\",\"Actions\\nFolding a Fitted Sheet\",\"Actions\\nPumping a Tire\",\"Actions\\nMailing a Package\",\"Actions\\nBuckling a Seatbelt\",\"Actions\\nCarrying Groceries\",\"Actions\\nLoading a Trunk\",\"Actions\\nReading a Menu\",\"Actions\\nChecking a Compass\",\"Actions\\nThrowing a Curveball\",\"Actions\\nKeeping the Beat\",\"Actions\\nIroning a Shirt\",\"Actions\\nUnlocking a Door\",\"Actions\\nHanging a Picture\",\"Actions\\nFlipping a Coin\",\"Actions\\nWalking a Tightrope\",\"Actions\\nGrowing Tall\"]},\"resumed\":{\"phase\":\"prep\",\"team\":\"Team 2\",\"turnIndex\":1,\"used\":[\"Actions\\nHailing a Taxi\",\"Actions\\nThree Point Turn\",\"Actions\\nUsing Chopsticks\",\"Actions\\nShuffling Cards\",\"Actions\\nDealing Cards\",\"Actions\\nConducting an Orchestra\",\"Actions\\nSealing an Envelope\",\"Actions\\nAddressing a Letter\",\"Actions\\nSetting an Alarm\",\"Actions\\nFolding a Fitted Sheet\",\"Actions\\nPumping a Tire\",\"Actions\\nMailing a Package\",\"Actions\\nBuckling a Seatbelt\",\"Actions\\nCarrying Groceries\",\"Actions\\nLoading a Trunk\",\"Actions\\nReading a Menu\",\"Actions\\nChecking a Compass\",\"Actions\\nThrowing a Curveball\",\"Actions\\nKeeping the Beat\",\"Actions\\nIroning a Shirt\",\"Actions\\nUnlocking a Door\",\"Actions\\nHanging a Picture\",\"Actions\\nFlipping a Coin\",\"Actions\\nWalking a Tightrope\",\"Actions\\nGrowing Tall\"]}}"
+      "detail": "{\"before\":{\"team\":\"Team 2\",\"turnIndex\":1,\"used\":[\"Actions\\nHailing a Taxi\",\"Actions\\nThree Point Turn\",\"Actions\\nUsing Chopsticks\",\"Actions\\nShuffling Cards\",\"Actions\\nDealing Cards\",\"Actions\\nConducting an Orchestra\",\"Actions\\nSealing an Envelope\",\"Actions\\nAddressing a Letter\",\"Actions\\nSetting an Alarm\",\"Actions\\nFolding a Fitted Sheet\",\"Actions\\nPumping a Tire\",\"Actions\\nMailing a Package\",\"Actions\\nBuckling a Seatbelt\",\"Actions\\nCarrying Groceries\",\"Actions\\nLoading a Trunk\",\"Actions\\nReading a Menu\",\"Actions\\nChecking a Compass\",\"Actions\\nThrowing a Curveball\",\"Actions\\nKeeping the Beat\",\"Actions\\nIroning a Shirt\",\"Actions\\nUnlocking a Door\",\"Actions\\nHanging a Picture\",\"Actions\\nFlipping a Coin\",\"Actions\\nWalking a Tightrope\",\"Actions\\nIce Skating\"]},\"resumed\":{\"phase\":\"prep\",\"team\":\"Team 2\",\"turnIndex\":1,\"used\":[\"Actions\\nHailing a Taxi\",\"Actions\\nThree Point Turn\",\"Actions\\nUsing Chopsticks\",\"Actions\\nShuffling Cards\",\"Actions\\nDealing Cards\",\"Actions\\nConducting an Orchestra\",\"Actions\\nSealing an Envelope\",\"Actions\\nAddressing a Letter\",\"Actions\\nSetting an Alarm\",\"Actions\\nFolding a Fitted Sheet\",\"Actions\\nPumping a Tire\",\"Actions\\nMailing a Package\",\"Actions\\nBuckling a Seatbelt\",\"Actions\\nCarrying Groceries\",\"Actions\\nLoading a Trunk\",\"Actions\\nReading a Menu\",\"Actions\\nChecking a Compass\",\"Actions\\nThrowing a Curveball\",\"Actions\\nKeeping the Beat\",\"Actions\\nIroning a Shirt\",\"Actions\\nUnlocking a Door\",\"Actions\\nHanging a Picture\",\"Actions\\nFlipping a Coin\",\"Actions\\nWalking a Tightrope\",\"Actions\\nIce Skating\"]}}"
     },
     {
       "name": "resume keeps the remaining time",
@@ -526,14 +526,14 @@
       "detail": "{\"paused\":\"\",\"wakes\":3,\"before\":1}"
     },
     {
-      "name": "leave sheet pauses, blocks tilt and keys, and returns home",
+      "name": "leave sheet ignores long presses and palms, pauses, blocks tilt and keys, and Main Menu unlocks the screen, exits fullscreen and stops sensors",
       "ok": true,
-      "detail": "{\"visible\":{\"prep\":true,\"countdown\":true,\"play\":true,\"empty\":true,\"recap\":true},\"clear\":true,\"open\":true,\"held\":true,\"resumed\":true,\"delta\":0,\"menu\":true,\"snap\":{\"score\":\"4,0\",\"turn\":0,\"names\":\"Team 1|Team 2\",\"ms\":14899}}"
+      "detail": "{\"visible\":{\"prep\":true,\"countdown\":true,\"play\":true,\"empty\":true,\"recap\":true},\"clear\":true,\"longIgnored\":true,\"palmIgnored\":true,\"open\":true,\"held\":true,\"resumed\":true,\"delta\":0,\"menu\":true,\"teardown\":true,\"snap\":{\"score\":\"4,0\",\"turn\":0,\"names\":\"Team 1|Team 2\",\"ms\":14969}}"
     },
     {
       "name": "resume restores the score, turn, teams and time",
       "ok": true,
-      "detail": "{\"resumedGame\":{\"setup\":true,\"phase\":\"setup\"},\"restored\":{\"score\":\"4,0\",\"turn\":0,\"names\":\"Team 1|Team 2\",\"left\":14881},\"snap\":{\"score\":\"4,0\",\"turn\":0,\"names\":\"Team 1|Team 2\",\"ms\":14899}}"
+      "detail": "{\"resumedGame\":{\"setup\":true,\"phase\":\"setup\"},\"restored\":{\"score\":\"4,0\",\"turn\":0,\"names\":\"Team 1|Team 2\",\"left\":14952},\"snap\":{\"score\":\"4,0\",\"turn\":0,\"names\":\"Team 1|Team 2\",\"ms\":14969}}"
     },
     {
       "name": "leave sheet holds the countdown during prep",
@@ -648,7 +648,7 @@
     {
       "name": "Bible Stories play shot uses a real prompt",
       "ok": true,
-      "detail": "God Calls Samuel"
+      "detail": "Sermon on the Mount"
     },
     {
       "name": "no dialog is open before v7 play-bible-stories",
@@ -658,7 +658,7 @@
     {
       "name": "Actions play shot uses a real prompt",
       "ok": true,
-      "detail": "Saluting"
+      "detail": "Running"
     },
     {
       "name": "no dialog is open before v7 play-actions",
@@ -668,7 +668,7 @@
     {
       "name": "Animals play shot uses a real prompt",
       "ok": true,
-      "detail": "Elephant"
+      "detail": "Toucan"
     },
     {
       "name": "no dialog is open before v7 play-animals",
@@ -678,7 +678,7 @@
     {
       "name": "play shots use three different prompts",
       "ok": true,
-      "detail": "{\"Bible Stories\":\"God Calls Samuel\",\"Actions\":\"Saluting\",\"Animals\":\"Elephant\"}"
+      "detail": "{\"Bible Stories\":\"Sermon on the Mount\",\"Actions\":\"Running\",\"Animals\":\"Toucan\"}"
     },
     {
       "name": "no dialog is open before v7 recap",
@@ -733,7 +733,7 @@
     {
       "name": "record toggle is visible on the round step",
       "ok": true,
-      "detail": "{\"top\":241.00059509277344,\"bottom\":254.00059509277344,\"width\":13}"
+      "detail": "{\"top\":242.4144744873047,\"bottom\":255.4144744873047,\"width\":13}"
     },
     {
       "name": "all 18 deck pictures load at 640 pixels",
@@ -768,7 +768,7 @@
     {
       "name": "Actions style shot uses a real prompt",
       "ok": true,
-      "detail": "Brushing Teeth"
+      "detail": "High Five"
     },
     {
       "name": "no dialog is open before v8 play-act",
@@ -778,7 +778,7 @@
     {
       "name": "Animals style shot uses a real prompt",
       "ok": true,
-      "detail": "Swan"
+      "detail": "Arctic Fox"
     },
     {
       "name": "no dialog is open before v8 play-describe",
@@ -788,7 +788,7 @@
     {
       "name": "Hum It style shot uses a real prompt",
       "ok": true,
-      "detail": "Twinkle Twinkle Little Star"
+      "detail": "Fishers of Men"
     },
     {
       "name": "no dialog is open before v8 play-hum",
@@ -798,7 +798,7 @@
     {
       "name": "style shots use three different prompts",
       "ok": true,
-      "detail": "{\"act\":\"Brushing Teeth\",\"describe\":\"Swan\",\"hum\":\"Twinkle Twinkle Little Star\"}"
+      "detail": "{\"act\":\"High Five\",\"describe\":\"Arctic Fox\",\"hum\":\"Fishers of Men\"}"
     },
     {
       "name": "getUserMedia stays unused when record is off",
@@ -818,7 +818,7 @@
     {
       "name": "a fake camera records a capped clip and stops the tracks",
       "ok": true,
-      "detail": "{\"stop\":\"cap\",\"blob\":\"31791\",\"tracks\":\"ended,ended\",\"cap\":\"1000\"}"
+      "detail": "{\"stop\":\"cap\",\"blob\":\"31539\",\"tracks\":\"ended,ended\",\"cap\":\"1000\"}"
     },
     {
       "name": "the recap shows the reaction preview",
@@ -848,7 +848,7 @@
     {
       "name": "index.html is under 150 KB",
       "ok": true,
-      "detail": "150080"
+      "detail": "152837"
     },
     {
       "name": "deck list shows two full rows at 844x390",
@@ -858,7 +858,7 @@
     {
       "name": "deck list shows two full rows at 390x844",
       "ok": true,
-      "detail": "{\"width\":390,\"height\":844,\"viewH\":722,\"viewTop\":56,\"full\":5,\"rows\":3,\"cardH\":167,\"rowTops\":[275,453,77]}"
+      "detail": "{\"width\":390,\"height\":844,\"viewH\":722,\"viewTop\":55,\"full\":5,\"rows\":3,\"cardH\":167,\"rowTops\":[274,452,76]}"
     },
     {
       "name": "the new deck tile is in the deck list",

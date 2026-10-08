@@ -794,4 +794,5 @@ Tilt 34, headless 189 local and live, shuffle 46. Live index 146337, prompts 283
 `66fef06` `charades-v8-5-2`: recognizable Bible decks. Tilt 34, headless 190.
 `charades-v8-5-3`: classic deck cleanup. Tilt 34, headless 190.
 v8.5.5: Main Menu then reload lands on home with Resume; Make the Guest Bed removed; shuffle floor 30. Cache charades-v8-5-5.
+v8.5.6: Main Menu unlocks the screen, exits fullscreen and stops sensors; X moved back near the v8.4 spot and ignores long presses and palms. Tilt code still identical to v8.4. Cache charades-v8-5-6.
 

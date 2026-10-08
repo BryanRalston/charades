@@ -319,7 +319,9 @@ try {
             window.__orientLocks += 1;
             return Promise.resolve();
           },
-          unlock() {},
+          unlock() {
+            window.__orientUnlocks = (window.__orientUnlocks || 0) + 1;
+          },
           addEventListener() {},
           removeEventListener() {},
           dispatchEvent() { return true; }
@@ -433,8 +435,8 @@ try {
   const swSource = readFileSync(ROOT + "\\sw.js", "utf8");
   const deckFiles = ["bible-characters","bible-stories","miracles-parables","christmas-easter","church-life","bible-animals","bible-places-things","hum-it","actions","jobs","sports","animals","chores","movies","everyday-objects","foods","outdoor-fun","mix"];
   check(
-    "sw cache is charades-v8-5-5",
-    swSource.indexOf('const CACHE = "charades-v8-5-5"') !== -1 && swSource.indexOf('ASSET_VERSION = "8.5.5"') !== -1 && swSource.indexOf('"./prompts.js"') !== -1 && deckFiles.every((name) => swSource.indexOf("./assets/decks/" + name + ".webp") !== -1),
+    "sw cache is charades-v8-5-6",
+    swSource.indexOf('const CACHE = "charades-v8-5-6"') !== -1 && swSource.indexOf('ASSET_VERSION = "8.5.6"') !== -1 && swSource.indexOf('"./prompts.js"') !== -1 && deckFiles.every((name) => swSource.indexOf("./assets/decks/" + name + ".webp") !== -1),
     ""
   );
   const swStart = swSource.indexOf("function networkFirst");
@@ -1189,7 +1191,7 @@ try {
       const el = document.getElementById('btn-pause');
       const style = getComputedStyle(el);
       const box = el.getBoundingClientRect();
-      return style.display !== 'none' && box.width >= 40 && box.width <= 44 && box.height >= 40 && box.height <= 44 && box.left >= 24;
+      return style.display !== 'none' && box.width >= 40 && box.width <= 44 && box.height >= 40 && box.height <= 44 && box.left >= 12;
     }
     function hits(a, b) {
       if (!a || !b || a.width === 0 || b.width === 0) return false;
@@ -1204,7 +1206,17 @@ try {
     document.body.dataset.phase = savedPhase;
     const box = document.getElementById('btn-pause').getBoundingClientRect();
     const clear = !hits(box, document.getElementById('prompt').getBoundingClientRect()) && !hits(box, document.getElementById('btn-pass').getBoundingClientRect()) && !hits(box, document.getElementById('btn-correct').getBoundingClientRect());
+    const modalOpen = () => document.getElementById('pause-modal').hidden === false;
+    noteLeaveDown({ type: 'touchstart', touches: { length: 1 } });
+    leaveDownAt -= 600;
+    onLeaveTap();
+    const longIgnored = !modalOpen() && !document.body.dataset.paused;
+    noteLeaveDown({ type: 'touchstart', touches: { length: 2 } });
+    onLeaveTap();
+    const palmIgnored = !modalOpen() && !document.body.dataset.paused;
     const before = Math.round(timerRemaining());
+    noteLeaveDown({ type: 'touchstart', touches: { length: 1 } });
+    noteLeaveDown({ type: 'mousedown' });
     document.getElementById('btn-pause').click();
     const open = document.getElementById('pause-modal').hidden === false && document.body.dataset.paused === 'user' && document.getElementById('pause-text').textContent === 'Leave game?' && document.getElementById('pause-note').textContent === 'Your scores are saved.' && document.getElementById('btn-resume').textContent === 'Keep Playing' && document.getElementById('btn-pause-end').textContent === 'Main Menu';
     const score = document.getElementById('play-score').textContent;
@@ -1217,14 +1229,16 @@ try {
     const resumed = document.getElementById('pause-modal').hidden === true && !document.body.dataset.paused && Math.abs(after - before) <= 150;
     document.getElementById('btn-pause').click();
     const snap = { score: state.teams.map((team) => team.score).join(','), turn: state.turnIndex, names: state.teams.map((team) => team.name).join('|'), ms: Math.round(timerLeftMs) };
+    const unlocksBefore = window.__orientUnlocks || 0;
     document.getElementById('btn-pause-end').click();
+    const teardown = (window.__orientUnlocks || 0) > unlocksBefore && !document.fullscreenElement && !document.body.classList.contains('playing') && sensor.listening === false && !sensor.calibTimer && !prepHold;
     const resumeBtn = document.getElementById('btn-continue');
     const menu = document.body.dataset.phase === 'home' && resumeBtn.hidden === false && resumeBtn.textContent === 'Resume' && state.turnIndex === snap.turn;
-    return { visible: visible, clear: clear, open: open, held: held, resumed: resumed, delta: after - before, menu: menu, snap: snap };
+    return { visible: visible, clear: clear, longIgnored: longIgnored, palmIgnored: palmIgnored, open: open, held: held, resumed: resumed, delta: after - before, menu: menu, teardown: teardown, snap: snap };
   })()`);
   check(
-    "leave sheet pauses, blocks tilt and keys, and returns home",
-    pauseUi.visible.prep && pauseUi.visible.countdown && pauseUi.visible.play && pauseUi.visible.empty && pauseUi.visible.recap && pauseUi.clear && pauseUi.open && pauseUi.held && pauseUi.resumed && pauseUi.menu,
+    "leave sheet ignores long presses and palms, pauses, blocks tilt and keys, and Main Menu unlocks the screen, exits fullscreen and stops sensors",
+    pauseUi.longIgnored && pauseUi.palmIgnored && pauseUi.teardown && pauseUi.visible.prep && pauseUi.visible.countdown && pauseUi.visible.play && pauseUi.visible.empty && pauseUi.visible.recap && pauseUi.clear && pauseUi.open && pauseUi.held && pauseUi.resumed && pauseUi.menu,
     JSON.stringify(pauseUi)
   );
   const resumedGame = await ev(`(async () => {
@@ -2115,7 +2129,7 @@ try {
       new Promise((resolve) => setTimeout(() => resolve(null), 8000))
     ]);
     if (!ready) return { ok: false, why: "not ready" };
-    const cache = await caches.open("charades-v8-5-5");
+    const cache = await caches.open("charades-v8-5-6");
     const url = new URL("prompts.js", location.href).href;
     const res = await cache.match(url) || await cache.match("./prompts.js");
     if (!res) return { ok: false, why: "missing", keys: await caches.keys() };
