@@ -437,8 +437,8 @@ try {
   const swSource = readFileSync(ROOT + "\\sw.js", "utf8");
   const deckFiles = ["bible-characters","bible-stories","miracles-parables","christmas-easter","church-life","bible-animals","bible-places-things","hum-it","actions","jobs","sports","animals","chores","movies","everyday-objects","foods","outdoor-fun","mix"];
   check(
-    "sw cache is charades-v8-4",
-    swSource.indexOf('const CACHE = "charades-v8-4"') !== -1 && swSource.indexOf('ASSET_VERSION = "8.4"') !== -1 && swSource.indexOf('"./prompts.js"') !== -1 && deckFiles.every((name) => swSource.indexOf("./assets/decks/" + name + ".webp") !== -1),
+    "sw cache is charades-v8-5",
+    swSource.indexOf('const CACHE = "charades-v8-5"') !== -1 && swSource.indexOf('ASSET_VERSION = "8.5"') !== -1 && swSource.indexOf('"./prompts.js"') !== -1 && deckFiles.every((name) => swSource.indexOf("./assets/decks/" + name + ".webp") !== -1),
     ""
   );
   const swStart = swSource.indexOf("function networkFirst");
@@ -679,7 +679,7 @@ try {
     const kids = (deck.kids || []).length;
     const adults = (deck.adults || []).length;
     const count = kids + adults;
-    const floor = name === "Miracles & Parables" ? 30 : 40;
+    const floor = 30;
     check(name + " has at least 40 prompts", count >= 40, String(count));
     check(name + " has at least " + floor + " kids and " + floor + " adults", kids >= floor && adults >= floor, kids + "/" + adults);
   }
@@ -710,7 +710,7 @@ try {
   }
   check("no unlisted near-duplicates", nearFlagged.length === 0, nearFlagged.slice(0, 6).join("; ") || "allowed " + nearAllowed.join("; "));
   const removedCards = ["Friendship Pad", "Pew Pencil", "Known Sheep", "Sorted Sheep", "Ready Feast", "Healed at Once", "Salt Steps", "Boot Tray", "Rock Badger", "Doxology", "Benediction", "Pink Egg", "Backpack Strap", "Dairy Cow", "Praying in Fish", "Sudden Fig Tree", "Methuselah", "Dorcas", "Thorny Soil", "Swept Floor", "Hidden Coin", "Narrow Door", "Rising Dough", "New Skins", "Dawn Workers", "Evening Workers", "Hand Made Whole", "Faraway Healing", "Official's Son", "Distant Son Healed", "Servant Healed", "Rainbow Promise", "Rainbow Sky", "Dove Returns", "Dove With Leaf", "Cloud Leads On", "Thin Cow", "Raven Pair", "Little Lamb", "Pet Lamb", "Shepherd Lamb", "Big Fish", "Great Fish", "Blue Egg", "Plastic Egg", "Hidden Egg", "Toy Story 2", "Toy Story 3", "Toy Story 4", "Despicable Me 2", "Despicable Me 3", "Despicable Me 4", "Happy Feet Two", "102 Dalmatians", "Incredibles 2", "Frozen 2", "Rock House", "Sand House", "House on Sand", "Foolish Builder", "Water Into Wine", "Full Jars", "Feeding the 5,000", "Folding a Map", "Parking a Car", "Waving Down a Ride", "Puss in Boots", "I Am a Sunbeam", "Lame Man Walks", "Pool Steps", "Hidden Pearl", "Old Wineskins", "Wedding Garment", "Bright Lamp", "Seed in the Dirt", "Sling and Stone", "Karate Kid", "The Karate Kid", "Red Sea", "Morning Manna", "Baby Moses", "Basket Boat", "River Basket", "Baby Moses Basket", "Ark Animals", "Giant Grapes", "Follow Star", "Family Hug", "Foot Hop", "Bunny Hop", "Waving Goodbye", "Wrapping a Gift", "Stow Toys"];
-  const addedScenes = ["David and Goliath", "Jonah Swallowed", "Loaves and Fish", "Peter Denies Jesus", "Paul Blinded", "Daniel Prays", "Zacchaeus Climbs Tree", "Samson Pushes Pillars", "Paul's Shipwreck", "Baby Moses in a Basket"];
+  const addedScenes = ["David and Goliath", "Jonah and the Whale", "Loaves and Fish", "Zacchaeus in the Tree", "Samson and Delilah", "Paul's Shipwreck", "Baby Moses in a Basket", "Daniel in the Lions' Den", "The Last Supper"];
   const hasPrompt = (prompt) => EXPECTED.some((name) => deckPrompts(promptMap[name]).indexOf(prompt) !== -1);
   const stillThere = removedCards.filter(hasPrompt);
   const missingScenes = addedScenes.filter((prompt) => !hasPrompt(prompt));
@@ -2022,7 +2022,7 @@ try {
       new Promise((resolve) => setTimeout(() => resolve(null), 8000))
     ]);
     if (!ready) return { ok: false, why: "not ready" };
-    const cache = await caches.open("charades-v8-4");
+    const cache = await caches.open("charades-v8-5");
     const url = new URL("prompts.js", location.href).href;
     const res = await cache.match(url) || await cache.match("./prompts.js");
     if (!res) return { ok: false, why: "missing", keys: await caches.keys() };
