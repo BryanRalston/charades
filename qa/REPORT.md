@@ -520,3 +520,68 @@ Custom decks are saved on the device and are not part of the 1926.
 - `index.html` is 163805 bytes, over the 150 KB target. The 18 deck pictures add 154916 bytes beside it.
 - Projector mode and kids picture mode were left out.
 
+## v8.1
+
+Live page after `794fd1a`. https://bryanralston.github.io/charades/ serves the v8.1 player. `sw.js` is cache `charades-v8-1`, asset version `8.1`. Navigations stay network-first, and a slow network still gives up after 2.5 seconds (live fallback measured 2515 ms) and uses the cache. `prompts.js` and the 18 deck pictures are in that precache. No 402 or 429.
+
+### What changed
+
+The My Decks editor no longer sits under the deck list. A "+ New deck" tile is inside the scrolling list. Tapping it opens a sheet with the name, the prompts, Save, and Cancel. Saved decks stay in that list, with Share. On a short landscape screen the card pictures are 52px tall so two full rows fit above Next.
+
+When the style and the deck are both Hum It, prep and play show that name once. A different deck still shows its own name under the style.
+
+The screenshot script closes the Share deck window and the Add-deck offer before the play, recap, and winner frames. Each of those frames checks that `#share-modal`, `#deck-offer`, `#pause-modal`, `#confirm-modal`, and `#deck-empty` are hidden. The recap and winner frames still use a headline, card lists, and standings that agree.
+
+The built-in prompt lists, including Hum It, moved to `prompts.js`. The page loads that file, and the service worker precaches it, so a reload after install still has the lists offline. The tilt math and the sensor handlers are byte-identical to v8. Calibration and the permission order are unchanged.
+
+### Measurements
+
+| Viewport | Scroll area | Full rows | Card height | Row tops |
+| --- | --- | --- | --- | --- |
+| 844×390 | 280px, from y 64 | 2 | 94px | 77, 188 |
+| 390×844 | 722px, from y 52 | 3 | 167px | 73, 272, 449 |
+
+At 844×390, six cards sit fully inside the scroll area. A third row starts lower and is not fully on screen. At 390×844, five cards sit fully inside, across three rows.
+
+### File sizes
+
+| File | Bytes |
+| --- | --- |
+| Live `index.html` | 140606 |
+| Live `prompts.js` | 25950 |
+
+140606 is under the 150 KB target. The 18 deck pictures remain separate files, 154916 bytes.
+
+### Screenshots
+
+Files are in `qa/v8_1/`:
+
+- `deck-light.png`, `deck-dark.png` at 844×390
+- `deck-portrait.png` at 390×844
+- `new-deck-closed.png`, `new-deck-open.png`
+- `play-hum-light.png`, `play-hum-dark.png` (Hum It shown once, prompt Head Shoulders Knees)
+
+### Tests
+
+| Check | Result |
+| --- | --- |
+| `node qa/tilt_math_check.mjs` | 34 passed |
+| `node qa/headless_qc.mjs` on http://127.0.0.1:8765/ | 158 passed, 0 console errors. Includes the v8 checks, the deck-list height at both viewports, the + New deck save and share, Hum It shown once, closed dialogs on the play, recap, and winner shots, and `prompts.js` served from the service worker cache. |
+| `node qa/shuffle_check.mjs` | 29 passed, 0 console errors. Seventeen categories, 1926 cards. Mix reshuffle holds back the latest 24 (deck 1902). |
+| Live `CHARADES_URL=https://bryanralston.github.io/charades/ node qa/headless_qc.mjs` | 158 passed, 0 console errors |
+| Live `index.html` | HTTP 200, 140606 bytes |
+| Live `prompts.js` | HTTP 200, 25950 bytes |
+| Live `sw.js` | HTTP 200, cache `charades-v8-1`, asset version `8.1`, `NETWORK_TIMEOUT_MS` 2500 |
+
+### Open limits
+
+- At 844×390 a third deck row is only partly on screen. Two full rows are inside the scroll area.
+- Cards do not carry an easy, medium, or hard tag.
+- If rotation lock keeps the screen angle at 0, the mapping still does not see a landscape forehead pose.
+- Mid-round resume, including the time left, is stored for that tab.
+- The iPhone permission prompt was not exercised on a phone. The camera path used a fake headless camera.
+- The inline QR covers versions 1 through 10.
+- Custom length is 10 to 300 seconds, in steps of 5.
+- Jingle Bells is only in Christmas & Easter.
+- Projector mode and kids picture mode were left out.
+
