@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { spawn } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { setTimeout as delay } from "node:timers/promises";
@@ -5,6 +6,12 @@ import { setTimeout as delay } from "node:timers/promises";
 const ROOT = "C:\\Users\\bryma\\dev\\charades";
 const QA = ROOT + "\\qa";
 const REDESIGN = QA + "\\redesign";
+const V5 = QA + "\\v5";
+const V4_TILT = {
+  math: ["015ff8a014515ed3d7d9ea3c858999989a101864c13b7335a754bdb687aab4b6", 2627],
+  sensors: ["54724f300d2fcf0039071dbc8611e26d694f984ee6ee98b08b8b1f186ca95ecf", 4019],
+  perm: ["eb8fc694b1268d25a61c29e7e7682851edea578d366235a468fa6b2d047b2b8b", 665]
+};
 const CHROME = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
 const PORT = 9333;
 const BASE = process.env.CHARADES_URL || "http://127.0.0.1:8765/";
@@ -33,6 +40,25 @@ const POSES = {
 
 mkdirSync(QA, { recursive: true });
 mkdirSync(REDESIGN, { recursive: true });
+mkdirSync(V5, { recursive: true });
+
+function tiltSlices(html) {
+  const mathStart = html.indexOf("/* tilt-math-start */");
+  const mathEnd = html.indexOf("/* tilt-math-end */");
+  const math = html.slice(mathStart, mathEnd + "/* tilt-math-end */".length);
+  const sensorStart = html.indexOf("    function beginCalibration() {");
+  const sensorEnd = html.indexOf("    function permissionApi(ctor) {");
+  const sensors = html.slice(sensorStart, sensorEnd);
+  const permStart = html.indexOf("    function onTapStart() {");
+  const permEnd = html.indexOf("      const startPhase = document.body.dataset.phase;");
+  const perm = html.slice(permStart, permEnd);
+  const sha = (text) => createHash("sha256").update(text).digest("hex");
+  return {
+    math: [sha(math), math.length],
+    sensors: [sha(sensors), sensors.length],
+    perm: [sha(perm), perm.length]
+  };
+}
 const consoleEvents = [];
 const checks = [];
 const shots = [];
@@ -197,10 +223,23 @@ try {
     });
   }
 
-  async function redesignShot(name) {
+  async function v5Shot(name) {
     const png = await cdp.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
-    writeFileSync(REDESIGN + "\\" + name, Buffer.from(png.data, "base64"));
-    shots.push("redesign/" + name);
+    writeFileSync(V5 + "\\" + name, Buffer.from(png.data, "base64"));
+    shots.push("v5/" + name);
+  }
+
+  async function setViewport(width, height) {
+    const landscape = width > height;
+    await cdp.send("Emulation.setDeviceMetricsOverride", {
+      width,
+      height,
+      deviceScaleFactor: 1,
+      mobile: true,
+      screenOrientation: landscape
+        ? { type: "landscapePrimary", angle: 90 }
+        : { type: "portraitPrimary", angle: 0 }
+    });
   }
 
   async function waitFor(expression, timeoutMs, label) {
@@ -212,6 +251,10 @@ try {
     const snap = await ev("document.body.dataset.phase + ' | ' + (document.getElementById('hint')||{}).textContent + ' | ' + (document.getElementById('prompt')||{}).textContent");
     throw new Error("timed out waiting for " + label + " (" + snap + ")");
   }
+
+  const tiltNow = tiltSlices(readFileSync(ROOT + "\\index.html", "utf8"));
+  const tiltSame = ["math", "sensors", "perm"].every((key) => tiltNow[key][0] === V4_TILT[key][0] && tiltNow[key][1] === V4_TILT[key][1]);
+  check("tilt block is byte-identical to v4", tiltSame, JSON.stringify(tiltNow));
 
   await cdp.send("Page.navigate", { url: BASE });
   await waitFor("document.readyState === 'complete' && !!document.getElementById('btn-tap-start') && document.querySelectorAll('.cat-btn').length >= 16", 10000, "page load");
@@ -237,25 +280,39 @@ try {
   const landscapeHint = await ev("getComputedStyle(document.querySelector('.rotate-hint')).display");
   check("landscape hides the sideways note", landscapeHint === "none", landscapeHint);
   await setScheme("light");
-  await redesignShot("home-light.png");
+  await v5Shot("home-light.png");
   await setScheme("dark");
-  await redesignShot("home-dark.png");
+  await v5Shot("home-dark.png");
   await setScheme("light");
+  await setViewport(932, 430);
+  await delay(200);
+  await v5Shot("home-932.png");
+  await setViewport(844, 390);
   await ev("document.getElementById('btn-play').click()");
   await delay(250);
-  await redesignShot("setup-light.png");
+  await v5Shot("setup-deck-light.png");
   await setScheme("dark");
-  await redesignShot("setup-dark.png");
+  await v5Shot("setup-deck-dark.png");
+  await setScheme("light");
+  await ev(`
+    document.getElementById("setup").dataset.step = "round";
+    document.getElementById("setup-title").textContent = "Round";
+  `);
+  await delay(200);
+  await v5Shot("setup-round-light.png");
+  await setScheme("dark");
+  await v5Shot("setup-round-dark.png");
   await setScheme("light");
   await ev(`
     document.body.dataset.phase = "prep";
     document.body.classList.add("playing");
+    document.getElementById("play").style.setProperty("--cat-deep", "#5a3208");
     document.getElementById("tilt-status").textContent = "Tilt off, use buttons";
   `);
   await delay(200);
-  await redesignShot("prep-light.png");
+  await v5Shot("prep-light.png");
   await setScheme("dark");
-  await redesignShot("prep-dark.png");
+  await v5Shot("prep-dark.png");
   await setScheme("light");
   await ev(`
     document.body.dataset.phase = "play";
@@ -265,63 +322,72 @@ try {
     document.getElementById("play-team").textContent = "Team 1";
     document.getElementById("play-score").textContent = "0";
     const ring = document.getElementById("ring-progress");
-    ring.style.strokeDasharray = "175.929";
+    ring.style.strokeDasharray = "289.027";
     ring.style.strokeDashoffset = "40";
   `);
   await delay(200);
-  await redesignShot("play-light.png");
+  await v5Shot("play-light.png");
   await setScheme("dark");
-  await redesignShot("play-dark.png");
+  await v5Shot("play-dark.png");
   await setScheme("light");
+  await setViewport(932, 430);
+  await delay(150);
+  await v5Shot("play-932.png");
+  await setViewport(844, 390);
   await ev(`
     document.body.classList.remove("playing");
     document.body.dataset.phase = "recap";
-    document.getElementById("recap-line").textContent = "Team 1 scored 3. Total: 3.";
-    document.getElementById("recap-next").textContent = "Next up: Team 2";
+    document.getElementById("recap-line").textContent = "Team 1 scored 3! Total: 3.";
     document.getElementById("btn-next").textContent = "Next up: Team 2";
-    document.getElementById("recap-guessed").replaceChildren();
-    document.getElementById("recap-passed").replaceChildren();
-    ["Jumping", "Waving"].forEach((text) => {
+    function addItem(list, text) {
       const item = document.createElement("li");
       const mark = document.createElement("span");
       mark.className = "mark";
       item.append(mark, document.createTextNode(text));
-      document.getElementById("recap-guessed").appendChild(item);
-    });
-    ["Sleeping"].forEach((text) => {
-      const item = document.createElement("li");
-      const mark = document.createElement("span");
-      mark.className = "mark";
-      item.append(mark, document.createTextNode(text));
-      document.getElementById("recap-passed").appendChild(item);
-    });
+      list.appendChild(item);
+    }
+    const guessed = document.getElementById("recap-guessed");
+    const passed = document.getElementById("recap-passed");
+    guessed.replaceChildren();
+    passed.replaceChildren();
+    addItem(guessed, "Jumping");
+    addItem(guessed, "Waving");
+    addItem(passed, "Sleeping");
     const standings = document.getElementById("standings");
     standings.replaceChildren();
-    ["Team 1  3", "Team 2  0"].forEach((text) => {
+    [["Team 1", "3", "#0a84ff"], ["Team 2", "0", "#ff375f"]].forEach((entry) => {
       const item = document.createElement("li");
-      item.textContent = text;
+      const crown = document.createElement("span");
+      const name = document.createElement("span");
+      name.textContent = entry[0];
+      const bar = document.createElement("span");
+      bar.className = "stand-bar";
+      const fill = document.createElement("span");
+      fill.className = "stand-fill";
+      fill.style.width = entry[1] === "0" ? "0%" : "100%";
+      fill.style.background = entry[2];
+      bar.appendChild(fill);
+      const score = document.createElement("span");
+      score.className = "stand-score";
+      score.textContent = entry[1];
+      item.append(crown, name, bar, score);
       standings.appendChild(item);
     });
+    renderConfetti(3);
   `);
   await delay(250);
-  await redesignShot("recap-light.png");
+  await v5Shot("recap-light.png");
   await setScheme("dark");
-  await redesignShot("recap-dark.png");
+  await v5Shot("recap-dark.png");
   await setScheme("light");
-  await cdp.send("Emulation.setDeviceMetricsOverride", {
-    width: 390,
-    height: 844,
-    deviceScaleFactor: 1,
-    mobile: true,
-    screenOrientation: { type: "portraitPrimary", angle: 0 }
-  });
+  await setViewport(390, 844);
   await ev(`
     document.body.dataset.phase = "play";
     document.body.classList.add("playing");
     document.body.classList.add("portrait");
   `);
   await delay(250);
-  await redesignShot("rotate-overlay.png");
+  await v5Shot("rotate-overlay.png");
   await cdp.send("Emulation.setDeviceMetricsOverride", {
     width: 844,
     height: 390,
@@ -411,9 +477,9 @@ try {
   check("Tap to start calls requestPermission synchronously", permSync >= 1, "sync calls " + permSync + " installed " + JSON.stringify(await ev("window.__permInstalled")));
   await waitFor("document.body.dataset.phase === 'play' && document.getElementById('prompt').textContent.length > 0", 12000, "round start");
   await setScheme("light");
-  await redesignShot("play-light.png");
+  await v5Shot("play-light.png");
   await setScheme("dark");
-  await redesignShot("play-dark.png");
+  await v5Shot("play-dark.png");
   await setScheme("light");
   await shot("02-play.png");
 
@@ -491,6 +557,7 @@ try {
   let sawDrop = false;
   let previous = null;
   let recap = null;
+  let lastPlayPrompt = "";
   const roundStart = Date.now();
   while (Date.now() - roundStart < 40000) {
     const info = await ev(`({
@@ -498,12 +565,15 @@ try {
       timer: document.getElementById('timer').textContent,
       urgent: document.getElementById('timer').classList.contains('urgent'),
       line: (document.getElementById('recap-line') || {}).textContent || '',
-      next: (document.getElementById('recap-next') || {}).textContent || '',
+      next: (document.getElementById('btn-next') || {}).textContent || '',
+      prompt: (document.getElementById('prompt') || {}).textContent || '',
+      used: (() => { try { return JSON.parse(localStorage.getItem('charades.v1')).used; } catch (err) { return []; } })(),
       guessed: [...document.querySelectorAll('#recap-guessed li')].map((node) => node.textContent),
       passed: [...document.querySelectorAll('#recap-passed li')].map((node) => node.textContent)
     })`);
     if (previous !== null && Number(info.timer) < Number(previous)) sawDrop = true;
     previous = info.timer;
+    if (info.phase === "play" && info.prompt) lastPlayPrompt = info.prompt;
     if (info.urgent) {
       sawUrgent = true;
       if (!shots.includes("05-urgent.png")) await shot("05-urgent.png");
@@ -519,15 +589,20 @@ try {
   check("the timer ends the round", Boolean(recap), recap ? recap.line : "still " + previous);
   if (recap) {
     await setScheme("light");
-    await redesignShot("recap-light.png");
+    await v5Shot("recap-light.png");
     await setScheme("dark");
-    await redesignShot("recap-dark.png");
+    await v5Shot("recap-dark.png");
     await setScheme("light");
     await shot("06-recap.png");
     check("recap lists the guessed prompt", recap.guessed.indexOf(firstPrompt) !== -1, recap.guessed.join(", "));
     check("recap lists the passed prompt", recap.passed.indexOf(correct.prompt) !== -1, recap.passed.join(", "));
     check("recap shows the round total", recap.line.indexOf("scored 3") !== -1 && recap.line.indexOf("Total: 3") !== -1, recap.line);
     check("the turn rotates", recap.next.indexOf("Team 2") !== -1, recap.next);
+    check(
+      "time-up card is passed and used",
+      recap.passed.indexOf("Time's up") !== -1 && recap.used.indexOf("Actions\n" + lastPlayPrompt) !== -1,
+      lastPlayPrompt + " | " + recap.passed.join(", ")
+    );
   }
 
   await cdp.send("Page.reload", { ignoreCache: false });
@@ -636,7 +711,7 @@ try {
   check("portrait shows the rotate overlay", overlay.display === "flex" && overlay.text.indexOf("Rotate your phone") !== -1, overlay.display + " " + overlay.text.replace(/\\s+/g, " "));
   await shot("08-portrait.png");
   await setScheme("light");
-  await redesignShot("rotate-overlay.png");
+  await v5Shot("rotate-overlay.png");
 
   const used = promptMap.Actions.map((prompt) => "Actions\n" + prompt);
   const saved = {
@@ -674,6 +749,30 @@ try {
   const reshuffled = await ev("document.getElementById('prompt').textContent");
   check("reshuffle deals a prompt again", promptMap.Actions.indexOf(reshuffled) !== -1, reshuffled);
   await shot("10-reshuffle.png");
+
+  const beforeResume = await ev(`(() => {
+    const team = document.getElementById('play-team').textContent;
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+    const saved = JSON.parse(localStorage.getItem('charades.v1'));
+    return { team: team, turnIndex: saved.turnIndex, used: saved.used };
+  })()`);
+  await cdp.send("Page.reload");
+  await waitFor("document.body && document.body.dataset.phase === 'prep'", 10000, "refresh resume");
+  const resumed = await ev(`(() => {
+    const saved = JSON.parse(localStorage.getItem('charades.v1'));
+    return {
+      phase: document.body.dataset.phase,
+      team: document.getElementById('play-team').textContent,
+      turnIndex: saved.turnIndex,
+      used: saved.used
+    };
+  })()`);
+  const usedSame = JSON.stringify(resumed.used) === JSON.stringify(beforeResume.used);
+  check(
+    "refresh mid-round resumes at prep",
+    resumed.phase === "prep" && resumed.team === beforeResume.team && resumed.turnIndex === beforeResume.turnIndex && usedSame,
+    JSON.stringify({ before: beforeResume, resumed: resumed })
+  );
 
   await delay(600);
   const errors = consoleEvents.filter((event) => event.type === "error");

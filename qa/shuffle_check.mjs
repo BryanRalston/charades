@@ -209,7 +209,7 @@ try {
   check("those cards are not the list order", firstRound.join("\n") !== sourcePrefix, firstRound.slice(0, 4).join(", "));
 
   await cdp.send("Page.reload");
-  await waitFor("document.readyState === 'complete' && document.body.dataset.phase === 'home'", 10000, "reload");
+  await waitFor("document.body && document.body.dataset.phase === 'prep'", 10000, "reload prep");
   await ev(`
     const DOE = window.DeviceOrientationEvent;
     function grant() { return Promise.resolve("granted"); }

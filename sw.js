@@ -1,4 +1,4 @@
-const CACHE = "charades-v4";
+const CACHE = "charades-v5";
 const ASSETS = [
   "./",
   "./index.html",

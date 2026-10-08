@@ -1,6 +1,11 @@
 {
   "checks": [
     {
+      "name": "tilt block is byte-identical to v4",
+      "ok": true,
+      "detail": "{\"math\":[\"015ff8a014515ed3d7d9ea3c858999989a101864c13b7335a754bdb687aab4b6\",2627],\"sensors\":[\"54724f300d2fcf0039071dbc8611e26d694f984ee6ee98b08b8b1f186ca95ecf\",4019],\"perm\":[\"eb8fc694b1268d25a61c29e7e7682851edea578d366235a468fa6b2d047b2b8b\",665]}"
+    },
+    {
       "name": "headings render as Christian, Classic, Mix",
       "ok": true,
       "detail": "Christian | Classic | Mix"
@@ -13,7 +18,7 @@
     {
       "name": "Tap to start is present",
       "ok": true,
-      "detail": "{\"text\":\"Tap to start\",\"width\":320,\"height\":44}"
+      "detail": "{\"text\":\"Tap to start\",\"width\":820,\"height\":44}"
     },
     {
       "name": "screen angle is landscape-left 90",
@@ -153,7 +158,7 @@
     {
       "name": "holding the tilt does not score again",
       "ok": true,
-      "detail": "Jumping"
+      "detail": "Making Faces"
     },
     {
       "name": "the opposite tilt does not count before neutral",
@@ -173,7 +178,7 @@
     {
       "name": "holding pass does not advance again",
       "ok": true,
-      "detail": "Swimming"
+      "detail": "Brushing Teeth"
     },
     {
       "name": "landscape-right face-down counts as correct",
@@ -198,27 +203,32 @@
     {
       "name": "the timer ends the round",
       "ok": true,
-      "detail": "Team 1 scored 3. Total: 3."
+      "detail": "Team 1 scored 3! Total: 3."
     },
     {
       "name": "recap lists the guessed prompt",
       "ok": true,
-      "detail": "Duck Walk, Swimming, Washing Hands"
+      "detail": "Tying Shoes, Brushing Teeth, Hugging"
     },
     {
       "name": "recap lists the passed prompt",
       "ok": true,
-      "detail": "Jumping"
+      "detail": "Making Faces, Time's up"
     },
     {
       "name": "recap shows the round total",
       "ok": true,
-      "detail": "Team 1 scored 3. Total: 3."
+      "detail": "Team 1 scored 3! Total: 3."
     },
     {
       "name": "the turn rotates",
       "ok": true,
       "detail": "Next up: Team 2"
+    },
+    {
+      "name": "time-up card is passed and used",
+      "ok": true,
+      "detail": "Walking Dog | Making Faces, Time's up"
     },
     {
       "name": "score survives a refresh",
@@ -253,7 +263,12 @@
     {
       "name": "reshuffle deals a prompt again",
       "ok": true,
-      "detail": "Thumbs Up"
+      "detail": "Yawning"
+    },
+    {
+      "name": "refresh mid-round resumes at prep",
+      "ok": true,
+      "detail": "{\"before\":{\"team\":\"Team 2\",\"turnIndex\":1,\"used\":[\"Actions\\nRaising Hand\",\"Actions\\nSitting Crisscross\",\"Actions\\nStomping\",\"Actions\\nSnapping Fingers\",\"Actions\\nRubbing Tummy\",\"Actions\\nPatting Head\",\"Actions\\nWashing Face\",\"Actions\\nGargling\",\"Actions\\nSlurping\",\"Actions\\nSipping Straw\",\"Actions\\nStirring Pot\",\"Actions\\nPouring Milk\",\"Actions\\nCracking Egg\",\"Actions\\nRolling Dough\",\"Actions\\nLicking Spoon\",\"Actions\\nWaving Goodbye\",\"Actions\\nShaking Gift\",\"Actions\\nTying Bow\",\"Actions\\nKnocking\",\"Actions\\nAnswering Door\",\"Actions\\nCopying Leader\",\"Actions\\nMelting Down\",\"Actions\\nGrowing Tall\",\"Actions\\nRobot Dance\",\"Actions\\nYawning\"]},\"resumed\":{\"phase\":\"prep\",\"team\":\"Team 2\",\"turnIndex\":1,\"used\":[\"Actions\\nRaising Hand\",\"Actions\\nSitting Crisscross\",\"Actions\\nStomping\",\"Actions\\nSnapping Fingers\",\"Actions\\nRubbing Tummy\",\"Actions\\nPatting Head\",\"Actions\\nWashing Face\",\"Actions\\nGargling\",\"Actions\\nSlurping\",\"Actions\\nSipping Straw\",\"Actions\\nStirring Pot\",\"Actions\\nPouring Milk\",\"Actions\\nCracking Egg\",\"Actions\\nRolling Dough\",\"Actions\\nLicking Spoon\",\"Actions\\nWaving Goodbye\",\"Actions\\nShaking Gift\",\"Actions\\nTying Bow\",\"Actions\\nKnocking\",\"Actions\\nAnswering Door\",\"Actions\\nCopying Leader\",\"Actions\\nMelting Down\",\"Actions\\nGrowing Tall\",\"Actions\\nRobot Dance\",\"Actions\\nYawning\"]}}"
     },
     {
       "name": "zero console errors",
@@ -262,30 +277,34 @@
     }
   ],
   "shots": [
-    "redesign/home-light.png",
-    "redesign/home-dark.png",
-    "redesign/setup-light.png",
-    "redesign/setup-dark.png",
-    "redesign/prep-light.png",
-    "redesign/prep-dark.png",
-    "redesign/play-light.png",
-    "redesign/play-dark.png",
-    "redesign/recap-light.png",
-    "redesign/recap-dark.png",
-    "redesign/rotate-overlay.png",
+    "v5/home-light.png",
+    "v5/home-dark.png",
+    "v5/home-932.png",
+    "v5/setup-deck-light.png",
+    "v5/setup-deck-dark.png",
+    "v5/setup-round-light.png",
+    "v5/setup-round-dark.png",
+    "v5/prep-light.png",
+    "v5/prep-dark.png",
+    "v5/play-light.png",
+    "v5/play-dark.png",
+    "v5/play-932.png",
+    "v5/recap-light.png",
+    "v5/recap-dark.png",
+    "v5/rotate-overlay.png",
     "01-setup.png",
-    "redesign/play-light.png",
-    "redesign/play-dark.png",
+    "v5/play-light.png",
+    "v5/play-dark.png",
     "02-play.png",
     "03-correct.png",
     "04-pass.png",
     "05-urgent.png",
-    "redesign/recap-light.png",
-    "redesign/recap-dark.png",
+    "v5/recap-light.png",
+    "v5/recap-dark.png",
     "06-recap.png",
     "07-refresh.png",
     "08-portrait.png",
-    "redesign/rotate-overlay.png",
+    "v5/rotate-overlay.png",
     "09-empty.png",
     "10-reshuffle.png"
   ],
@@ -316,7 +335,7 @@
     ],
     "start": {
       "text": "Tap to start",
-      "width": 320,
+      "width": 820,
       "height": 44
     },
     "links": [],
