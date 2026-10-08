@@ -686,3 +686,101 @@ Files are in `qa/v8_2/`, light and dark, at 844×390:
 - Jingle Bells is only in Christmas & Easter.
 - Projector mode and kids picture mode were left out.
 
+## v8.3
+
+Live page after `6cd4709`. https://bryanralston.github.io/charades/ serves the v8.3 player. `sw.js` is cache `charades-v8-3`, asset version `8.3`. Navigations stay network-first, and a slow network still gives up after 2.5 seconds (live fallback measured 2515 ms) and uses the cache. No 402 or 429.
+
+### What changed
+
+Miracles & Parables is one card per miracle or parable. The floor for that deck only is 30 Kids and 30 Adults. Every other deck stays at 40 of each. The combined deck is 68 cards.
+
+Actions drops Folding a Map, Parking a Car, and Waving Down a Ride, and adds Ironing a Shirt, Wrapping a Gift, and Unlocking a Door. Adults stays at 45.
+
+Standings put the level badge on its own line above the team name. The name stays on one line. The badge does not cover the score bar. The same layout is on the home, recap, and winner screens.
+
+Kids prompts are one or two words. Hum It is the exception. Movies replaces Puss in Boots with Karate Kid. Hum It kids replaces I Am a Sunbeam with Hokey Pokey. The first two Hum It kids songs stay Jesus Loves Me and This Little Light of Mine.
+
+A near-duplicate check flags close paraphrases inside a deck and prints the allowed pairs. The tilt math and the sensor handlers are byte-identical to v8.2. Calibration and the permission order are unchanged.
+
+Screenshots for this round are only in `qa/v8_3/`. Older folders are left as they were.
+
+### Miracles & Parables
+
+Kids (32): Ten Lepers, Jairus Daughter, Fig Tree, Peter's Mother, Bent Woman, Great Catch, Withered Hand, Raising Lazarus, Lost Sheep, Lost Coin, Mustard Seed, The Sower, Widow's Son, Four Thousand, Severed Ear, Drowned Pigs, Freed Boy, One Leper, Tabitha Raised, Snake Bite, Open Prison, Ten Lamps, Priceless Pearl, New Wineskins, Narrow Gate, Rich Fool, Vineyard Workers, Wedding Feast, Good Shepherd, Hidden Treasure, Two Sons, Yeast Dough.
+
+Adults (36): House on Rock, Wedding at Cana, Man Through Roof, Loaves and Fish, Calming the Storm, Friend at Midnight, The Prodigal Son, Wheat and Weeds, Counting the Cost, Dragnet of Fish, Unforgiving Servant, Pool of Bethesda, Two Blind Men, Muddy Eyes Open, Deaf Ears Open, Mute Man Speaks, Walking on Water, Woman Touches Hem, Centurion's Servant, The Good Samaritan, The Talents, Persistent Widow, Sheep and Goats, Vine and Branches, Pharisee and Tax Collector, Two Debtors, Salt and Light, Faithful Steward, Wise Manager, Beautiful Gate, Wicked Tenants, Rich Man and Lazarus, Growing Seed, Great Banquet, Lamp on Stand, Coin in Fish.
+
+### Deck counts
+
+| Deck | Kids | Adults | All |
+| --- | --- | --- | --- |
+| Bible Characters | 42 | 73 | 115 |
+| Bible Stories | 50 | 64 | 114 |
+| Miracles & Parables | 32 | 36 | 68 |
+| Christmas & Easter | 61 | 53 | 114 |
+| Church Life | 46 | 70 | 116 |
+| Bible Animals | 52 | 61 | 113 |
+| Bible Places & Things | 45 | 72 | 117 |
+| Actions | 115 | 45 | 160 |
+| Jobs | 51 | 83 | 134 |
+| Sports | 49 | 66 | 115 |
+| Animals | 59 | 54 | 113 |
+| Chores | 50 | 56 | 106 |
+| Movies | 52 | 98 | 150 |
+| Everyday Objects | 120 | 50 | 170 |
+| Foods | 72 | 52 | 124 |
+| Outdoor Fun | 50 | 70 | 120 |
+| Hum It | 55 | 45 | 100 |
+| Mix | 1001 | 1048 | 2049 |
+
+### Measurements
+
+| Viewport | Scroll area | Full rows | Card height | Row tops |
+| --- | --- | --- | --- | --- |
+| 844×390 | 280px, from y 64 | 2 | 94px | 77, 188 |
+| 390×844 | 722px, from y 56 | 3 | 167px | 77, 275, 453 |
+
+At 844×390, six cards sit fully inside the scroll area. A third row starts lower and is not fully on screen. At 390×844, five cards sit fully inside, across three rows. The Kids deck shot shows Mix at 1001, Bible Characters at 42, Bible Stories at 50, Miracles & Parables at 32, Christmas & Easter at 61, and Church Life at 46.
+
+### File sizes
+
+| File | Bytes |
+| --- | --- |
+| Live `index.html` | 146337 |
+| Live `prompts.js` | 28263 |
+
+146337 is under the 150 KB target.
+
+### Screenshots
+
+Files are in `qa/v8_3/`, light and dark, at 844×390:
+
+- `recap-light.png`, `recap-dark.png` (Team 1 scored 3, Kids badge above the name, Adults badge above Team 2, score bar clear of the badge)
+- `deck-kids-light.png`, `deck-kids-dark.png` (Choose a Deck at the Kids level)
+
+### Tests
+
+| Check | Result |
+| --- | --- |
+| `node qa/tilt_math_check.mjs` | 34 passed |
+| `node qa/headless_qc.mjs` on http://127.0.0.1:8765/ | 189 passed, 0 console errors. Includes the v8.2 checks, the 30/30 Miracles floor, one-or-two-word Kids prompts, the near-duplicate allowlist, and standings names on one line with badges clear of the bar at 844×390. |
+| `node qa/shuffle_check.mjs` | 46 passed, 0 console errors. Seventeen categories, 2049 cards. Mix reshuffle holds back the latest 24 (deck 2025). |
+| Live `CHARADES_URL=https://bryanralston.github.io/charades/ node qa/headless_qc.mjs` | 189 passed, 0 console errors |
+| Live `index.html` | HTTP 200, 146337 bytes |
+| Live `prompts.js` | HTTP 200, 28263 bytes |
+| Live `sw.js` | HTTP 200, cache `charades-v8-3`, asset version `8.3`, `NETWORK_TIMEOUT_MS` 2500 |
+
+### Open limits
+
+- At 844×390 a third deck row is only partly on screen. Two full rows are inside the scroll area.
+- Adults means a harder card. The lists stay family-safe. A badge appears for Kids and Adults. All has no badge. Custom decks ignore the level.
+- Miracles & Parables is the only deck with a 30/30 floor.
+- Cards do not carry a tag beyond Kids or Adults.
+- If rotation lock keeps the screen angle at 0, the mapping still does not see a landscape forehead pose.
+- Mid-round resume, including the time left and each team's level, is stored for that tab.
+- The iPhone permission prompt was not exercised on a phone. The camera path used a fake headless camera.
+- The inline QR covers versions 1 through 10.
+- Custom length is 10 to 300 seconds, in steps of 5.
+- Jingle Bells is only in Christmas & Easter.
+- Projector mode and kids picture mode were left out.
+
