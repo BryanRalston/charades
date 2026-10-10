@@ -798,3 +798,4 @@ v8.5.6: Main Menu unlocks the screen, exits fullscreen and stops sensors; X move
 
 v8.6: recap keeps cards scored before Main Menu then Resume; winner screen adds Main Menu, New Game and an X; motion intro once per device; tab return shows Keep Playing paused; portrait team rows wrap level chips; deck cleanup 1739 to 1681 cards (S'mores fix, dupes, hard Kids cards moved or cut). Shuffle floor 25, index budget 155 KB. Tilt slices unchanged. Cache charades-v8-6.
 v8.7: data-only backfill, 53 very recognizable cards added to the smallest decks (Miracles & Parables, Bible Stories, Christmas & Easter adults, Church Life kids, Bible Animals adults, Bible Places & Things). Code and tilt slices unchanged. Cache charades-v8-7.
+v8.8: fix team 2+ stuck in prep when the phone is not upright at Tap to start (watchCalibration now re-checks upright while prepHold, since calibrated stays true). Tilt math and protected sensor slices unchanged. Cache charades-v8-8.

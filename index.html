@@ -1693,6 +1693,7 @@
 
     function watchCalibration() {
       const phase = document.body.dataset.phase;
+      if (phase === "prep" && prepHold) watchUpright();
       if (sensor.calibrated) {
         if ((phase === "prep" || phase === "countdown" || phase === "play") && screenAngle() !== sensor.calibAngle) {
           beginCalibration();
