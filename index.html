@@ -2106,6 +2106,15 @@
         button.classList.toggle("selected", on);
         button.setAttribute("aria-pressed", on ? "true" : "false");
       });
+      const hum = document.querySelector('input[name="style"][value="hum"]');
+      const song = state.settings.category === "Hum It";
+      if (hum && hum.parentElement) hum.parentElement.hidden = !song;
+      if (!song && state.settings.style === "hum") {
+        state.settings.style = "act";
+        saveState();
+        applySettings();
+        paintStyle();
+      }
     }
 
     function renderTeams() {
@@ -2351,11 +2360,8 @@
 
     function setGlobalLevel(level) {
       const next = normalizeLevel(level);
-      const prev = normalizeLevel(state.settings.level);
       state.settings.level = next;
-      state.teams.forEach((team) => {
-        if (normalizeLevel(team.level) === prev) team.level = next;
-      });
+      state.teams.forEach((team) => { team.level = next; });
       saveState();
       applySettings();
       renderTeams();
@@ -4028,7 +4034,7 @@
       });
     });
     document.querySelectorAll('input[name="level"]').forEach((input) => {
-      input.addEventListener("change", () => {
+      input.addEventListener("click", () => {
         if (!input.checked) return;
         setGlobalLevel(input.value);
       });
