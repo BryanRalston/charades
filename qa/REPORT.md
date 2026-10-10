@@ -797,3 +797,4 @@ v8.5.5: Main Menu then reload lands on home with Resume; Make the Guest Bed remo
 v8.5.6: Main Menu unlocks the screen, exits fullscreen and stops sensors; X moved back near the v8.4 spot and ignores long presses and palms. Tilt code still identical to v8.4. Cache charades-v8-5-6.
 
 v8.6: recap keeps cards scored before Main Menu then Resume; winner screen adds Main Menu, New Game and an X; motion intro once per device; tab return shows Keep Playing paused; portrait team rows wrap level chips; deck cleanup 1739 to 1681 cards (S'mores fix, dupes, hard Kids cards moved or cut). Shuffle floor 25, index budget 155 KB. Tilt slices unchanged. Cache charades-v8-6.
+v8.7: data-only backfill, 53 very recognizable cards added to the smallest decks (Miracles & Parables, Bible Stories, Christmas & Easter adults, Church Life kids, Bible Animals adults, Bible Places & Things). Code and tilt slices unchanged. Cache charades-v8-7.
