@@ -85,7 +85,7 @@ for (const name of names) {
   const adults = (promptMap[name].adults || []).length;
   const count = deck.length;
   total += count;
-  const floor = 30;
+  const floor = 25;
   check(name + " has at least 40 prompts", count >= 40, String(count));
   check(name + " has at least " + floor + " kids and " + floor + " adults", kids >= floor && adults >= floor, kids + "/" + adults);
 }

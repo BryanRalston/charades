@@ -964,6 +964,12 @@
   #winner-confetti { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
   #winner-crown .crown { width: 72px; height: 54px; }
   #btn-tutorial-go, #btn-pass-start, #btn-rematch { min-width: 200px; }
+  .winner-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 0; z-index: 1; }
+  #btn-winner-close { position: absolute; top: 12px; right: 12px; z-index: 2; width: 44px; height: 44px; border-radius: 50%; background: var(--fill); font-size: 20px; }
+  @media (orientation: portrait) {
+    #team-list li { grid-template-columns: 12px minmax(0, 1fr) auto auto; row-gap: 2px; }
+    #team-list li > .team-level { grid-column: 2 / -1; grid-row: 2; padding-bottom: 8px; }
+  }
   #recap-video { display: flex; align-items: center; gap: 10px; width: min(860px, 100%); }
   #recap-video[hidden] { display: none; }
   #reaction-preview { width: 168px; height: 94px; border-radius: 12px; background: #000; }
@@ -1203,7 +1209,8 @@
       <h3>Standings</h3>
       <ol id="winner-standings"></ol>
     </section>
-    <button type="button" id="btn-rematch" class="pill">Rematch</button>
+    <p class="winner-actions"><button type="button" id="btn-rematch" class="pill">Rematch</button> <button type="button" id="btn-winner-menu" class="pill secondary">Main Menu</button> <button type="button" id="btn-winner-new" class="pill secondary">New Game</button></p>
+    <button type="button" id="btn-winner-close" aria-label="Close">&#x2715;</button>
   </section>
 
   <div id="deck-empty" hidden>
@@ -1284,6 +1291,8 @@
     const ROUND_KEY = "charades.round";
     const ROUND_MS_KEY = "charades.roundMs";
     const ROUND_MENU_KEY = "charades.roundMenu";
+    const ROUND_LISTS_KEY = "charades.roundLists";
+    const INTRO_KEY = "charades.motionIntroSeen";
     const REPEAT_GAP = 24;
     const STABLE_DEG = 3;
     const STABLE_MS = 400;
@@ -2396,6 +2405,8 @@
       roundGuessed = [];
       roundPassed = [];
       roundPoints = 0;
+      if (pendingResumeMs > 0) restoreRoundLists();
+      else clearRoundLists();
       currentCard = null;
       document.documentElement.dataset.lastResult = "";
       markRound();
@@ -2503,7 +2514,20 @@
         sessionStorage.removeItem(ROUND_KEY);
         sessionStorage.removeItem(ROUND_MS_KEY);
         sessionStorage.removeItem(ROUND_MENU_KEY);
+        sessionStorage.removeItem(ROUND_LISTS_KEY);
       } catch (err) {}
+    }
+
+    function saveRoundLists() {
+      try { sessionStorage.setItem(ROUND_LISTS_KEY, JSON.stringify([roundGuessed, roundPassed, roundPoints])); } catch (err) {}
+    }
+
+    function restoreRoundLists() {
+      try { [roundGuessed, roundPassed, roundPoints] = JSON.parse(sessionStorage.getItem(ROUND_LISTS_KEY)) || [[], [], 0]; } catch (err) {}
+    }
+
+    function clearRoundLists() {
+      try { sessionStorage.removeItem(ROUND_LISTS_KEY); } catch (err) {}
     }
 
     function saveRoundMs(ms) {
@@ -3005,9 +3029,14 @@
       document.body.dataset.phase = "tutorial";
     }
 
+    function introSeen() {
+      try { return localStorage.getItem(INTRO_KEY) === "1"; } catch (err) { return false; }
+    }
+
     function onTutorialContinue() {
       const el = document.getElementById("tutorial");
       if (el) el.hidden = true;
+      try { localStorage.setItem(INTRO_KEY, "1"); } catch (err) {}
       tutorialReady = true;
       if (document.body.dataset.phase === "tutorial") document.body.dataset.phase = "setup";
       onTapStart();
@@ -3107,6 +3136,11 @@
       hideUndo();
       renderTeams();
       showPassPhone();
+    }
+
+    function winnerToMenu() {
+      rematch();
+      leaveToMenu();
     }
 
     function flyCard(kind) {
@@ -3563,10 +3597,11 @@
         setHint("Add a team first.");
         return;
       }
-      if (!state.settings.tutorialSeen && !gameInProgress() && !tutorialReady) {
+      if (!state.settings.tutorialSeen && !introSeen() && !gameInProgress() && !tutorialReady) {
         showTutorial();
         return;
       }
+      const fromIntro = tutorialReady;
       tutorialReady = false;
       freeReaction();
       startLock = true;
@@ -3616,7 +3651,7 @@
         else sensor.permission = "granted";
         setHint(!orientOk && !motionOk && asked ? "Tilt off, use buttons" : "");
         refreshSensorUi();
-        if (!state.settings.tutorialSeen && !gameInProgress()) {
+        if (!state.settings.tutorialSeen && fromIntro && !gameInProgress()) {
           startPractice();
           return;
         }
@@ -3689,6 +3724,7 @@
       timerMark = 0;
       stopTimer();
       saveRoundMs(timerLeftMs);
+      saveRoundLists();
       document.body.dataset.paused = reason === "hidden" ? "hidden" : "user";
       if (reason !== "hidden") {
         const modal = document.getElementById("pause-modal");
@@ -3792,6 +3828,7 @@
         }
         stopTimer();
         saveRoundMs(timerLeftMs);
+        saveRoundLists();
         try { sessionStorage.setItem(ROUND_KEY, "1"); } catch (err) {}
       }
       // Main Menu parks the turn: a reload lands on home (no auto-resume), and Resume still keeps the saved time.
@@ -3839,7 +3876,11 @@
         if (roundLive()) pauseRound("hidden");
         return;
       }
-      if (document.body.dataset.paused === "hidden") resumeRound();
+      if (document.body.dataset.paused === "hidden") {
+        document.body.dataset.paused = "user";
+        const modal = document.getElementById("pause-modal");
+        if (modal) modal.hidden = false;
+      }
       if (roundLive() || document.body.dataset.paused) acquireWakeLock();
     }
 
@@ -3957,6 +3998,11 @@
     document.getElementById("btn-pass-start").addEventListener("click", onTapStart);
     document.getElementById("btn-tutorial-go").addEventListener("click", onTutorialContinue);
     document.getElementById("btn-rematch").addEventListener("click", rematch);
+    document.getElementById("btn-winner-menu").addEventListener("click", winnerToMenu);
+    document.getElementById("btn-winner-close").addEventListener("click", winnerToMenu);
+    document.getElementById("btn-winner-new").addEventListener("click", () => {
+      document.getElementById("confirm-modal").hidden = false;
+    });
     document.getElementById("btn-add-team").addEventListener("click", addTeam);
     document.querySelectorAll('input[name="seconds"]').forEach((input) => {
       input.addEventListener("change", () => {

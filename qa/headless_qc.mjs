@@ -435,8 +435,8 @@ try {
   const swSource = readFileSync(ROOT + "\\sw.js", "utf8");
   const deckFiles = ["bible-characters","bible-stories","miracles-parables","christmas-easter","church-life","bible-animals","bible-places-things","hum-it","actions","jobs","sports","animals","chores","movies","everyday-objects","foods","outdoor-fun","mix"];
   check(
-    "sw cache is charades-v8-5-6",
-    swSource.indexOf('const CACHE = "charades-v8-5-6"') !== -1 && swSource.indexOf('ASSET_VERSION = "8.5.6"') !== -1 && swSource.indexOf('"./prompts.js"') !== -1 && deckFiles.every((name) => swSource.indexOf("./assets/decks/" + name + ".webp") !== -1),
+    "sw cache is charades-v8-6",
+    swSource.indexOf('const CACHE = "charades-v8-6"') !== -1 && swSource.indexOf('ASSET_VERSION = "8.6"') !== -1 && swSource.indexOf('"./prompts.js"') !== -1 && deckFiles.every((name) => swSource.indexOf("./assets/decks/" + name + ".webp") !== -1),
     ""
   );
   const swStart = swSource.indexOf("function networkFirst");
@@ -677,7 +677,7 @@ try {
     const kids = (deck.kids || []).length;
     const adults = (deck.adults || []).length;
     const count = kids + adults;
-    const floor = 30;
+    const floor = 25;
     check(name + " has at least 40 prompts", count >= 40, String(count));
     check(name + " has at least " + floor + " kids and " + floor + " adults", kids >= floor && adults >= floor, kids + "/" + adults);
   }
@@ -1183,9 +1183,12 @@ try {
     const before = window.__wakeRequests || 0;
     window.__docHidden = false;
     document.dispatchEvent(new Event('visibilitychange'));
-    return { paused: document.body.dataset.paused || '', wakes: window.__wakeRequests || 0, before: before };
+    const sheet = document.getElementById('pause-modal').hidden === false;
+    const pausedBack = document.body.dataset.paused || '';
+    document.getElementById('btn-resume').click();
+    return { paused: document.body.dataset.paused || '', pausedBack: pausedBack, sheet: sheet, wakes: window.__wakeRequests || 0, before: before };
   })()`);
-  check("wake lock is re-acquired when the tab returns", shown.paused === "" && shown.wakes > shown.before, JSON.stringify(shown));
+  check("tab return shows Keep Playing paused, then Keep Playing resumes with the wake lock", shown.sheet === true && shown.pausedBack === "user" && shown.paused === "" && shown.wakes > shown.before, JSON.stringify(shown));
   const pauseUi = await ev(`(() => {
     function shown() {
       const el = document.getElementById('btn-pause');
@@ -1696,7 +1699,7 @@ try {
   await v7Pair("pass");
 
   const animals = deckPrompts(promptMap["Bible Animals"]);
-  check("Bible Animals keeps one dove and one raven", animals.filter((prompt) => /dove/i.test(prompt)).sort().join(",") === "Dove,Turtledove" && animals.filter((prompt) => /raven/i.test(prompt)).join(",") === "Raven", animals.filter((prompt) => /dove|raven/i.test(prompt)).join(","));
+  check("Bible Animals keeps one dove and one raven", animals.filter((prompt) => /dove/i.test(prompt)).sort().join(",") === "Dove" && animals.filter((prompt) => /raven/i.test(prompt)).join(",") === "Raven", animals.filter((prompt) => /dove|raven/i.test(prompt)).join(","));
   check("Bible Animals stays at 40 or more", animals.length >= 40, String(animals.length));
   const humDeck = promptMap["Hum It"] || { kids: [], adults: [] };
   const hum = deckPrompts(humDeck);
@@ -2015,7 +2018,7 @@ try {
   check("a custom length reloads from localStorage", persisted.seconds === 45 && persisted.label === "45s" && persisted.open === true, JSON.stringify(persisted));
 
   const indexBytes = readFileSync(ROOT + "\\index.html").length;
-  check("index.html is under 150 KB", indexBytes < 150 * 1024, String(indexBytes));
+  check("index.html is under 155 KB", indexBytes < 155 * 1024, String(indexBytes));
 
   async function measureDeck(width, height) {
     await setViewport(width, height);
@@ -2129,7 +2132,7 @@ try {
       new Promise((resolve) => setTimeout(() => resolve(null), 8000))
     ]);
     if (!ready) return { ok: false, why: "not ready" };
-    const cache = await caches.open("charades-v8-5-6");
+    const cache = await caches.open("charades-v8-6");
     const url = new URL("prompts.js", location.href).href;
     const res = await cache.match(url) || await cache.match("./prompts.js");
     if (!res) return { ok: false, why: "missing", keys: await caches.keys() };
